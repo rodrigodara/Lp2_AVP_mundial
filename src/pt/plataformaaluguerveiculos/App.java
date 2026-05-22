@@ -15,6 +15,7 @@ public class App extends Application {
     BorderPane root = new BorderPane();
     Scene scene = new Scene(root, 800, 600);
     stage.setScene(scene); 
+    scene.getStylesheets().add(getClass().getResource("/resources/styles.css").toExternalForm());
     navbarView = new NavbarView();
     root.setTop(navbarView.getNavbar());
 

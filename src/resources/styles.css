@@ -1,0 +1,17 @@
+.navbar {
+    -fx-background-color: #1a237e;
+    -fx-padding: 10 20 10 20;
+    -fx-spacing: 10;
+}
+
+.navbar-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+
+.navbar-button:hover {
+    -fx-background-color: #3949ab;
+    -fx-background-radius: 5;
+}

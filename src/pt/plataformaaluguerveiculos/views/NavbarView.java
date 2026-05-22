@@ -17,6 +17,12 @@ public class NavbarView {
         Button btnSair = new Button("Sair");
 
         navbar.getChildren().addAll(btnDashboard, btnProcurarVeiculos, btnReservas, btnPerfil, btnSair);
+        navbar.getStyleClass().add("navbar");
+        btnDashboard.getStyleClass().add("navbar-button");
+        btnProcurarVeiculos.getStyleClass().add("navbar-button");
+        btnReservas.getStyleClass().add("navbar-button");
+        btnPerfil.getStyleClass().add("navbar-button");
+        btnSair.getStyleClass().add("navbar-button");
         navbar.setSpacing(10);
         navbar.setPadding(new Insets(10,20,10,20));
     }
