@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<!--
+    ALV-29 — Formulário de registo de utilizador
+    Controller: com.aluguer.controller.RegistoController
+-->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.aluguer.controller.RegistoController"
+      alignment="CENTER"
+      spacing="0"
+      style="-fx-background-color: #f5f6fa;">
+
+    <!-- Cabeçalho -->
+    <VBox alignment="CENTER" spacing="4"
+          style="-fx-background-color: #1565c0; -fx-padding: 28 0 28 0;">
+        <Label text="Criar Conta"
+               style="-fx-text-fill: white; -fx-font-size: 22px; -fx-font-weight: bold;"/>
+        <Label text="Plataforma de Aluguer de Veículos"
+               style="-fx-text-fill: #90caf9; -fx-font-size: 13px;"/>
+    </VBox>
+
+    <!-- Formulário -->
+    <ScrollPane fitToWidth="true" style="-fx-background: transparent; -fx-background-color: transparent;">
+        <VBox fx:id="vboxForm" spacing="14" maxWidth="460"
+              style="-fx-background-color: white; -fx-background-radius: 10;
+                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 12, 0, 0, 4);
+                     -fx-padding: 32;">
+            <padding><Insets top="20" right="40" bottom="20" left="40"/></padding>
+
+            <!-- Email -->
+            <VBox spacing="4">
+                <Label text="Email *" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                <TextField fx:id="tfEmail" promptText="exemplo@email.com"
+                           style="-fx-pref-height: 38px; -fx-border-color: #cfd8dc;
+                                  -fx-border-radius: 6; -fx-background-radius: 6;"/>
+            </VBox>
+
+            <!-- Nome -->
+            <VBox spacing="4">
+                <Label text="Nome completo *" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                <TextField fx:id="tfNome" promptText="João Silva"
+                           style="-fx-pref-height: 38px; -fx-border-color: #cfd8dc;
+                                  -fx-border-radius: 6; -fx-background-radius: 6;"/>
+            </VBox>
+
+            <!-- NIF -->
+            <VBox spacing="4">
+                <Label text="NIF *" style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                <TextField fx:id="tfNif" promptText="123456789"
+                           style="-fx-pref-height: 38px; -fx-border-color: #cfd8dc;
+                                  -fx-border-radius: 6; -fx-background-radius: 6;"/>
+            </VBox>
+
+            <!-- Carta de Condução -->
+            <HBox spacing="12">
+                <VBox spacing="4" HBox.hgrow="ALWAYS">
+                    <Label text="Nº Carta de Condução *"
+                           style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                    <TextField fx:id="tfNumeroCarta" promptText="AA-123456"
+                               style="-fx-pref-height: 38px; -fx-border-color: #cfd8dc;
+                                      -fx-border-radius: 6; -fx-background-radius: 6;"/>
+                </VBox>
+                <VBox spacing="4">
+                    <Label text="Validade *"
+                           style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                    <DatePicker fx:id="dpValidadeCarta" promptText="dd/MM/aaaa"
+                                style="-fx-pref-height: 38px; -fx-pref-width: 160px;"/>
+                </VBox>
+            </HBox>
+
+            <!-- Password -->
+            <VBox spacing="4">
+                <Label text="Password * (mínimo 8 caracteres)"
+                       style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                <PasswordField fx:id="pfPassword" promptText="••••••••"
+                               style="-fx-pref-height: 38px; -fx-border-color: #cfd8dc;
+                                      -fx-border-radius: 6; -fx-background-radius: 6;"/>
+            </VBox>
+
+            <!-- Confirmar Password -->
+            <VBox spacing="4">
+                <Label text="Confirmar password *"
+                       style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                <PasswordField fx:id="pfConfirmarPassword" promptText="••••••••"
+                               style="-fx-pref-height: 38px; -fx-border-color: #cfd8dc;
+                                      -fx-border-radius: 6; -fx-background-radius: 6;"/>
+            </VBox>
+
+            <!-- Label de erro/sucesso -->
+            <Label fx:id="lblErro" wrapText="true" visible="false"
+                   style="-fx-font-size: 13px; -fx-padding: 6 10 6 10;
+                          -fx-background-color: #fce4e4; -fx-background-radius: 6;"/>
+
+            <!-- Botões -->
+            <VBox spacing="8">
+                <Button fx:id="btnRegistar" text="Criar Conta"
+                        maxWidth="Infinity" onAction="#onRegistar"
+                        style="-fx-background-color: #1565c0; -fx-text-fill: white;
+                               -fx-font-size: 14px; -fx-font-weight: bold;
+                               -fx-pref-height: 42px; -fx-background-radius: 8;
+                               -fx-cursor: hand;"/>
+                <Button text="Já tenho conta — Iniciar sessão"
+                        maxWidth="Infinity" onAction="#onVoltar"
+                        style="-fx-background-color: transparent; -fx-text-fill: #1565c0;
+                               -fx-font-size: 13px; -fx-cursor: hand; -fx-border-color: transparent;"/>
+            </VBox>
+
+        </VBox>
+    </ScrollPane>
+
+</VBox>

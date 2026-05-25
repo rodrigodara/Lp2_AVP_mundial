@@ -1,0 +1,7 @@
+com\aluguer\MainApp.class
+com\aluguer\util\PasswordUtil.class
+com\aluguer\util\DatabaseConnection.class
+com\aluguer\controller\RegistoService.class
+com\aluguer\dao\UserDAO.class
+com\aluguer\model\User.class
+com\aluguer\controller\RegistoController.class
