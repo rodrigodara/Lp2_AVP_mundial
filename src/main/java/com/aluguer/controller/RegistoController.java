@@ -1,12 +1,18 @@
 package com.aluguer.controller;
 
-import com.aluguer.model.User;
-import javafx.fxml.FXML;
-import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
-
 import java.sql.SQLException;
 import java.time.LocalDate;
+
+import com.aluguer.MainApp;
+import com.aluguer.model.User;
+
+import javafx.fxml.FXML;
+import javafx.scene.control.Button;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.VBox;
 
 /**
  * ALV-29 / ALV-30 / ALV-31 — Controller JavaFX do formulário de registo.
@@ -40,7 +46,10 @@ public class RegistoController {
     // ------------------------------------------------------------------
     // Acção do botão Registar
     // ------------------------------------------------------------------
-
+    @FXML
+    private void onVoltar() {
+        MainApp.showLogin();
+    }
     @FXML
     private void onRegistar() {
         lblErro.setVisible(false);
@@ -108,9 +117,5 @@ public class RegistoController {
     // Navegação — voltar ao login (ligar ao MainApp se necessário)
     // ------------------------------------------------------------------
 
-    @FXML
-    private void onVoltar() {
-        // Exemplo: MainApp.mostrarLogin();
-        // Implementar conforme a navegação do MainApp
-    }
+
 }
