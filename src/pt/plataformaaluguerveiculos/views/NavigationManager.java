@@ -1,0 +1,54 @@
+package pt.plataformaaluguerveiculos.views;
+
+import javafx.scene.Node;
+
+/**
+ * ALV-57 - Implementar navegação entre páginas
+ * Singleton que gere a troca de conteúdo no BaseLayoutView.
+ */
+public class NavigationManager {
+
+    private static NavigationManager instance;
+    private BaseLayoutView baseLayout;
+
+    private NavigationManager() {}
+
+    public static NavigationManager getInstance() {
+        if (instance == null) {
+            instance = new NavigationManager();
+        }
+        return instance;
+    }
+
+    public void init(BaseLayoutView baseLayout) {
+        this.baseLayout = baseLayout;
+    }
+
+    public BaseLayoutView getBaseLayout() {
+        return baseLayout;
+    }
+
+    public void navegarPara(Node pagina) {
+        if (baseLayout != null) {
+            baseLayout.setContent(pagina);
+        }
+    }
+
+    public void navegarParaDashboard() {
+        DashboardView dashboard = new DashboardView();
+        navegarPara(dashboard.getRoot());
+    }
+
+    public void navegarParaLogin() {
+        // Esconde navbar e mostra login
+        if (baseLayout != null) {
+            baseLayout.getRoot().setTop(null);
+        }
+        LoginView login = new LoginView();
+        navegarPara(login.getRoot());
+    }
+
+    public void sair() {
+        navegarParaLogin();
+    }
+}
