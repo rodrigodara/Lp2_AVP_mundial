@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<!--
+    Login de utilizador
+    Controller: com.aluguer.controller.LoginController
+-->
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.aluguer.controller.LoginController"
+      alignment="CENTER"
+      spacing="0"
+      style="-fx-background-color: #f5f6fa;">
+
+    <!-- Cabeçalho -->
+    <VBox alignment="CENTER" spacing="4"
+          style="-fx-background-color: #1565c0; -fx-padding: 28 0 28 0;">
+        <Label text="Iniciar Sessão"
+               style="-fx-text-fill: white; -fx-font-size: 22px; -fx-font-weight: bold;"/>
+        <Label text="Plataforma de Aluguer de Veículos"
+               style="-fx-text-fill: #90caf9; -fx-font-size: 13px;"/>
+    </VBox>
+
+    <!-- Cartão central -->
+    <VBox alignment="CENTER" VBox.vgrow="ALWAYS">
+        <VBox spacing="16" maxWidth="420"
+              style="-fx-background-color: white; -fx-background-radius: 10;
+                     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 12, 0, 0, 4);
+                     -fx-padding: 36 40 36 40;">
+
+            <!-- Email -->
+            <VBox spacing="4">
+                <Label text="Email"
+                       style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                <TextField fx:id="tfEmail" promptText="exemplo@email.com"
+                           style="-fx-pref-height: 38px; -fx-border-color: #cfd8dc;
+                                  -fx-border-radius: 6; -fx-background-radius: 6;"/>
+            </VBox>
+
+            <!-- Password -->
+            <VBox spacing="4">
+                <Label text="Password"
+                       style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #37474f;"/>
+                <PasswordField fx:id="pfPassword" promptText="••••••••"
+                               style="-fx-pref-height: 38px; -fx-border-color: #cfd8dc;
+                                      -fx-border-radius: 6; -fx-background-radius: 6;"/>
+            </VBox>
+
+            <!-- Label de erro/sucesso -->
+            <Label fx:id="lblErro" wrapText="true" visible="false"
+                   style="-fx-font-size: 13px; -fx-padding: 6 10 6 10;
+                          -fx-background-color: #fce4e4; -fx-background-radius: 6;"/>
+
+            <!-- Botões -->
+            <VBox spacing="8">
+                <Button fx:id="btnEntrar" text="Entrar"
+                        maxWidth="Infinity" onAction="#onEntrar"
+                        style="-fx-background-color: #1565c0; -fx-text-fill: white;
+                               -fx-font-size: 14px; -fx-font-weight: bold;
+                               -fx-pref-height: 42px; -fx-background-radius: 8;
+                               -fx-cursor: hand;"/>
+                <Button text="Ainda não tenho conta — Criar conta"
+                        maxWidth="Infinity" onAction="#onCriarConta"
+                        style="-fx-background-color: transparent; -fx-text-fill: #1565c0;
+                               -fx-font-size: 13px; -fx-cursor: hand; -fx-border-color: transparent;"/>
+            </VBox>
+
+        </VBox>
+    </VBox>
+
+</VBox>
