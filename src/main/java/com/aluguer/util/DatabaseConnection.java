@@ -10,9 +10,7 @@ public class DatabaseConnection {
     // CONFIGURAÇÃO MYSQL (XAMPP)
     // -----------------------------
     private static final String URL =
-            "jdbc:mysql://localhost:3306/aluguer_veiculos"
-            + "?useSSL=false"
-            + "&serverTimezone=UTC";
+            "jdbc:mariadb://localhost:3306/aluguer_veiculos";
 
     private static final String USER = "root";
     private static final String PASSWORD = "";
