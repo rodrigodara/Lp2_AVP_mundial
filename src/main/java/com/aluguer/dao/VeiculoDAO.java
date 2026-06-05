@@ -16,9 +16,6 @@ public class VeiculoDAO {
     // 1. INSERIR VEÍCULO
     // ============================
     public boolean inserir(Veiculo v) throws SQLException {
-        String sql = "INSERT INTO veiculo (marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-    public boolean inserir(Veiculo v) {
         String sql = "INSERT INTO veiculo (marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, estado) "
                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -33,7 +30,6 @@ public class VeiculoDAO {
             stmt.setString(6, v.getLocalizacao());
             stmt.setInt(7, v.getProprietarioId());
             stmt.setString(8, v.getEstado());
-
 
             return stmt.executeUpdate() > 0;
         }
@@ -52,18 +48,6 @@ public class VeiculoDAO {
 
             while (rs.next()) {
                 lista.add(mapRow(rs));
-                Veiculo v = new Veiculo(
-                rs.getInt("id"),
-                rs.getString("marca"),
-                rs.getString("modelo"),
-                rs.getInt("ano"),
-                rs.getString("combustivel"),
-                rs.getDouble("precoDiario"),
-                rs.getString("localizacao"),
-                rs.getInt("proprietarioId"),
-                rs.getString("estado") // NOVO
-            );
-                lista.add(v);
             }
         }
         return lista;
@@ -81,20 +65,6 @@ public class VeiculoDAO {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) return mapRow(rs);
-
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                return new Veiculo(
-                    rs.getInt("id"),
-                    rs.getString("marca"),
-                    rs.getString("modelo"),
-                    rs.getInt("ano"),
-                    rs.getString("combustivel"),
-                    rs.getDouble("precoDiario"),
-                    rs.getString("localizacao"),
-                    rs.getInt("proprietarioId"),
-                    rs.getString("estado") //nova
-                );
             }
         }
         return null;
@@ -104,14 +74,11 @@ public class VeiculoDAO {
     // 4. ATUALIZAR
     // ============================
     public boolean atualizar(Veiculo v) throws SQLException {
-        String sql = "UPDATE veiculo SET marca=?, modelo=?, ano=?, combustivel=?, precoDiario=?, localizacao=? "
-                   + "WHERE id=? AND proprietarioId=?";
+        String sql = "UPDATE veiculo SET marca=?, modelo=?, ano=?, combustivel=?, precoDiario=?, localizacao=?, proprietarioId=?, estado=? "
+                   + "WHERE id=?";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-    public boolean atualizar(Veiculo v) {
-        String sql = "UPDATE veiculo SET marca=?, modelo=?, ano=?, combustivel=?, precoDiario=?, localizacao=?, proprietarioId=?, estado=? "
-                   + "WHERE id=?";
 
             stmt.setString(1, v.getMarca());
             stmt.setString(2, v.getModelo());
@@ -119,12 +86,9 @@ public class VeiculoDAO {
             stmt.setString(4, v.getCombustivel());
             stmt.setDouble(5, v.getPrecoDiario());
             stmt.setString(6, v.getLocalizacao());
-            stmt.setInt(7, v.getId());
-            stmt.setInt(8, v.getProprietarioId());
             stmt.setInt(7, v.getProprietarioId());
             stmt.setString(8, v.getEstado());
             stmt.setInt(9, v.getId());
-
 
             return stmt.executeUpdate() > 0;
         }
@@ -156,7 +120,8 @@ public class VeiculoDAO {
             rs.getString("combustivel"),
             rs.getDouble("precoDiario"),
             rs.getString("localizacao"),
-            rs.getInt("proprietarioId")
+            rs.getInt("proprietarioId"),
+            rs.getString("estado")
         );
     }
 }

@@ -1,38 +1,27 @@
- C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\LoginController.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\LoginController.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\LoginService.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\RegistoController.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\RegistoService.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\VeiculosController.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\dao\ReservaDAO.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\dao\UserDAO.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\dao\VeiculoDAO.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\MainApp.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\model\Reserva.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\model\User.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\model\Veiculo.java
-C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\testes\testeveiculoDAO.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\service\ReservaService.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\service\VeiculoService.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\util\DatabaseConnection.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\util\PasswordUtil.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\util\SessionManager.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\controller\RegistoController.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\controller\RegistoService.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\dao\ReservaDAO.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\dao\UserDAO.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\dao\VeiculoDAO.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\MainApp.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\model\Reserva.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\model\User.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\model\Veiculo.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\service\ReservaService.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\service\VeiculoService.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\util\DatabaseConnection.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\main\java\com\aluguer\util\PasswordUtil.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\App.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\views\BaseLayoutView.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\views\DashboardView.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\views\FeedbackView.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\views\LoginView.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\views\MinhasReservasView.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\views\NavbarView.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\views\NavigationManager.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\views\PedidosRecebidosView.java
-C:\Users\franc\OneDrive - Instituto Superior de Engenharia do Porto\CTESP-DAS-ERM\LP2\Projeto 2\src\pt\plataformaaluguerveiculos\views\ProcurarVeiculosView.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\App.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\views\BaseLayoutView.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\views\DashboardView.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\views\FeedbackView.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\views\LoginView.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\views\MinhasReservasView.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\views\NavbarView.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\views\NavigationManager.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\views\PedidosRecebidosView.java
+C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\pt\plataformaaluguerveiculos\views\ProcurarVeiculosView.java
