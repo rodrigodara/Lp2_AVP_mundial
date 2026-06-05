@@ -32,6 +32,20 @@ public class MainApp extends Application {
     // ------------------------------------------------------------------
     // Utilitário interno
     // ------------------------------------------------------------------
+        BaseLayoutView baseLayout = new BaseLayoutView();
+
+        NavigationManager nav = NavigationManager.getInstance();
+        nav.init(baseLayout);
+
+        baseLayout.getRoot().setTop(null);
+
+        LoginView loginView = new LoginView();
+        baseLayout.setContent(loginView.getRoot());
+
+        Scene scene = new Scene(baseLayout.getRoot(), 900, 650);
+
+        String css = getClass().getResource("/styles.css").toExternalForm();
+        scene.getStylesheets().add(css);
 
     private static void loadScene(String fxmlPath, int width, int height) {
         try {
