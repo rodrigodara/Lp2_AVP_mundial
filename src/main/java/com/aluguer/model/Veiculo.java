@@ -1,4 +1,5 @@
 package com.aluguer.model;
+
 public class Veiculo {
 
     private int id;
@@ -9,9 +10,11 @@ public class Veiculo {
     private double precoDiario;
     private String localizacao;
     private int proprietarioId;
+    private String estado; // NOVO CAMPO
 
     // Construtor completo
-    public Veiculo(int id, String marca, String modelo, int ano, String combustivel, double precoDiario, String localizacao, int proprietarioId) {
+    public Veiculo(int id, String marca, String modelo, int ano, String combustivel,
+                   double precoDiario, String localizacao, int proprietarioId, String estado) {
         this.id = id;
         this.marca = marca;
         this.modelo = modelo;
@@ -20,10 +23,12 @@ public class Veiculo {
         this.precoDiario = precoDiario;
         this.localizacao = localizacao;
         this.proprietarioId = proprietarioId;
+        this.estado = estado;
     }
 
     // Construtor sem ID (para inserções)
-    public Veiculo(String marca, String modelo, int ano, String combustivel, double precoDiario, String localizacao, int proprietarioId) {
+    public Veiculo(String marca, String modelo, int ano, String combustivel,
+                   double precoDiario, String localizacao, int proprietarioId, String estado) {
         this.marca = marca;
         this.modelo = modelo;
         this.ano = ano;
@@ -31,6 +36,7 @@ public class Veiculo {
         this.precoDiario = precoDiario;
         this.localizacao = localizacao;
         this.proprietarioId = proprietarioId;
+        this.estado = estado;
     }
 
     // Getters e Setters
@@ -57,6 +63,9 @@ public class Veiculo {
 
     public int getProprietarioId() { return proprietarioId; }
     public void setProprietarioId(int proprietarioId) { this.proprietarioId = proprietarioId; }
+
+    public String getEstado() { return estado; }
+    public void setEstado(String estado) { this.estado = estado; }
 
     @Override
     public String toString() {

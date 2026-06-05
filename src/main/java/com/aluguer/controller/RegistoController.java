@@ -119,3 +119,8 @@ public class RegistoController {
 
 
 }
+    @FXML
+    private void onVoltar() {
+        pt.plataformaaluguerveiculos.views.NavigationManager.getInstance().navegarParaLogin();
+    }
+}

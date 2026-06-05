@@ -11,17 +11,14 @@
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>17</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>21.0.2</javafx.version>
     </properties>
 
     <dependencies>
 
-        <!-- ================================================================ -->
-        <!-- JavaFX — interface gráfica (ALV-29)                              -->
-        <!-- ================================================================ -->
+        <!-- JavaFX — interface gráfica (ALV-29) -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
@@ -33,27 +30,21 @@
             <version>${javafx.version}</version>
         </dependency>
 
-        <!-- ================================================================ -->
-        <!-- MySQL Connector — ligação ao MySQL (ALV-24)                      -->
-        <!-- ================================================================ -->
         <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
-            <version>8.3.0</version>
+            <groupId>org.mariadb.jdbc</groupId>
+            <artifactId>mariadb-java-client</artifactId>
+            <version>3.3.2</version>
         </dependency>
 
-        <!-- ================================================================ -->
-        <!-- BCrypt — hash de passwords (ALV-26)                              -->
-        <!-- ================================================================ -->
+
+        <!-- BCrypt — hash de passwords (ALV-26) -->
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
             <version>0.4</version>
         </dependency>
 
-        <!-- ================================================================ -->
-        <!-- JUnit 5 — testes unitários (ALV-32)                              -->
-        <!-- ================================================================ -->
+        <!-- JUnit 5 — testes unitários (ALV-32 / ALV-92) -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -61,10 +52,51 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- H2 — base de dados in-memory para testes (ALV-92) -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>2.2.224</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
+
+        <testSourceDirectory>src/test/java</testSourceDirectory>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>src/resources</directory>
+                <targetPath>resources</targetPath>
+            </resource>
+        </resources>
+
         <plugins>
+
+            <!-- Adiciona src/pt como segunda pasta de sources -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals><goal>add-source</goal></goals>
+                        <configuration>
+                            <sources>
+                                <source>src/pt</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!-- Plugin JavaFX para correr a aplicação com: mvn javafx:run -->
             <plugin>
                 <groupId>org.openjfx</groupId>
@@ -74,6 +106,14 @@
                     <mainClass>com.aluguer.MainApp</mainClass>
                 </configuration>
             </plugin>
+
+            <!-- Maven Surefire para correr testes JUnit 5 com: mvn test -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+            </plugin>
+
         </plugins>
     </build>
 
