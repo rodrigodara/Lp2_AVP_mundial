@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.aluguer.controller.VeiculosController">
+
+    <TableView fx:id="tabelaVeiculos" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="colMarca"       text="Marca"/>
+            <TableColumn fx:id="colModelo"      text="Modelo"/>
+            <TableColumn fx:id="colAno"         text="Ano"/>
+            <TableColumn fx:id="colCombustivel" text="Combustível"/>
+            <TableColumn fx:id="colPreco"       text="Preço/Dia"/>
+            <TableColumn fx:id="colLocalizacao" text="Localização"/>
+        </columns>
+    </TableView>
+
+    <HBox spacing="10">
+        <TextField fx:id="txtMarca"       promptText="Marca"/>
+        <TextField fx:id="txtModelo"      promptText="Modelo"/>
+        <TextField fx:id="txtAno"         promptText="Ano"/>
+        <TextField fx:id="txtCombustivel" promptText="Combustível"/>
+        <TextField fx:id="txtPreco"       promptText="Preço por dia"/>
+        <TextField fx:id="txtLocalizacao" promptText="Localização"/>
+    </HBox>
+
+    <HBox spacing="10">
+        <Button text="Adicionar" onAction="#adicionarVeiculo"/>
+        <Button text="Remover"   onAction="#removerVeiculo"/>
+    </HBox>
+
+</VBox>
