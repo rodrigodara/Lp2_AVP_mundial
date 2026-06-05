@@ -8,6 +8,8 @@ import javafx.scene.Node;
  */
 public class NavigationManager {
 
+    private int utilizadorLogadoId = -1;
+
     private static NavigationManager instance;
     private BaseLayoutView baseLayout;
 
@@ -26,6 +28,14 @@ public class NavigationManager {
 
     public BaseLayoutView getBaseLayout() {
         return baseLayout;
+    }
+
+    public void setUtilizadorLogado(int utilizadorId) {
+        this.utilizadorLogadoId = utilizadorId;
+    }
+
+    public int getUtilizadorLogado() {
+        return utilizadorLogadoId;
     }
 
     public void navegarPara(Node pagina) {
@@ -57,12 +67,17 @@ public class NavigationManager {
     }
 
     // ALV-65 – ir para aprovar/rejeitar reservas
+    public void navegarParaPedidosRecebidos() {
+        int id = utilizadorLogadoId > 0 ? utilizadorLogadoId : 1;
+        navegarPara(new PedidosRecebidosView(id).getRoot());
+    }
+
     public void navegarParaAprovarReservas(int proprietarioId) {
-        navegarPara(new AprovarReservasView(proprietarioId).getRoot());
+        navegarPara(new PedidosRecebidosView(proprietarioId).getRoot());
     }
 
     // ALV-66 – ir para as minhas reservas
     public void navegarParaMinhasReservas(int utilizadorId) {
-        navegarPara(new MinhasReservasView(utilizadorId).getRoot());
+        navegarParaDashboard();
     }
 }

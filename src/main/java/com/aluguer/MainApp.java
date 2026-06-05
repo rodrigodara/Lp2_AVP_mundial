@@ -14,22 +14,20 @@ public class MainApp extends Application {
     public void start(Stage stage) {
         stage.setTitle("Plataforma de Aluguer de Veículos");
 
-        // Layout base com navbar
         BaseLayoutView baseLayout = new BaseLayoutView();
 
-        // Inicializar o NavigationManager com o layout base
         NavigationManager nav = NavigationManager.getInstance();
         nav.init(baseLayout);
 
-        // Começar no Login (sem navbar visível)
         baseLayout.getRoot().setTop(null);
+
         LoginView loginView = new LoginView();
         baseLayout.setContent(loginView.getRoot());
 
         Scene scene = new Scene(baseLayout.getRoot(), 900, 650);
-        scene.getStylesheets().add(
-            getClass().getResource("/resources/styles.css").toExternalForm()
-        );
+
+        String css = getClass().getResource("/styles.css").toExternalForm();
+        scene.getStylesheets().add(css);
 
         stage.setScene(scene);
         stage.show();

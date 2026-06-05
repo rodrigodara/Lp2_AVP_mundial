@@ -75,7 +75,7 @@ public class ReservaService {
                                 double saldoAtual) throws ReservaException {
         if (inicio == null || fim == null)
             throw new ReservaException("As datas são obrigatórias.");
-        if (!inicio.isAfter(LocalDate.now().minusDays(1)))
+        if (inicio.isBefore(LocalDate.now()))
             throw new ReservaException("A data de início deve ser hoje ou futura.");
         if (fim.isBefore(inicio))
             throw new ReservaException("A data de fim não pode ser anterior ao início.");

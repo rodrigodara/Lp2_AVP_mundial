@@ -1,0 +1,147 @@
+/* === NAVBAR (ALV-56 - rfernandesit07) === */
+.navbar {
+    -fx-background-color: #1a237e;
+    -fx-padding: 10 20 10 20;
+    -fx-spacing: 10;
+}
+
+.navbar-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-cursor: hand;
+}
+
+.navbar-button:hover {
+    -fx-background-color: #3949ab;
+    -fx-background-radius: 5;
+}
+
+/* === LOGIN (ALV-53 / ALV-59) === */
+.login-container {
+    -fx-background-color: #f5f5f5;
+}
+
+.login-titulo {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-fill: #1a237e;
+}
+
+.login-subtitulo {
+    -fx-font-size: 14px;
+    -fx-fill: #555555;
+}
+
+.campo-texto {
+    -fx-font-size: 14px;
+    -fx-padding: 10;
+    -fx-border-color: #cccccc;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+}
+
+.campo-texto:focused {
+    -fx-border-color: #1a237e;
+}
+
+.btn-primario {
+    -fx-background-color: #1a237e;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-padding: 10 20 10 20;
+    -fx-background-radius: 5;
+    -fx-cursor: hand;
+}
+
+.btn-primario:hover {
+    -fx-background-color: #3949ab;
+}
+
+/* === FEEDBACK (ALV-60) === */
+.mensagem-erro {
+    -fx-text-fill: #c62828;
+    -fx-font-size: 13px;
+}
+
+.feedback-error .dialog-pane {
+    -fx-border-color: #c62828;
+}
+
+.feedback-sucesso .dialog-pane {
+    -fx-border-color: #2e7d32;
+}
+
+/* === DASHBOARD (ALV-55 stub) === */
+.dashboard-container {
+    -fx-background-color: #ffffff;
+}
+
+.dashboard-titulo {
+    -fx-font-size: 26px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a237e;
+}
+
+.dashboard-subtitulo {
+    -fx-font-size: 15px;
+    -fx-text-fill: #555555;
+}
+
+/* ================================================================
+   ALV-64 / 65 / 66 — Reservas (MM)
+   ================================================================ */
+.reserva-container { -fx-background-color: #ffffff; }
+.reserva-titulo { -fx-font-size: 22px; -fx-font-weight: bold; -fx-fill: #1a237e; }
+.reserva-subtitulo { -fx-font-size: 14px; -fx-fill: #555555; }
+.reserva-campo-label { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333333; }
+.reserva-painel-preco {
+    -fx-background-color: #f0f4ff; -fx-background-radius: 8;
+    -fx-border-color: #c5cae9; -fx-border-radius: 8; -fx-border-width: 1;
+}
+.reserva-preco-titulo { -fx-font-size: 14px; -fx-font-weight: bold; -fx-fill: #1a237e; }
+.reserva-preco-linha  { -fx-font-size: 13px; -fx-text-fill: #333333; }
+.reserva-preco-total  { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1a237e; }
+.reserva-preco-nota   { -fx-font-size: 11px; -fx-text-fill: #2e7d32; -fx-font-style: italic; }
+.reserva-saldo        { -fx-font-size: 13px; -fx-text-fill: #555555; }
+.reserva-icone-sucesso { -fx-font-size: 56px; -fx-fill: #2e7d32; }
+.reserva-card {
+    -fx-background-color: #ffffff; -fx-border-color: #c5cae9;
+    -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 2);
+}
+.reserva-card-titulo { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1a237e; }
+.reserva-scroll { -fx-background-color: transparent; -fx-background: transparent; }
+.btn-aceitar {
+    -fx-background-color: #2e7d32; -fx-text-fill: white; -fx-font-size: 13px;
+    -fx-font-weight: bold; -fx-background-radius: 5; -fx-pref-width: 110; -fx-cursor: hand;
+}
+.btn-aceitar:hover { -fx-background-color: #1b5e20; }
+.btn-rejeitar {
+    -fx-background-color: #c62828; -fx-text-fill: white; -fx-font-size: 13px;
+    -fx-font-weight: bold; -fx-background-radius: 5; -fx-pref-width: 110; -fx-cursor: hand;
+}
+.btn-rejeitar:hover { -fx-background-color: #7f0000; }
+.btn-secundario {
+    -fx-background-color: transparent; -fx-border-color: #1a237e;
+    -fx-border-radius: 5; -fx-border-width: 1; -fx-text-fill: #1a237e;
+    -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-cursor: hand;
+}
+.btn-secundario:hover { -fx-background-color: #e8eaf6; }
+.reserva-tabs { -fx-tab-min-height: 36px; }
+.reserva-badge-pendente {
+    -fx-background-color: #fff3e0; -fx-text-fill: #e65100;
+    -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
+}
+.reserva-badge-aceite {
+    -fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32;
+    -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
+}
+.reserva-badge-rejeitado, .reserva-badge-cancelado {
+    -fx-background-color: #ffebee; -fx-text-fill: #c62828;
+    -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
+}
+.reserva-badge-concluido {
+    -fx-background-color: #e8eaf6; -fx-text-fill: #1a237e;
+    -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
+}

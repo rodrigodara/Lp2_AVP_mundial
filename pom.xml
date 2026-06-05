@@ -62,6 +62,15 @@
         </dependency>
 
 
+
+        <!-- JUnit 4 — necessário porque ReservaServiceTest usa org.junit.Assert/Before/Test -->
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- H2 para testes unitários (ALV-92) -->
         <dependency>
             <groupId>com.h2database</groupId>
