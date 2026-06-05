@@ -1,5 +1,12 @@
 package pt.plataformaaluguerveiculos.views;
 
+import java.sql.Connection;
+import java.util.List;
+
+import com.aluguer.model.Veiculo;
+import com.aluguer.service.VeiculoService;
+import com.aluguer.util.DatabaseConnection;
+
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -9,13 +16,6 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.VBox;
-
-import java.sql.Connection;
-import java.util.List;
-
-import com.aluguer.model.Veiculo;
-import com.aluguer.service.VeiculoService;
-import com.aluguer.util.DatabaseConnection;
 
 public class ProcurarVeiculosView {
 
@@ -74,7 +74,7 @@ tabela.getColumns().addAll(
     private void carregarVeiculos() {
         try {
             Connection conn = DatabaseConnection.getConnection();
-            VeiculoService service = new VeiculoService(conn);
+            VeiculoService service = new VeiculoService();
 
             List<Veiculo> lista = service.getAllVehicles();
             ObservableList<Veiculo> obs = FXCollections.observableArrayList(lista);

@@ -4,34 +4,19 @@ import com.aluguer.model.User;
 import com.aluguer.util.SessionManager;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import com.aluguer.MainApp;
+
+import pt.plataformaaluguerveiculos.views.NavigationManager;
 
 import java.sql.SQLException;
 
-/**
- * Controller do formulário de login.
- * Liga login.fxml ao LoginService.
- */
 public class LoginController {
-
-    // ------------------------------------------------------------------
-    // FXML bindings
-    // ------------------------------------------------------------------
 
     @FXML private TextField     tfEmail;
     @FXML private PasswordField pfPassword;
     @FXML private Label         lblErro;
     @FXML private Button        btnEntrar;
 
-    // ------------------------------------------------------------------
-    // Dependências
-    // ------------------------------------------------------------------
-
     private final LoginService loginService = new LoginService();
-
-    // ------------------------------------------------------------------
-    // Ação do botão Entrar
-    // ------------------------------------------------------------------
 
     @FXML
     private void onEntrar() {
@@ -43,11 +28,6 @@ public class LoginController {
                     tfEmail.getText(),
                     pfPassword.getText()
             );
-
-            // Login bem-sucedido
-            // TODO: substituir pela navegação para o teu dashboard
-            // Exemplo:  MainApp.showDashboard();
-            // Por agora mostra uma confirmação
             mostrarSucesso("Bem-vindo, " + user.getNome() + "!");
 
         } catch (IllegalArgumentException e) {
@@ -59,30 +39,15 @@ public class LoginController {
         }
     }
 
-    // ------------------------------------------------------------------
-    // Ação do botão Criar Conta → navegar para registo
-    // ------------------------------------------------------------------
-
     @FXML
     private void onCriarConta() {
-        MainApp.showRegisto();
+        NavigationManager.getInstance().navegarParaRegisto();
     }
-
-    // ------------------------------------------------------------------
-    // Logout estático — chamar em qualquer controller que precise de logout
-    //
-    // Exemplo de uso num dashboard:
-    //   @FXML private void onLogout() { LoginController.logout(); }
-    // ------------------------------------------------------------------
 
     public static void logout() {
         SessionManager.getInstance().terminarSessao();
-        MainApp.showLogin();
+        NavigationManager.getInstance().navegarParaLogin();
     }
-
-    // ------------------------------------------------------------------
-    // Utilitários de UI
-    // ------------------------------------------------------------------
 
     private void mostrarErro(String mensagem) {
         lblErro.setText("⚠ " + mensagem);

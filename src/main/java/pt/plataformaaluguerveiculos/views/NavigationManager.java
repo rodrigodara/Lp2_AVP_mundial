@@ -114,4 +114,19 @@ public class NavigationManager {
         ProcurarVeiculosView view = new ProcurarVeiculosView();
         navegarPara(view.getRoot());
     }
+    public void navegarParaRegisto() {
+    if (baseLayout != null) {
+        baseLayout.getRoot().setTop(null);
+    }
+    try {
+        javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+            getClass().getResource("/view/registo.fxml")
+        );
+        javafx.scene.Parent registo = loader.load();
+        navegarPara(registo);
+    } catch (Exception e) {
+        System.err.println("[NavigationManager] Erro ao carregar registo.fxml");
+        e.printStackTrace();
+    }
+}
 }

@@ -53,15 +53,16 @@ public class VeiculosController implements Initializable {
     private void adicionarVeiculo() {
         if (!validarCampos()) return;
 
-        Veiculo v = new Veiculo(
-            txtMarca.getText(),
-            txtModelo.getText(),
-            Integer.parseInt(txtAno.getText()),
-            txtCombustivel.getText(),
-            Double.parseDouble(txtPreco.getText()),
-            txtLocalizacao.getText(),
-            1 // TODO: substituir pelo id do utilizador da sessão
-        );
+            Veiculo v = new Veiculo(
+                txtMarca.getText(),
+                txtModelo.getText(),
+                Integer.parseInt(txtAno.getText()),
+                txtCombustivel.getText(),
+                Double.parseDouble(txtPreco.getText()),
+                txtLocalizacao.getText(),
+                1,           // proprietarioId
+                "disponivel" // estado — campo que faltava
+);
 
         try {
             veiculoDAO.inserir(v);

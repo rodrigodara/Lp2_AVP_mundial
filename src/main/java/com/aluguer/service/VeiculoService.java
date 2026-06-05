@@ -1,6 +1,5 @@
 package com.aluguer.service;
 
-import java.sql.Connection;
 import java.util.List;
 
 import com.aluguer.dao.VeiculoDAO;
@@ -8,13 +7,9 @@ import com.aluguer.model.Veiculo;
 
 public class VeiculoService {
 
-    private VeiculoDAO dao;
+    private final VeiculoDAO dao = new VeiculoDAO();
 
-    public VeiculoService(Connection conn) {
-        this.dao = new VeiculoDAO(conn);
-    }
-
-    public List<Veiculo> getAllVehicles() {
+    public List<Veiculo> getAllVehicles() throws Exception {
         return dao.listarTodos();
     }
 }

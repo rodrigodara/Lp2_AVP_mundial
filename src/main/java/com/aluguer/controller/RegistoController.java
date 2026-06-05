@@ -3,8 +3,6 @@ package com.aluguer.controller;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
-<<<<<<< HEAD
-import com.aluguer.MainApp;
 import com.aluguer.model.User;
 
 import javafx.fxml.FXML;
@@ -14,6 +12,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
+import pt.plataformaaluguerveiculos.views.NavigationManager;
 
 /**
  * ALV-29 / ALV-30 / ALV-31 — Controller JavaFX do formulário de registo.
@@ -21,8 +20,6 @@ import javafx.scene.layout.VBox;
  * Liga o registo.fxml ao RegistoService (backend).
  * Trata erros de validação e de base de dados e mostra-os ao utilizador.
  */
-=======
->>>>>>> a9cfcea30995633c429d48f491bf4e9ad2a1ec6a
 public class RegistoController {
 
     @FXML private TextField tfEmail;
@@ -38,16 +35,15 @@ public class RegistoController {
 
     private final RegistoService registoService = new RegistoService();
 
-<<<<<<< HEAD
     // ------------------------------------------------------------------
     // Acção do botão Registar
     // ------------------------------------------------------------------
+
     @FXML
     private void onVoltar() {
-        MainApp.showLogin();
+        NavigationManager.getInstance().navegarParaLogin();
     }
-=======
->>>>>>> a9cfcea30995633c429d48f491bf4e9ad2a1ec6a
+
     @FXML
     private void onRegistar() {
         lblErro.setVisible(false);
@@ -103,10 +99,4 @@ public class RegistoController {
         pfPassword.clear();
         pfConfirmarPassword.clear();
     }
-
-    // ------------------------------------------------------------------
-    // Navegação — voltar ao login (ligar ao MainApp se necessário)
-    // ------------------------------------------------------------------
-
-
 }
