@@ -27,7 +27,7 @@ public class App extends Application {
         baseLayout.setContent(loginView.getRoot());
 
         Scene scene = new Scene(baseLayout.getRoot(), 900, 650);
-        scene.getStylesheets().add(getClass().getResource("/resources/styles.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/styles.css").toExternalForm());
 
         stage.setScene(scene);
         stage.show();
