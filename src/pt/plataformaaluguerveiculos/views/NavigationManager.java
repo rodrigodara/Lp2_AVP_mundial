@@ -7,13 +7,14 @@ import javafx.scene.Node;
  * Singleton que gere a troca de conteúdo no BaseLayoutView.
  *
  * ALV-90 — Adicionado navegarParaPedidosRecebidos()
+ * ALV-100 — Adicionado navegarParaMinhasReservas()
  */
 public class NavigationManager {
 
     private static NavigationManager instance;
     private BaseLayoutView baseLayout;
 
-    // ALV-90: guarda o id do proprietário logado (definido após login)
+    // ALV-90: guarda o id do utilizador logado (definido após login)
     private int utilizadorLogadoId = -1;
 
     private NavigationManager() {}
@@ -70,12 +71,31 @@ public class NavigationManager {
             System.err.println("[NavManager] Utilizador não autenticado.");
             return;
         }
-        // Garante que a navbar está visível
+        garantirNavbar();
+        PedidosRecebidosView pedidos = new PedidosRecebidosView(utilizadorLogadoId);
+        navegarPara(pedidos.getRoot());
+    }
+
+    // ----------------------------------------------------------------
+    // ALV-100 — Navegar para "As Minhas Reservas"
+    // ----------------------------------------------------------------
+    public void navegarParaMinhasReservas() {
+        if (utilizadorLogadoId < 0) {
+            System.err.println("[NavManager] Utilizador não autenticado.");
+            return;
+        }
+        garantirNavbar();
+        MinhasReservasView minhasReservas = new MinhasReservasView(utilizadorLogadoId);
+        navegarPara(minhasReservas.getRoot());
+    }
+
+    // ----------------------------------------------------------------
+    // Auxiliar — garante que a navbar está visível
+    // ----------------------------------------------------------------
+    private void garantirNavbar() {
         if (baseLayout != null && baseLayout.getRoot().getTop() == null) {
             baseLayout.getRoot().setTop(baseLayout.getNavbarView().getNavbar());
         }
-        PedidosRecebidosView pedidos = new PedidosRecebidosView(utilizadorLogadoId);
-        navegarPara(pedidos.getRoot());
     }
 
     public void sair() {
