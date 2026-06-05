@@ -15,8 +15,9 @@ import com.aluguer.model.Reserva;
  *   - Buscar reserva por id
  *   - Listar reservas por utilizador (locatário)
  *   - Listar reservas por veículo (proprietário)
- *   - Atualizar estado — aceite/rejeitado (ALV-51)
+ *   - Atualizar estado — aceite/rejeitado (ALV-51 / ALV-89)
  *   - Verificar sobreposição de datas (RF4)
+ *   - Listar pedidos recebidos por proprietário (ALV-90)
  */
 public class ReservaDAO {
 
@@ -118,7 +119,7 @@ public class ReservaDAO {
     }
 
     // ============================
-    // 5. ATUALIZAR ESTADO — ALV-51
+    // 5. ATUALIZAR ESTADO — ALV-51 / ALV-89
     // ============================
     public boolean atualizarEstado(int id, Reserva.Estado estado) {
         String sql = "UPDATE reserva SET estado = ? WHERE id = ?";
@@ -160,6 +161,54 @@ public class ReservaDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    // ============================
+    // 7. LISTAR PENDENTES POR PROPRIETÁRIO — ALV-90
+    // ============================
+    /**
+     * Devolve todas as reservas PENDENTES dos veículos pertencentes
+     * ao proprietário indicado. Usado na página "Pedidos Recebidos".
+     */
+    public List<Reserva> listarPendentesPorProprietario(int proprietarioId) {
+        List<Reserva> lista = new ArrayList<>();
+        String sql = "SELECT r.* FROM reserva r " +
+                     "JOIN veiculo v ON r.veiculoId = v.id " +
+                     "WHERE v.proprietarioId = ? AND r.estado = 'PENDENTE' " +
+                     "ORDER BY r.dataInicio ASC";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, proprietarioId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) lista.add(mapRow(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lista;
+    }
+
+    // ============================
+    // 8. LISTAR TODAS POR PROPRIETÁRIO — ALV-90
+    // ============================
+    /**
+     * Devolve todas as reservas (todos os estados) dos veículos do proprietário.
+     * Permite filtrar por estado na camada de UI.
+     */
+    public List<Reserva> listarTodasPorProprietario(int proprietarioId) {
+        List<Reserva> lista = new ArrayList<>();
+        String sql = "SELECT r.* FROM reserva r " +
+                     "JOIN veiculo v ON r.veiculoId = v.id " +
+                     "WHERE v.proprietarioId = ? " +
+                     "ORDER BY r.estado ASC, r.dataInicio DESC";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, proprietarioId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) lista.add(mapRow(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return lista;
     }
 
     // ============================

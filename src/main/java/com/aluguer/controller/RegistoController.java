@@ -110,7 +110,6 @@ public class RegistoController {
 
     @FXML
     private void onVoltar() {
-        // Exemplo: MainApp.mostrarLogin();
-        // Implementar conforme a navegação do MainApp
+        pt.plataformaaluguerveiculos.views.NavigationManager.getInstance().navegarParaLogin();
     }
 }
