@@ -29,7 +29,8 @@ public class DatabaseConnection {
     public static Connection getConnection() throws SQLException {
         try {
             if (instance == null || instance.isClosed()) {
-                Class.forName("com.mysql.cj.jdbc.Driver");
+                Class.forName("org.mariadb.jdbc.Driver");
+
 
                 instance = DriverManager.getConnection(URL, USER, PASSWORD);
 

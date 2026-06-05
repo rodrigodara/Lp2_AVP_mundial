@@ -5,6 +5,12 @@ import javafx.scene.Node;
 /**
  * ALV-57 - Implementar navegação entre páginas
  * Singleton que gere a troca de conteúdo no BaseLayoutView.
+<<<<<<< HEAD:src/main/java/pt/plataformaaluguerveiculos/views/NavigationManager.java
+=======
+ *
+ * ALV-90 — Adicionado navegarParaPedidosRecebidos()
+ * ALV-100 — Adicionado navegarParaMinhasReservas()
+>>>>>>> origin/main:src/pt/plataformaaluguerveiculos/views/NavigationManager.java
  */
 public class NavigationManager {
 
@@ -13,6 +19,12 @@ public class NavigationManager {
     private static NavigationManager instance;
     private BaseLayoutView baseLayout;
 
+<<<<<<< HEAD:src/main/java/pt/plataformaaluguerveiculos/views/NavigationManager.java
+=======
+    // ALV-90: guarda o id do utilizador logado (definido após login)
+    private int utilizadorLogadoId = -1;
+
+>>>>>>> origin/main:src/pt/plataformaaluguerveiculos/views/NavigationManager.java
     private NavigationManager() {}
 
     public static NavigationManager getInstance() {
@@ -58,6 +70,7 @@ public class NavigationManager {
         navegarPara(login.getRoot());
     }
 
+<<<<<<< HEAD:src/main/java/pt/plataformaaluguerveiculos/views/NavigationManager.java
     public void sair() {
         navegarParaLogin();
     }
@@ -80,4 +93,51 @@ public class NavigationManager {
     public void navegarParaMinhasReservas(int utilizadorId) {
         navegarParaDashboard();
     }
+=======
+    // ----------------------------------------------------------------
+    // ALV-90 — Navegar para a página de pedidos recebidos
+    // ----------------------------------------------------------------
+    public void navegarParaPedidosRecebidos() {
+        if (utilizadorLogadoId < 0) {
+            System.err.println("[NavManager] Utilizador não autenticado.");
+            return;
+        }
+        garantirNavbar();
+        PedidosRecebidosView pedidos = new PedidosRecebidosView(utilizadorLogadoId);
+        navegarPara(pedidos.getRoot());
+    }
+
+    // ----------------------------------------------------------------
+    // ALV-100 — Navegar para "As Minhas Reservas"
+    // ----------------------------------------------------------------
+    public void navegarParaMinhasReservas() {
+        if (utilizadorLogadoId < 0) {
+            System.err.println("[NavManager] Utilizador não autenticado.");
+            return;
+        }
+        garantirNavbar();
+        MinhasReservasView minhasReservas = new MinhasReservasView(utilizadorLogadoId);
+        navegarPara(minhasReservas.getRoot());
+    }
+
+    // ----------------------------------------------------------------
+    // Auxiliar — garante que a navbar está visível
+    // ----------------------------------------------------------------
+    private void garantirNavbar() {
+        if (baseLayout != null && baseLayout.getRoot().getTop() == null) {
+            baseLayout.getRoot().setTop(baseLayout.getNavbarView().getNavbar());
+        }
+    }
+
+    public void sair() {
+        navegarParaLogin();
+    }
+
+    public void navegarParaProcurarVeiculos() {
+    garantirNavbar();
+    ProcurarVeiculosView view = new ProcurarVeiculosView();
+    navegarPara(view.getRoot());
+    }
+
+>>>>>>> origin/main:src/pt/plataformaaluguerveiculos/views/NavigationManager.java
 }

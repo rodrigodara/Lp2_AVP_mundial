@@ -1,25 +1,27 @@
 package pt.plataformaaluguerveiculos.views;
 
-import javafx.scene.layout.HBox;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
+import javafx.scene.layout.HBox;
 
 /**
- * ALV-56 — Navbar da aplicação.
- * ALV-90 — Adicionado botão "Pedidos Recebidos" ligado ao NavigationManager.
+ * ALV-56  — Navbar da aplicação.
+ * ALV-90  — Adicionado botão "Pedidos Recebidos" ligado ao NavigationManager.
+ * ALV-100 — Adicionado botão "As Minhas Reservas" ligado ao NavigationManager.
  */
 public class NavbarView {
+
     private HBox navbar;
 
     public NavbarView() {
         navbar = new HBox();
 
-        Button btnDashboard         = new Button("Dashboard");
-        Button btnProcurarVeiculos  = new Button("Procurar Veículos");
-        Button btnReservas          = new Button("As Minhas Reservas");
-        Button btnPedidos           = new Button("Pedidos Recebidos");   // ALV-90
-        Button btnPerfil            = new Button("Perfil");
-        Button btnSair              = new Button("Sair");
+        Button btnDashboard        = new Button("Dashboard");
+        Button btnProcurarVeiculos = new Button("Procurar Veículos");
+        Button btnReservas         = new Button("As Minhas Reservas");
+        Button btnPedidos          = new Button("Pedidos Recebidos");
+        Button btnPerfil           = new Button("Perfil");
+        Button btnSair             = new Button("Sair");
 
         // Estilos
         for (Button btn : new Button[]{btnDashboard, btnProcurarVeiculos,
@@ -27,9 +29,17 @@ public class NavbarView {
             btn.getStyleClass().add("navbar-button");
         }
 
-        // Acções de navegação
+        // Ações de navegação
         btnDashboard.setOnAction(e ->
             NavigationManager.getInstance().navegarParaDashboard());
+            
+        btnProcurarVeiculos.setOnAction(e ->
+            NavigationManager.getInstance().navegarParaProcurarVeiculos());
+
+
+        // ALV-100: navegar para as minhas reservas
+        btnReservas.setOnAction(e ->
+            NavigationManager.getInstance().navegarParaMinhasReservas());
 
         // ALV-90: navegar para pedidos recebidos
         btnPedidos.setOnAction(e ->
