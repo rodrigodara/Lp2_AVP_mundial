@@ -32,6 +32,10 @@ public class NavbarView {
         // Ações de navegação
         btnDashboard.setOnAction(e ->
             NavigationManager.getInstance().navegarParaDashboard());
+            
+        btnProcurarVeiculos.setOnAction(e ->
+            NavigationManager.getInstance().navegarParaProcurarVeiculos());
+
 
         // ALV-100: navegar para as minhas reservas
         btnReservas.setOnAction(e ->

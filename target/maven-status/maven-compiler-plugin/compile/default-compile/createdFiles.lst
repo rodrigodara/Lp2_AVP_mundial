@@ -19,5 +19,8 @@ com\aluguer\model\User.class
 pt\plataformaaluguerveiculos\views\BaseLayoutView.class
 pt\plataformaaluguerveiculos\views\DashboardView.class
 com\aluguer\util\PasswordUtil.class
+VeiculoService.class
 com\aluguer\dao\VeiculoDAO.class
+pt\plataformaaluguerveiculos\views\ProcurarVeiculosView.class
 com\aluguer\dao\ReservaDAO.class
+pt\plataformaaluguerveiculos\views\MinhasReservasView.class

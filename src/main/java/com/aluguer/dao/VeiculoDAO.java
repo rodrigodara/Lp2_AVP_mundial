@@ -18,8 +18,8 @@ public class VeiculoDAO {
     // 1. INSERIR VEÍCULO
     // ============================
     public boolean inserir(Veiculo v) {
-        String sql = "INSERT INTO veiculo (marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO veiculo (marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, estado) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, v.getMarca());
@@ -29,6 +29,8 @@ public class VeiculoDAO {
             stmt.setDouble(5, v.getPrecoDiario());
             stmt.setString(6, v.getLocalizacao());
             stmt.setInt(7, v.getProprietarioId());
+            stmt.setString(8, v.getEstado());
+
 
             return stmt.executeUpdate() > 0;
 
@@ -50,15 +52,16 @@ public class VeiculoDAO {
 
             while (rs.next()) {
                 Veiculo v = new Veiculo(
-                    rs.getInt("id"),
-                    rs.getString("marca"),
-                    rs.getString("modelo"),
-                    rs.getInt("ano"),
-                    rs.getString("combustivel"),
-                    rs.getDouble("precoDiario"),
-                    rs.getString("localizacao"),
-                    rs.getInt("proprietarioId")
-                );
+                rs.getInt("id"),
+                rs.getString("marca"),
+                rs.getString("modelo"),
+                rs.getInt("ano"),
+                rs.getString("combustivel"),
+                rs.getDouble("precoDiario"),
+                rs.getString("localizacao"),
+                rs.getInt("proprietarioId"),
+                rs.getString("estado") // NOVO
+            );
                 lista.add(v);
             }
 
@@ -88,7 +91,8 @@ public class VeiculoDAO {
                     rs.getString("combustivel"),
                     rs.getDouble("precoDiario"),
                     rs.getString("localizacao"),
-                    rs.getInt("proprietarioId")
+                    rs.getInt("proprietarioId"),
+                    rs.getString("estado") //nova
                 );
             }
 
@@ -103,7 +107,7 @@ public class VeiculoDAO {
     // 4. ATUALIZAR
     // ============================
     public boolean atualizar(Veiculo v) {
-        String sql = "UPDATE veiculo SET marca=?, modelo=?, ano=?, combustivel=?, precoDiario=?, localizacao=?, proprietarioId=? "
+        String sql = "UPDATE veiculo SET marca=?, modelo=?, ano=?, combustivel=?, precoDiario=?, localizacao=?, proprietarioId=?, estado=? "
                    + "WHERE id=?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -114,7 +118,9 @@ public class VeiculoDAO {
             stmt.setDouble(5, v.getPrecoDiario());
             stmt.setString(6, v.getLocalizacao());
             stmt.setInt(7, v.getProprietarioId());
-            stmt.setInt(8, v.getId());
+            stmt.setString(8, v.getEstado());
+            stmt.setInt(9, v.getId());
+
 
             return stmt.executeUpdate() > 0;
 

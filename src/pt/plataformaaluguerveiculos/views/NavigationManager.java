@@ -101,4 +101,11 @@ public class NavigationManager {
     public void sair() {
         navegarParaLogin();
     }
+
+    public void navegarParaProcurarVeiculos() {
+    garantirNavbar();
+    ProcurarVeiculosView view = new ProcurarVeiculosView();
+    navegarPara(view.getRoot());
+    }
+
 }
