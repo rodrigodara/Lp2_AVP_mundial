@@ -18,189 +18,156 @@ import javafx.scene.control.TabPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-/**
- * ALV-99  — Criar endpoint GET /my-reservations
- * ALV-100 — Criar página "As Minhas Reservas"
- * ALV-101 — Mostrar reservas pendentes
- * ALV-102 — Mostrar reservas aceites
- * ALV-103 — Mostrar reservas rejeitadas
- * ALV-104 — Testar listagem de reservas
- *
- * Página que o locatário vê ao clicar em "As Minhas Reservas".
- * Lista todas as reservas do utilizador organizada por estado em tabs.
- */
 public class MinhasReservasView {
 
     private VBox root;
     private final int utilizadorId;
-
-    // ----------------------------------------------------------------
-    // Construtor
-    // ----------------------------------------------------------------
 
     public MinhasReservasView(int utilizadorId) {
         this.utilizadorId = utilizadorId;
 
         root = new VBox(16);
         root.setPadding(new Insets(30));
-        root.getStyleClass().add("reservas-container");
+        root.setStyle("-fx-background-color: white;");
 
         construirPagina();
     }
 
-    // ----------------------------------------------------------------
-    // Construção da UI — ALV-100
-    // ----------------------------------------------------------------
-
     private void construirPagina() {
         root.getChildren().clear();
 
-        // Cabeçalho
         Label titulo = new Label("As Minhas Reservas");
-        titulo.getStyleClass().add("reservas-titulo");
+        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
 
         Label subtitulo = new Label("Histórico e estado das suas reservas");
-        subtitulo.getStyleClass().add("reservas-subtitulo");
+        subtitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #777777;");
 
         root.getChildren().addAll(titulo, subtitulo);
 
-        // Carregar todas as reservas do utilizador — ALV-99
         List<Reserva> todas = carregarReservas();
 
         if (todas.isEmpty()) {
             Label vazio = new Label("Ainda não tem reservas registadas.");
-            vazio.getStyleClass().add("reservas-vazio");
+            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
             vazio.setPadding(new Insets(40, 0, 0, 0));
             root.getChildren().add(vazio);
             return;
         }
 
-        // Separar por estado — ALV-101 / ALV-102 / ALV-103
-        List<Reserva> pendentes   = filtrarPorEstado(todas, Reserva.Estado.PENDENTE);
-        List<Reserva> aceites     = filtrarPorEstado(todas, Reserva.Estado.ACEITE);
-        List<Reserva> rejeitadas  = filtrarPorEstado(todas, Reserva.Estado.REJEITADO);
-        List<Reserva> canceladas  = filtrarPorEstado(todas, Reserva.Estado.CANCELADO);
-        List<Reserva> concluidas  = filtrarPorEstado(todas, Reserva.Estado.CONCLUIDO);
+        List<Reserva> pendentes  = filtrar(todas, Reserva.Estado.PENDENTE);
+        List<Reserva> aceites    = filtrar(todas, Reserva.Estado.ACEITE);
+        List<Reserva> rejeitadas = filtrar(todas, Reserva.Estado.REJEITADO);
+        List<Reserva> canceladas = filtrar(todas, Reserva.Estado.CANCELADO);
+        List<Reserva> concluidas = filtrar(todas, Reserva.Estado.CONCLUIDO);
 
-        // Tabs por estado
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        tabs.getStyleClass().add("reservas-tabs");
+        tabs.setStyle("-fx-background-color: white;");
 
         tabs.getTabs().addAll(
-            criarTab("Pendentes ("   + pendentes.size()  + ")", pendentes,  "estado-pendente"),
-            criarTab("Aceites ("     + aceites.size()    + ")", aceites,    "estado-aceite"),
-            criarTab("Rejeitadas ("  + rejeitadas.size() + ")", rejeitadas, "estado-rejeitado"),
-            criarTab("Canceladas ("  + canceladas.size() + ")", canceladas, "estado-cancelado"),
-            criarTab("Concluídas ("  + concluidas.size() + ")", concluidas, "estado-concluido")
+            criarTab("Pendentes ("  + pendentes.size()  + ")", pendentes,  "#e65100",  "#fff3e0"),
+            criarTab("Aceites ("    + aceites.size()    + ")", aceites,    "#2e7d32",  "#e8f5e9"),
+            criarTab("Rejeitadas (" + rejeitadas.size() + ")", rejeitadas, "#c62828",  "#ffebee"),
+            criarTab("Canceladas (" + canceladas.size() + ")", canceladas, "#c62828",  "#ffebee"),
+            criarTab("Concluídas (" + concluidas.size() + ")", concluidas, "#1a237e",  "#e8eaf6")
         );
 
         root.getChildren().add(tabs);
     }
 
-    // ----------------------------------------------------------------
-    // Criar tab com lista de reservas
-    // ----------------------------------------------------------------
-
-    private Tab criarTab(String titulo, List<Reserva> reservas, String estiloEstado) {
+    private Tab criarTab(String titulo, List<Reserva> reservas, String corTexto, String corFundo) {
         Tab tab = new Tab(titulo);
 
         if (reservas.isEmpty()) {
             Label vazio = new Label("Sem reservas neste estado.");
-            vazio.getStyleClass().add("reservas-vazio");
+            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
             vazio.setPadding(new Insets(30));
-            tab.setContent(vazio);
+            VBox wrapper = new VBox(vazio);
+            wrapper.setStyle("-fx-background-color: white;");
+            tab.setContent(wrapper);
             return tab;
         }
 
-        VBox listaCards = new VBox(12);
-        listaCards.setPadding(new Insets(16));
+        VBox lista = new VBox(12);
+        lista.setPadding(new Insets(16));
+        lista.setStyle("-fx-background-color: white;");
 
         for (Reserva r : reservas) {
-            listaCards.getChildren().add(criarCardReserva(r, estiloEstado));
+            lista.getChildren().add(criarCard(r, corTexto, corFundo));
         }
 
-        ScrollPane scroll = new ScrollPane(listaCards);
+        ScrollPane scroll = new ScrollPane(lista);
         scroll.setFitToWidth(true);
-        scroll.getStyleClass().add("reservas-scroll");
-        scroll.setPrefHeight(450);
+        scroll.setStyle("-fx-background-color: white; -fx-background: white;");
 
         tab.setContent(scroll);
         return tab;
     }
 
-    // ----------------------------------------------------------------
-    // Card de reserva
-    // ----------------------------------------------------------------
-
-    private VBox criarCardReserva(Reserva r, String estiloEstado) {
+    private VBox criarCard(Reserva r, String corTexto, String corFundo) {
         VBox card = new VBox(8);
-        card.getStyleClass().add("reserva-card");
         card.setPadding(new Insets(16));
+        card.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-border-color: #e0e0e0;" +
+            "-fx-border-radius: 8;" +
+            "-fx-background-radius: 8;" +
+            "-fx-border-width: 1;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4, 0, 0, 2);"
+        );
 
-        // Linha 1: id + estado
-        HBox linhaId = new HBox(10);
-        linhaId.setAlignment(Pos.CENTER_LEFT);
+        // Linha topo: ID + badge estado
+        HBox topo = new HBox(10);
+        topo.setAlignment(Pos.CENTER_LEFT);
 
         Label lblId = new Label("Reserva #" + r.getId());
-        lblId.getStyleClass().add("reserva-card-id");
+        lblId.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
 
-        Label lblEstado = new Label(r.getEstado().name());
-        lblEstado.getStyleClass().addAll("reserva-estado", estiloEstado);
+        Label badge = new Label(r.getEstado().name());
+        badge.setStyle(
+            "-fx-font-size: 11px; -fx-font-weight: bold;" +
+            "-fx-text-fill: " + corTexto + ";" +
+            "-fx-background-color: " + corFundo + ";" +
+            "-fx-background-radius: 4;" +
+            "-fx-padding: 2 8 2 8;"
+        );
 
-        linhaId.getChildren().addAll(lblId, lblEstado);
+        topo.getChildren().addAll(lblId, badge);
 
-        // Linha 2: veículo
+        // Veículo
         Label lblVeiculo = new Label("Veículo ID: " + r.getVeiculoId());
-        lblVeiculo.getStyleClass().add("reserva-card-detalhe");
+        lblVeiculo.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
 
-        // Linha 3: datas e duração
+        // Datas
         Label lblDatas = new Label(
             "Período: " + r.getDataInicio() + " → " + r.getDataFim()
             + "  (" + r.getNumeroDias() + " dias)"
         );
-        lblDatas.getStyleClass().add("reserva-card-detalhe");
+        lblDatas.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
 
-        // Linha 4: preço e caução
+        // Preço
         Label lblPreco = new Label(
             "Total: " + String.format("%.2f€", r.getPrecoTotal())
             + "  |  Caução: " + String.format("%.2f€", r.getCaucao())
         );
-        lblPreco.getStyleClass().add("reserva-card-detalhe");
+        lblPreco.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
 
-        card.getChildren().addAll(linhaId, lblVeiculo, lblDatas, lblPreco);
+        card.getChildren().addAll(topo, lblVeiculo, lblDatas, lblPreco);
         return card;
     }
 
-    // ----------------------------------------------------------------
-    // ALV-99 — Carregar reservas do utilizador (GET /my-reservations)
-    // ----------------------------------------------------------------
-
     private List<Reserva> carregarReservas() {
         try (Connection conn = DatabaseConnection.getConnection()) {
-            ReservaDAO dao = new ReservaDAO(conn);
-            return dao.listarPorUtilizador(utilizadorId);
+            return new ReservaDAO(conn).listarPorUtilizador(utilizadorId);
         } catch (SQLException e) {
             e.printStackTrace();
             return java.util.Collections.emptyList();
         }
     }
 
-    // ----------------------------------------------------------------
-    // Auxiliar — filtrar por estado
-    // ----------------------------------------------------------------
-
-    private List<Reserva> filtrarPorEstado(List<Reserva> reservas, Reserva.Estado estado) {
-        return reservas.stream()
-                .filter(r -> r.getEstado() == estado)
-                .collect(Collectors.toList());
+    private List<Reserva> filtrar(List<Reserva> lista, Reserva.Estado estado) {
+        return lista.stream().filter(r -> r.getEstado() == estado).collect(Collectors.toList());
     }
 
-    // ----------------------------------------------------------------
-    // Getter
-    // ----------------------------------------------------------------
-
-    public VBox getRoot() {
-        return root;
-    }
+    public VBox getRoot() { return root; }
 }

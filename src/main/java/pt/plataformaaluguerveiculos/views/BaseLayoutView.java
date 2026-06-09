@@ -1,13 +1,11 @@
 package pt.plataformaaluguerveiculos.views;
 
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 
-/**
- * ALV-58 - Estrutura base de layout (header + content)
- * Reutilizada por todas as páginas autenticadas.
- */
 public class BaseLayoutView {
 
     private BorderPane root;
@@ -16,25 +14,31 @@ public class BaseLayoutView {
 
     public BaseLayoutView() {
         root = new BorderPane();
+        root.setStyle("-fx-background-color: white;");
+
         navbarView = new NavbarView();
         root.setTop(navbarView.getNavbar());
 
         scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
-        scrollPane.setFitToHeight(false);
-        scrollPane.getStyleClass().add("reserva-scroll");
+        scrollPane.setFitToHeight(true);   // preenche altura toda
+        scrollPane.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background: white;" +
+            "-fx-border-color: transparent;"
+        );
         root.setCenter(scrollPane);
     }
 
     public void setContent(Node content) {
-        scrollPane.setContent(content);
+        StackPane wrapper = new StackPane(content);
+        wrapper.setAlignment(Pos.CENTER);
+        wrapper.setStyle("-fx-background-color: white;");
+        // Garante que o wrapper cresce com o ScrollPane
+        wrapper.setMinHeight(ScrollPane.USE_COMPUTED_SIZE);
+        scrollPane.setContent(wrapper);
     }
 
-    public BorderPane getRoot() {
-        return root;
-    }
-
-    public NavbarView getNavbarView() {
-        return navbarView;
-    }
+    public BorderPane getRoot() { return root; }
+    public NavbarView getNavbarView() { return navbarView; }
 }

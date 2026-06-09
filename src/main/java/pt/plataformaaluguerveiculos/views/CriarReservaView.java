@@ -84,10 +84,11 @@ public class CriarReservaView {
         this.nomeVeiculo      = nomeVeiculo;
 
         root = new VBox(16);
-        root.setPadding(new Insets(32));
-        root.setMaxWidth(540);
+        root.setPadding(new Insets(40));
+        root.setMaxWidth(560);
         root.setAlignment(Pos.TOP_CENTER);
         root.getStyleClass().add("reserva-container");
+        root.setStyle("-fx-background-color: white;");
 
         construirFormulario();
         atualizarSimulacao();
@@ -265,6 +266,8 @@ public class CriarReservaView {
 
     private void mostrarSucesso(Reserva r) {
         root.getChildren().clear();
+        root.setAlignment(Pos.CENTER);
+        root.setMinHeight(400);
         VBox ok = new VBox(16);
         ok.setAlignment(Pos.CENTER);
         ok.setPadding(new Insets(40));
