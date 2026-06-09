@@ -9,8 +9,10 @@ public class DatabaseConnection {
     // -----------------------------
     // CONFIGURAÇÃO MYSQL (XAMPP)
     // -----------------------------
-    private static final String URL =
-            "jdbc:mariadb://localhost:3306/aluguer_veiculos";
+  private static final String URL =
+        "jdbc:mysql://localhost:3306/aluguer_veiculos"
+        + "?useSSL=false"
+        + "&serverTimezone=UTC";
 
     private static final String USER = "root";
     private static final String PASSWORD = "";
@@ -24,22 +26,17 @@ public class DatabaseConnection {
         // impede criação de objetos
     }
 
-    public static Connection getConnection() throws SQLException {
-        try {
-            if (instance == null || instance.isClosed()) {
-                Class.forName("org.mariadb.jdbc.Driver");
-
-
-                instance = DriverManager.getConnection(URL, USER, PASSWORD);
-
-                System.out.println("[DB] Ligação ao MySQL estabelecida com sucesso.");
-            }
-        } catch (ClassNotFoundException e) {
-            throw new SQLException("Driver MySQL não encontrado. Verifica o pom.xml", e);
+public static Connection getConnection() throws SQLException {
+    try {
+        if (instance == null || instance.isClosed()) {
+            instance = DriverManager.getConnection(URL, USER, PASSWORD);
+            System.out.println("[DB] Ligação ao MySQL estabelecida com sucesso.");
         }
-
-        return instance;
+    } catch (SQLException e) {
+        throw new SQLException("Erro ao conectar à base de dados: " + e.getMessage(), e);
     }
+    return instance;
+}
 
     public static void closeConnection() {
         if (instance != null) {

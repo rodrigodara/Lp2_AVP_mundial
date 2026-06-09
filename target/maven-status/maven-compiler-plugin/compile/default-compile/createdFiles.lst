@@ -20,6 +20,7 @@ com\aluguer\service\ReservaService$ResultadoOperacao.class
 com\aluguer\util\SessionManager.class
 com\aluguer\MainApp.class
 com\aluguer\controller\RegistoService.class
+pt\plataformaaluguerveiculos\views\RegistoView.class
 pt\plataformaaluguerveiculos\views\NavigationManager.class
 pt\plataformaaluguerveiculos\views\NavbarView.class
 com\aluguer\controller\LoginController.class

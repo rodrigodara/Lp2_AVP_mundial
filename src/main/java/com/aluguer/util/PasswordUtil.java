@@ -2,12 +2,7 @@ package com.aluguer.util;
 
 import org.mindrot.jbcrypt.BCrypt;
 
-/**
- * ALV-26 — Utilitário para hash e verificação de passwords com BCrypt.
- *
- * NUNCA guardar passwords em texto simples.
- * Usar hashPassword() antes de persistir e verifyPassword() no login.
- */
+
 public class PasswordUtil {
 
     private static final int SALT_ROUNDS = 12;

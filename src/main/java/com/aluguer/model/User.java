@@ -4,22 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * ALV-24 / ALV-25 — Model de Utilizador
- *
- * Representa um utilizador da plataforma de aluguer de veículos.
- * Um utilizador pode atuar simultaneamente como:
- *   - Proprietário  → anuncia os seus veículos para aluguer
- *   - Locatário     → aluga veículos de outros utilizadores
- *
- * Campos obrigatórios segundo RF1:
- *   email, nome, NIF, nº carta de condução, validade da carta, password (hash)
- */
 public class User {
 
-    // -------------------------------------------------------------------------
-    // Campos
-    // -------------------------------------------------------------------------
 
     /** Chave primária gerada pelo MySQL (AUTO_INCREMENT) */
     private int id;

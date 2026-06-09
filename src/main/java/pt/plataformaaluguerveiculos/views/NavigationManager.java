@@ -2,19 +2,11 @@ package pt.plataformaaluguerveiculos.views;
 
 import javafx.scene.Node;
 
-/**
- * ALV-57 - Implementar navegação entre páginas
- * Singleton que gere a troca de conteúdo no BaseLayoutView.
- *
- * ALV-90 — Adicionado navegarParaPedidosRecebidos()
- * ALV-100 — Adicionado navegarParaMinhasReservas()
- */
 public class NavigationManager {
-
-    private int utilizadorLogadoId = -1;
 
     private static NavigationManager instance;
     private BaseLayoutView baseLayout;
+    private int utilizadorLogadoId = -1;
 
     private NavigationManager() {}
 
@@ -66,9 +58,6 @@ public class NavigationManager {
         navegarPara(view.getRoot());
     }
 
-    // ----------------------------------------------------------------
-    // ALV-90 — Navegar para a página de pedidos recebidos
-    // ----------------------------------------------------------------
     public void navegarParaPedidosRecebidos() {
         if (utilizadorLogadoId < 0) {
             System.err.println("[NavManager] Utilizador não autenticado.");
@@ -78,6 +67,7 @@ public class NavigationManager {
         PedidosRecebidosView pedidos = new PedidosRecebidosView(utilizadorLogadoId);
         navegarPara(pedidos.getRoot());
     }
+
 
     public void navegarParaAprovarReservas(int proprietarioId) {
         navegarPara(new PedidosRecebidosView(proprietarioId).getRoot());
@@ -105,6 +95,14 @@ public class NavigationManager {
         }
     }
 
+public void navegarParaRegisto() {
+    if (baseLayout != null) {
+        baseLayout.getRoot().setTop(null);
+    }
+    RegistoView registo = new RegistoView();
+    navegarPara(registo.getRoot());
+}
+
     public void sair() {
         navegarParaLogin();
     }
@@ -114,19 +112,5 @@ public class NavigationManager {
         ProcurarVeiculosView view = new ProcurarVeiculosView();
         navegarPara(view.getRoot());
     }
-    public void navegarParaRegisto() {
-    if (baseLayout != null) {
-        baseLayout.getRoot().setTop(null);
-    }
-    try {
-        javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
-            getClass().getResource("/view/registo.fxml")
-        );
-        javafx.scene.Parent registo = loader.load();
-        navegarPara(registo);
-    } catch (Exception e) {
-        System.err.println("[NavigationManager] Erro ao carregar registo.fxml");
-        e.printStackTrace();
-    }
-}
+
 }
