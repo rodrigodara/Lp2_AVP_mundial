@@ -28,6 +28,7 @@ com\aluguer\model\User.class
 pt\plataformaaluguerveiculos\views\BaseLayoutView.class
 pt\plataformaaluguerveiculos\views\DashboardView.class
 com\aluguer\util\PasswordUtil.class
+com\aluguer\service\PrecoDinamicoService.class
 com\aluguer\dao\VeiculoDAO.class
 pt\plataformaaluguerveiculos\views\ProcurarVeiculosView.class
 pt\plataformaaluguerveiculos\views\CriarReservaView$2.class
