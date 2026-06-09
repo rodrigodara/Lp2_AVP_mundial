@@ -89,6 +89,8 @@ public class LoginView {
 
                 lblErro.setVisible(false);
 
+                com.aluguer.util.SessionManager.getInstance().iniciarSessao(user);
+
                 NavigationManager nav = NavigationManager.getInstance();
                 nav.setUtilizadorLogado(user.getId());
 

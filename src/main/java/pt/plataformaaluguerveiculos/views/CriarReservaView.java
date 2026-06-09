@@ -1,18 +1,26 @@
 package pt.plataformaaluguerveiculos.views;
 
-import com.aluguer.controller.ReservaService;
-import com.aluguer.controller.ReservaService.ReservaException;
-import com.aluguer.model.Reserva;
-import javafx.application.Platform;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import javafx.scene.text.Text;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+
+import com.aluguer.controller.ReservaService;
+import com.aluguer.controller.ReservaService.ReservaException;
+import com.aluguer.model.Reserva;
+
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Button;
+import javafx.scene.control.DateCell;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Separator;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 
 /**
  * ALV-64 – Criar Pedido de Reserva
@@ -203,8 +211,12 @@ public class CriarReservaView {
         double total  = renda + caucao;
 
         lblRenda.setText(String.format("Renda (%d dia%s): %.2f€", dias, dias > 1 ? "s" : "", renda));
-        lblCombustivel.setText(String.format("Combustível estimado: %.2f€", comb));
-        lblCaucao.setText(String.format("Caução (20%% de %.2f€): %.2f€", renda + comb, caucao));
+        if (kmDiaMedia <= 0 || consumo <= 0 || precoCombustivel <= 0) {
+            lblCombustivel.setText("Combustível estimado: não disponível (sem dados do veículo)");
+        } else {
+            lblCombustivel.setText(String.format("Combustível estimado: %.2f€", comb));
+        }
+        lblCaucao.setText(String.format("Caução: 20%% = %.2f€", caucao));
         lblTotal.setText(String.format("Total a bloquear: %.2f€", total));
         lblNota.setText(dias >= 7
             ? "✔ Desconto de longa duração (-10%) aplicado"
