@@ -30,11 +30,24 @@
             <version>${javafx.version}</version>
         </dependency>
 
-<dependency>
-    <groupId>com.mysql</groupId>
-    <artifactId>mysql-connector-j</artifactId>
-    <version>8.3.0</version>
-</dependency>
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <version>8.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency> 
+
+        <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
 
 
         <!-- BCrypt — hash de passwords (ALV-26) -->
@@ -87,7 +100,9 @@
                     <execution>
                         <id>add-source</id>
                         <phase>generate-sources</phase>
-                        <goals><goal>add-source</goal></goals>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
                         <configuration>
                             <sources>
                                 <source>src/pt</source>
@@ -104,8 +119,12 @@
                 <version>0.0.8</version>
                 <configuration>
                     <mainClass>com.aluguer.MainApp</mainClass>
+                    <options>
+                        <option>-Dprism.order=sw</option>
+                    </options>
                 </configuration>
             </plugin>
+            
 
             <!-- Maven Surefire para correr testes JUnit 5 com: mvn test -->
             <plugin>

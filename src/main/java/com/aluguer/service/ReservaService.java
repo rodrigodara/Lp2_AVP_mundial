@@ -16,6 +16,9 @@ import com.aluguer.util.DatabaseConnection;
  */
 public class ReservaService {
 
+    // Construtor sem argumentos (usado pela UI — a ligação BD é aberta por operação)
+    public ReservaService() {}
+
     // ================================================================
     // ALV-87 — Aceitar reserva
     // ================================================================

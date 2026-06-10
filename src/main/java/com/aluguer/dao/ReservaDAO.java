@@ -213,6 +213,123 @@ public class ReservaDAO {
         return reservas;
     }
 
+    // ------------------------------------------------------------------
+    // ALV-129 — Verificar sobreposição de pedidos do mesmo utilizador
+    // ------------------------------------------------------------------
+
+    /**
+     * Verifica se o utilizador já tem um pedido (PENDENTE ou ACEITE)
+     * para o mesmo veículo que se sobreponha ao período indicado.
+     * Usado para impedir pedidos duplicados ou sobrepostos pelo mesmo utilizador.
+     */
+    public boolean existeSobreposicaoPorUtilizador(int utilizadorId, int veiculoId,
+                                                    LocalDate inicio, LocalDate fim,
+                                                    int excluirId) {
+        String sql = """
+                SELECT 1 FROM reserva
+                WHERE utilizadorId = ?
+                  AND veiculoId    = ?
+                  AND estado IN ('PENDENTE', 'ACEITE')
+                  AND dataInicio <= ?
+                  AND dataFim    >= ?
+                  AND id != ?
+                """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, utilizadorId);
+            stmt.setInt(2, veiculoId);
+            stmt.setDate(3, Date.valueOf(fim));
+            stmt.setDate(4, Date.valueOf(inicio));
+            stmt.setInt(5, excluirId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao verificar sobreposição por utilizador: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // ALV-127 — Verificar reservas existentes para um veículo
+    // ------------------------------------------------------------------
+
+    /**
+     * Devolve todas as reservas PENDENTES ou ACEITES de um veículo,
+     * ordenadas por data de início.
+     * Usado para mostrar ao utilizador quais períodos já estão ocupados.
+     */
+    public List<Reserva> listarReservasAtivasPorVeiculo(int veiculoId) {
+        List<Reserva> reservas = new ArrayList<>();
+
+        String sql = """
+                SELECT * FROM reserva
+                WHERE veiculoId = ?
+                  AND estado IN ('PENDENTE', 'ACEITE')
+                ORDER BY dataInicio ASC
+                """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, veiculoId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    reservas.add(mapRow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao listar reservas ativas: " + e.getMessage());
+        }
+
+        return reservas;
+    }
+
+    // ------------------------------------------------------------------
+    // ALV-128 — Verificar datas bloqueadas (apenas reservas ACEITES)
+    // ------------------------------------------------------------------
+
+    /**
+     * Devolve todas as reservas ACEITES de um veículo num dado intervalo.
+     * Permite à UI mostrar exatamente quais datas estão bloqueadas
+     * (confirmadas pelo proprietário) vs. apenas pendentes.
+     *
+     * @param veiculoId  id do veículo
+     * @param de         início do intervalo de pesquisa (inclusive)
+     * @param ate        fim do intervalo de pesquisa (inclusive)
+     */
+    public List<Reserva> listarDatasBloquadas(int veiculoId, LocalDate de, LocalDate ate) {
+        List<Reserva> reservas = new ArrayList<>();
+
+        String sql = """
+                SELECT * FROM reserva
+                WHERE veiculoId = ?
+                  AND estado = 'ACEITE'
+                  AND dataInicio <= ?
+                  AND dataFim    >= ?
+                ORDER BY dataInicio ASC
+                """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, veiculoId);
+            stmt.setDate(2, Date.valueOf(ate));
+            stmt.setDate(3, Date.valueOf(de));
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    reservas.add(mapRow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao listar datas bloqueadas: " + e.getMessage());
+        }
+
+        return reservas;
+    }
+
     private Reserva mapRow(ResultSet rs) throws SQLException {
         return new Reserva(
                 rs.getInt("id"),

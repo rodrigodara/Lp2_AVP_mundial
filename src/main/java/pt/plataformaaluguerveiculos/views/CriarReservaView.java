@@ -57,6 +57,8 @@ public class CriarReservaView {
     private Button btnReservar;
     private ProgressIndicator spinner;
 
+    private Label lblAviso;      // ALV-130 — aviso de disponibilidade
+
     /**
      * @param service          ReservaService instanciado com a ligação BD
      * @param utilizadorId     id do utilizador autenticado
@@ -138,6 +140,11 @@ public class CriarReservaView {
         Label lblSaldo = new Label(String.format("Saldo disponível: %.2f€", saldo));
         lblSaldo.getStyleClass().add("reserva-saldo");
 
+        // ALV-130 — aviso de disponibilidade (verificado ao mudar as datas)
+        lblAviso = new Label();
+        lblAviso.setWrapText(true);
+        lblAviso.setVisible(false);
+
         lblErro = new Label();
         lblErro.getStyleClass().add("mensagem-erro");
         lblErro.setVisible(false);
@@ -166,7 +173,7 @@ public class CriarReservaView {
             lblI, dpInicio,
             lblF, dpFim,
             painelPreco,
-            lblSaldo, lblErro, spinner,
+            lblSaldo, lblAviso, lblErro, spinner,
             botoes
         );
     }
@@ -202,7 +209,29 @@ public class CriarReservaView {
             lblCaucao.setText("Caução (20%): –");
             lblTotal.setText("Total a bloquear: –");
             lblNota.setText("");
+            lblAviso.setVisible(false);
             return;
+        }
+
+        // ALV-132 — Validar disponibilidade antes de mostrar os preços
+        ReservaService.ResultadoDisponibilidade disp =
+            service.validarDisponibilidade(utilizadorId, veiculoId, ini, fim);
+
+        if (!disp.isDisponivel()) {
+            // ALV-130 — Mostrar erro de disponibilidade na UI
+            lblAviso.setText("⛔ " + disp.getMensagem());
+            lblAviso.setStyle("-fx-text-fill: #c0392b;");
+            lblAviso.setVisible(true);
+            btnReservar.setDisable(true);
+            lblErro.setVisible(false);
+            return;
+        } else if (!disp.getMensagem().startsWith("Veículo disponível")) {
+            // aviso de reserva pendente sobreposta — deixa reservar mas avisa
+            lblAviso.setText("⚠ " + disp.getMensagem());
+            lblAviso.setStyle("-fx-text-fill: #e67e22;");
+            lblAviso.setVisible(true);
+        } else {
+            lblAviso.setVisible(false);
         }
 
         long dias     = ChronoUnit.DAYS.between(ini, fim) + 1;

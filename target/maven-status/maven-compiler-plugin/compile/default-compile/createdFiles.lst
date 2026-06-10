@@ -18,6 +18,7 @@ com\aluguer\dao\UserDAO.class
 com\aluguer\service\VeiculoService.class
 com\aluguer\service\ReservaService$ResultadoOperacao.class
 com\aluguer\util\SessionManager.class
+com\aluguer\controller\ReservaService$ResultadoDisponibilidade.class
 com\aluguer\MainApp.class
 com\aluguer\controller\RegistoService.class
 pt\plataformaaluguerveiculos\views\RegistoView.class
