@@ -1,7 +1,9 @@
 package pt.plataformaaluguerveiculos.views;
 
 import java.sql.Connection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.aluguer.controller.ReservaService;
 import com.aluguer.model.User;
@@ -11,20 +13,30 @@ import com.aluguer.util.DatabaseConnection;
 import com.aluguer.util.SessionManager;
 
 import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 public class ProcurarVeiculosView {
 
     private VBox root;
     private TableView<Veiculo> tabela;
+
+    // Mapeamento label → preço máximo (null = sem limite)
+    private static final Map<String, Double> RANGES_PRECO = new LinkedHashMap<>();
+    static {
+        RANGES_PRECO.put("Até 30€/dia",   30.0);
+        RANGES_PRECO.put("Até 60€/dia",   60.0);
+        RANGES_PRECO.put("Até 100€/dia", 100.0);
+        RANGES_PRECO.put("Mais de 100€",  null); // tratado à parte
+    }
 
     public ProcurarVeiculosView() {
 
@@ -35,12 +47,54 @@ public class ProcurarVeiculosView {
         Label titulo = new Label("Procurar Veículos");
         titulo.getStyleClass().add("dashboard-titulo");
 
+        // ============================
+        // FILTROS
+        // ============================
+        ComboBox<String> comboMarca = new ComboBox<>();
+        comboMarca.setPromptText("Todas as marcas");
+        comboMarca.setPrefWidth(180);
+
+        ComboBox<String> comboPreco = new ComboBox<>();
+        comboPreco.setPromptText("Qualquer preço");
+        comboPreco.setPrefWidth(160);
+        comboPreco.setItems(FXCollections.observableArrayList(RANGES_PRECO.keySet()));
+
+        ComboBox<String> comboLocalizacao = new ComboBox<>();
+        comboLocalizacao.setPromptText("Todas as localizações");
+        comboLocalizacao.setPrefWidth(200);
+
+        Button btnLimpar = new Button("Limpar filtros");
+        btnLimpar.getStyleClass().add("btn-secundario");
+
+        HBox filtroBox = new HBox(12,
+            new Label("Marca:"), comboMarca,
+            new Label("Preço:"), comboPreco,
+            new Label("Localização:"), comboLocalizacao,
+            btnLimpar
+        );
+        filtroBox.setAlignment(Pos.CENTER_LEFT);
+
+        carregarMarcas(comboMarca);
+        carregarLocalizacoes(comboLocalizacao);
+
+        // Qualquer alteração num filtro dispara a pesquisa combinada
+        comboMarca.setOnAction(e -> aplicarFiltros(comboMarca, comboPreco, comboLocalizacao));
+        comboPreco.setOnAction(e -> aplicarFiltros(comboMarca, comboPreco, comboLocalizacao));
+        comboLocalizacao.setOnAction(e -> aplicarFiltros(comboMarca, comboPreco, comboLocalizacao));
+
+        btnLimpar.setOnAction(e -> {
+            comboMarca.setValue(null);
+            comboPreco.setValue(null);
+            comboLocalizacao.setValue(null);
+            carregarVeiculos();
+        });
+
+        // ============================
+        // TABELA
+        // ============================
         tabela = new TableView<>();
         tabela.setPrefHeight(500);
 
-        // ============================
-        // COLUNAS DA TABELA
-        // ============================
         TableColumn<Veiculo, String> colMarca = new TableColumn<>("Marca");
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
 
@@ -73,12 +127,10 @@ public class ProcurarVeiculosView {
         btnReservar.getStyleClass().add("btn-primario");
         btnReservar.setDisable(true);
 
-        // Ativa o botão quando há seleção
         tabela.getSelectionModel().selectedItemProperty().addListener(
             (obs, antigo, novo) -> btnReservar.setDisable(novo == null)
         );
 
-        // Duplo clique na linha também abre reserva
         tabela.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
                 abrirReserva(tabela.getSelectionModel().getSelectedItem());
@@ -89,12 +141,44 @@ public class ProcurarVeiculosView {
             abrirReserva(tabela.getSelectionModel().getSelectedItem())
         );
 
-        // ============================
-        // CARREGAR DADOS DA BD
-        // ============================
         carregarVeiculos();
 
-        root.getChildren().addAll(titulo, tabela, btnReservar);
+        root.getChildren().addAll(titulo, filtroBox, tabela, btnReservar);
+    }
+
+    private void aplicarFiltros(ComboBox<String> comboMarca,
+                                ComboBox<String> comboPreco,
+                                ComboBox<String> comboLocalizacao) {
+        String marca       = comboMarca.getValue();
+        String localizacao = comboLocalizacao.getValue();
+        String precoLabel  = comboPreco.getValue();
+
+        Double precoMax = null;
+        Double precoMin = null;
+        if (precoLabel != null) {
+            if (precoLabel.equals("Mais de 100€")) {
+                precoMin = 100.0; // filtrado em memória abaixo
+            } else {
+                precoMax = RANGES_PRECO.get(precoLabel);
+            }
+        }
+
+        try {
+            VeiculoService service = new VeiculoService();
+            List<Veiculo> lista = service.getVehiclesComFiltros(marca, precoMax, localizacao);
+
+            // "Mais de 100€" não tem suporte direto na query → filtra em memória
+            if (precoMin != null) {
+                final double min = precoMin;
+                lista = lista.stream()
+                    .filter(v -> v.getPrecoDiario() > min)
+                    .toList();
+            }
+
+            tabela.setItems(FXCollections.observableArrayList(lista));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void abrirReserva(Veiculo veiculo) {
@@ -115,9 +199,9 @@ public class ProcurarVeiculosView {
                 user.getId(),
                 veiculo.getId(),
                 veiculo.getPrecoDiario(),
-                0,        // consumo: sem histórico
-                0,        // precoCombustivel: sem histórico
-                0,        // kmDiaMedia: sem histórico
+                0,
+                0,
+                0,
                 user.getSaldo().doubleValue(),
                 veiculo.getMarca() + " " + veiculo.getModelo() + " (" + veiculo.getAno() + ")"
             );
@@ -133,8 +217,25 @@ public class ProcurarVeiculosView {
         try {
             VeiculoService service = new VeiculoService();
             List<Veiculo> lista = service.getAllVehicles();
-            ObservableList<Veiculo> obs = FXCollections.observableArrayList(lista);
-            tabela.setItems(obs);
+            tabela.setItems(FXCollections.observableArrayList(lista));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void carregarMarcas(ComboBox<String> combo) {
+        try {
+            VeiculoService service = new VeiculoService();
+            combo.setItems(FXCollections.observableArrayList(service.getMarcas()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void carregarLocalizacoes(ComboBox<String> combo) {
+        try {
+            VeiculoService service = new VeiculoService();
+            combo.setItems(FXCollections.observableArrayList(service.getLocalizacoes()));
         } catch (Exception e) {
             e.printStackTrace();
         }

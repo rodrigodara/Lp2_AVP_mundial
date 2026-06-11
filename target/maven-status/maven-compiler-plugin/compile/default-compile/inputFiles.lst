@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\LoginController.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\LoginService.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\RegistoController.java
@@ -29,3 +30,36 @@ C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerv
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\PedidosRecebidosView.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\ProcurarVeiculosView.java
 C:\xampp\htdocs\LP2 - Navios\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\RegistoView.java
+=======
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\LoginController.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\LoginService.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\RegistoController.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\RegistoService.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\ReservaService.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\controller\VeiculosController.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\dao\ReservaDAO.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\dao\UserDAO.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\dao\VeiculoDAO.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\MainApp.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\model\Reserva.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\model\User.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\model\Veiculo.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\service\PrecoDinamicoService.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\service\ReservaService.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\service\VeiculoService.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\util\DatabaseConnection.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\util\PasswordUtil.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\com\aluguer\util\SessionManager.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\App.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\BaseLayoutView.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\CriarReservaView.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\DashboardView.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\FeedbackView.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\LoginView.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\MinhasReservasView.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\NavbarView.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\NavigationManager.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\PedidosRecebidosView.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\ProcurarVeiculosView.java
+C:\Faculdade\2Semestre\LP2\AluguerCarros\Lp2_AVP_mundial\src\main\java\pt\plataformaaluguerveiculos\views\RegistoView.java
+>>>>>>> 32ac498e99bb86e6d2affdc2f3be61cd79ff7895

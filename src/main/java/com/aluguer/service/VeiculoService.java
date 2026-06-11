@@ -12,4 +12,16 @@ public class VeiculoService {
     public List<Veiculo> getAllVehicles() throws Exception {
         return dao.listarTodos();
     }
+
+    public List<String> getMarcas() throws Exception {
+        return dao.listarMarcas();
+    }
+
+    public List<String> getLocalizacoes() throws Exception {
+        return dao.listarLocalizacoes();
+    }
+
+    public List<Veiculo> getVehiclesComFiltros(String marca, Double precoMax, String localizacao) throws Exception {
+        return dao.listarComFiltros(marca, precoMax, localizacao);
+    }
 }

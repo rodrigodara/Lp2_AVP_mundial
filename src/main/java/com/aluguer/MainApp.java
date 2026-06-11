@@ -10,8 +10,7 @@ import pt.plataformaaluguerveiculos.views.NavigationManager;
 public class MainApp extends Application {
 
     private static Stage primaryStage;
-    
-    
+
     @Override
     public void start(Stage stage) throws Exception {
         primaryStage = stage;

@@ -109,6 +109,71 @@ public class VeiculoDAO {
     }
 
     // ============================
+    // 6. LISTAR MARCAS DISTINTAS
+    // ============================
+    public List<String> listarMarcas() throws SQLException {
+        List<String> marcas = new ArrayList<>();
+        String sql = "SELECT DISTINCT marca FROM veiculo ORDER BY marca";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                marcas.add(rs.getString("marca"));
+            }
+        }
+        return marcas;
+    }
+
+    // ============================
+    // 7. LISTAR LOCALIZAÇÕES DISTINTAS
+    // ============================
+    public List<String> listarLocalizacoes() throws SQLException {
+        List<String> localizacoes = new ArrayList<>();
+        String sql = "SELECT DISTINCT localizacao FROM veiculo ORDER BY localizacao";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                localizacoes.add(rs.getString("localizacao"));
+            }
+        }
+        return localizacoes;
+    }
+
+    // ============================
+    // 8. LISTAR COM FILTROS COMBINADOS
+    // marca, precoMax e localizacao são opcionais (null = ignorar)
+    // ============================
+    public List<Veiculo> listarComFiltros(String marca, Double precoMax, String localizacao) throws SQLException {
+        List<Veiculo> lista = new ArrayList<>();
+
+        StringBuilder sql = new StringBuilder("SELECT * FROM veiculo WHERE 1=1");
+        if (marca != null)       sql.append(" AND marca = ?");
+        if (precoMax != null)    sql.append(" AND precoDiario <= ?");
+        if (localizacao != null) sql.append(" AND localizacao = ?");
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+
+            int idx = 1;
+            if (marca != null)       stmt.setString(idx++, marca);
+            if (precoMax != null)    stmt.setDouble(idx++, precoMax);
+            if (localizacao != null) stmt.setString(idx++, localizacao);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+        }
+        return lista;
+    }
+
+    // ============================
     // MAPEAMENTO ResultSet → Veiculo
     // ============================
     private Veiculo mapRow(ResultSet rs) throws SQLException {
