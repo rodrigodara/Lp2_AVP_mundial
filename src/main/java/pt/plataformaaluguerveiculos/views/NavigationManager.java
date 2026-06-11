@@ -113,4 +113,11 @@ public void navegarParaRegisto() {
         navegarPara(view.getRoot());
     }
 
+    public void navegarParaHistoricoTransacoes() {
+    if (utilizadorLogadoId < 0) return;
+    garantirNavbar();
+    HistoricoTransacoesView view = new HistoricoTransacoesView(utilizadorLogadoId);
+    navegarPara(view.getRoot());
+}
+
 }
