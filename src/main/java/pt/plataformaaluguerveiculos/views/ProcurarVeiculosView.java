@@ -20,8 +20,10 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class ProcurarVeiculosView {
@@ -46,6 +48,38 @@ public class ProcurarVeiculosView {
 
         Label titulo = new Label("Procurar Veículos");
         titulo.getStyleClass().add("dashboard-titulo");
+
+        // ============================
+        // BARRA DE PESQUISA
+        // ============================
+        TextField campoPesquisa = new TextField();
+        campoPesquisa.setPromptText("Pesquisar por marca, modelo ou localização...");
+        campoPesquisa.getStyleClass().add("campo-texto");
+        HBox.setHgrow(campoPesquisa, Priority.ALWAYS);
+
+        Button btnPesquisar = new Button("Pesquisar");
+        btnPesquisar.getStyleClass().add("btn-primario");
+
+        Button btnLimparPesquisa = new Button("x");
+        btnLimparPesquisa.getStyleClass().add("btn-secundario");
+
+        HBox pesquisaBox = new HBox(8, campoPesquisa, btnPesquisar, btnLimparPesquisa);
+        pesquisaBox.setAlignment(Pos.CENTER_LEFT);
+
+        btnPesquisar.setOnAction(e -> {
+            String termo = campoPesquisa.getText().trim();
+            if (!termo.isEmpty()) {
+                pesquisar(termo);
+            }
+        });
+
+        // Pesquisa ao pressionar Enter
+        campoPesquisa.setOnAction(e -> btnPesquisar.fire());
+
+        btnLimparPesquisa.setOnAction(e -> {
+            campoPesquisa.clear();
+            carregarVeiculos();
+        });
 
         // ============================
         // FILTROS
@@ -93,7 +127,8 @@ public class ProcurarVeiculosView {
         // TABELA
         // ============================
         tabela = new TableView<>();
-        tabela.setPrefHeight(500);
+        tabela.setPrefHeight(600);
+        VBox.setVgrow(tabela, javafx.scene.layout.Priority.ALWAYS);
 
         TableColumn<Veiculo, String> colMarca = new TableColumn<>("Marca");
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
@@ -113,11 +148,11 @@ public class ProcurarVeiculosView {
         TableColumn<Veiculo, String> colLocalizacao = new TableColumn<>("Localização");
         colLocalizacao.setCellValueFactory(new PropertyValueFactory<>("localizacao"));
 
-        TableColumn<Veiculo, String> colEstado = new TableColumn<>("Estado");
-        colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+        // TableColumn<Veiculo, String> colEstado = new TableColumn<>("Estado");
+        // colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
 
         tabela.getColumns().addAll(
-            colMarca, colModelo, colAno, colCombustivel, colPreco, colLocalizacao, colEstado
+            colMarca, colModelo, colAno, colCombustivel, colPreco, colLocalizacao /*, colEstado*/
         );
 
         // ============================
@@ -143,7 +178,7 @@ public class ProcurarVeiculosView {
 
         carregarVeiculos();
 
-        root.getChildren().addAll(titulo, filtroBox, tabela, btnReservar);
+        root.getChildren().addAll(titulo, pesquisaBox, filtroBox, tabela, btnReservar);
     }
 
     private void aplicarFiltros(ComboBox<String> comboMarca,
@@ -210,6 +245,16 @@ public class ProcurarVeiculosView {
 
         } catch (Exception ex) {
             ex.printStackTrace();
+        }
+    }
+
+    private void pesquisar(String termo) {
+        try {
+            VeiculoService service = new VeiculoService();
+            List<Veiculo> lista = service.pesquisar(termo);
+            tabela.setItems(FXCollections.observableArrayList(lista));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

@@ -174,6 +174,31 @@ public class VeiculoDAO {
     }
 
     // ============================
+    // 9. PESQUISA POR TEXTO LIVRE
+    // Pesquisa em marca, modelo e localização
+    // ============================
+    public List<Veiculo> pesquisar(String termo) throws SQLException {
+        List<Veiculo> lista = new ArrayList<>();
+        String like = "%" + termo.trim() + "%";
+        String sql = "SELECT * FROM veiculo WHERE marca LIKE ? OR modelo LIKE ? OR localizacao LIKE ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setString(1, like);
+            stmt.setString(2, like);
+            stmt.setString(3, like);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+        }
+        return lista;
+    }
+
+    // ============================
     // MAPEAMENTO ResultSet → Veiculo
     // ============================
     private Veiculo mapRow(ResultSet rs) throws SQLException {

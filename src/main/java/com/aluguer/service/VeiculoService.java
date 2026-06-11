@@ -24,4 +24,8 @@ public class VeiculoService {
     public List<Veiculo> getVehiclesComFiltros(String marca, Double precoMax, String localizacao) throws Exception {
         return dao.listarComFiltros(marca, precoMax, localizacao);
     }
+
+    public List<Veiculo> pesquisar(String termo) throws Exception {
+        return dao.pesquisar(termo);
+    }
 }
