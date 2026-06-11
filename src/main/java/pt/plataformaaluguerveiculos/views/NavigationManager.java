@@ -1,5 +1,7 @@
 package pt.plataformaaluguerveiculos.views;
 
+import com.aluguer.model.Veiculo;
+
 import javafx.scene.Node;
 
 public class NavigationManager {
@@ -45,7 +47,6 @@ public class NavigationManager {
     }
 
     public void navegarParaLogin() {
-        // Esconde navbar e mostra login
         if (baseLayout != null) {
             baseLayout.getRoot().setTop(null);
         }
@@ -68,14 +69,11 @@ public class NavigationManager {
         navegarPara(pedidos.getRoot());
     }
 
-
     public void navegarParaAprovarReservas(int proprietarioId) {
         navegarPara(new PedidosRecebidosView(proprietarioId).getRoot());
     }
 
-    // ----------------------------------------------------------------
     // ALV-100 — Navegar para "As Minhas Reservas"
-    // ----------------------------------------------------------------
     public void navegarParaMinhasReservas() {
         if (utilizadorLogadoId < 0) {
             System.err.println("[NavManager] Utilizador não autenticado.");
@@ -84,6 +82,24 @@ public class NavigationManager {
         garantirNavbar();
         MinhasReservasView minhasReservas = new MinhasReservasView(utilizadorLogadoId);
         navegarPara(minhasReservas.getRoot());
+    }
+
+    // ALV-134 — Navegar para "Os Meus Veículos"
+    public void navegarParaMeusVeiculos() {
+        if (utilizadorLogadoId < 0) {
+            System.err.println("[NavManager] Utilizador não autenticado.");
+            return;
+        }
+        garantirNavbar();
+        MeusVeiculosView view = new MeusVeiculosView();
+        navegarPara(view.getRoot());
+    }
+
+    // ALV-111 — Navegar para detalhe de um veículo
+    public void navegarParaDetalheVeiculo(Veiculo veiculo) {
+        garantirNavbar();
+        DetalheVeiculoView view = new DetalheVeiculoView(veiculo);
+        navegarPara(view.getRoot());
     }
 
     // ----------------------------------------------------------------
@@ -95,13 +111,13 @@ public class NavigationManager {
         }
     }
 
-public void navegarParaRegisto() {
-    if (baseLayout != null) {
-        baseLayout.getRoot().setTop(null);
+    public void navegarParaRegisto() {
+        if (baseLayout != null) {
+            baseLayout.getRoot().setTop(null);
+        }
+        RegistoView registo = new RegistoView();
+        navegarPara(registo.getRoot());
     }
-    RegistoView registo = new RegistoView();
-    navegarPara(registo.getRoot());
-}
 
     public void sair() {
         navegarParaLogin();
@@ -112,5 +128,4 @@ public void navegarParaRegisto() {
         ProcurarVeiculosView view = new ProcurarVeiculosView();
         navegarPara(view.getRoot());
     }
-
 }
