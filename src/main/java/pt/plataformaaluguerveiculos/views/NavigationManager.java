@@ -1,5 +1,7 @@
 package pt.plataformaaluguerveiculos.views;
 
+import com.aluguer.model.Avaliacao;
+
 import javafx.scene.Node;
 
 public class NavigationManager {
@@ -110,6 +112,14 @@ public class NavigationManager {
         if (utilizadorLogadoId < 0) return;
         garantirNavbar();
         IndisponibilidadeView view = new IndisponibilidadeView(veiculoId);
+        navegarPara(view.getRoot());
+    }
+
+    // Navegar para página de avaliação
+    public void navegarParaAvaliar(int reservaId, int avaliadorId, int avaliadoId,
+                                    Avaliacao.TipoAvaliado tipo, String nomeAvaliado) {
+        garantirNavbar();
+        AvaliarView view = new AvaliarView(reservaId, avaliadorId, avaliadoId, tipo, nomeAvaliado);
         navegarPara(view.getRoot());
     }
 

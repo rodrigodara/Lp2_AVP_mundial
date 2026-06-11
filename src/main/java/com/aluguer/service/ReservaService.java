@@ -25,20 +25,17 @@ public class ReservaService {
         try (Connection conn = DatabaseConnection.getConnection()) {
             com.aluguer.dao.ReservaDAO dao = new com.aluguer.dao.ReservaDAO(conn);
 
-            // 1. Buscar reserva
             com.aluguer.model.Reserva reserva = dao.buscarPorId(reservaId);
             if (reserva == null) {
                 return ResultadoOperacao.erro("Reserva #" + reservaId + " não encontrada.");
             }
 
-            // 2. Validar estado — só PENDENTE pode ser aceite
             if (reserva.getEstado() != Estado.PENDENTE) {
                 return ResultadoOperacao.erro(
                     "Não é possível aceitar uma reserva no estado: " + reserva.getEstado()
                 );
             }
 
-            // 3. Verificar sobreposição com reservas já ACEITES
             boolean sobreposicao = dao.existeSobreposicao(
                 reserva.getVeiculoId(),
                 reserva.getDataInicio(),
@@ -51,7 +48,7 @@ public class ReservaService {
                 );
             }
 
-            // 4. ALV-174 — Verificar indisponibilidade do veículo
+            // ALV-174 — Verificar indisponibilidade do veículo
             AvailabilityDAO availabilityDAO = new AvailabilityDAO(conn);
             boolean indisponivel = availabilityDAO.estaIndisponivel(
                 reserva.getVeiculoId(),
@@ -64,7 +61,6 @@ public class ReservaService {
                 );
             }
 
-            // 5. Atualizar estado para ACEITE
             boolean ok = dao.atualizarEstado(reservaId, Estado.ACEITE);
             if (ok) {
                 return ResultadoOperacao.sucesso("Reserva #" + reservaId + " aceite com sucesso.");
@@ -102,6 +98,38 @@ public class ReservaService {
                 return ResultadoOperacao.sucesso("Reserva #" + reservaId + " rejeitada.");
             } else {
                 return ResultadoOperacao.erro("Falha ao rejeitar a reserva. Tente novamente.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return ResultadoOperacao.erro("Erro de base de dados: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // Concluir reserva — chamado pelo proprietário após devolução
+    // ================================================================
+
+    public ResultadoOperacao concluirReserva(int reservaId, int proprietarioId) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            com.aluguer.dao.ReservaDAO dao = new com.aluguer.dao.ReservaDAO(conn);
+
+            com.aluguer.model.Reserva reserva = dao.buscarPorId(reservaId);
+            if (reserva == null) {
+                return ResultadoOperacao.erro("Reserva #" + reservaId + " não encontrada.");
+            }
+
+            if (reserva.getEstado() != Estado.ACEITE) {
+                return ResultadoOperacao.erro(
+                    "Só é possível concluir reservas no estado ACEITE."
+                );
+            }
+
+            boolean ok = dao.atualizarEstado(reservaId, Estado.CONCLUIDO);
+            if (ok) {
+                return ResultadoOperacao.sucesso("Reserva #" + reservaId + " concluída com sucesso.");
+            } else {
+                return ResultadoOperacao.erro("Falha ao concluir a reserva. Tente novamente.");
             }
 
         } catch (SQLException e) {
