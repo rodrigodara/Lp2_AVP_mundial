@@ -12,9 +12,9 @@ import java.util.List;
 import com.aluguer.model.Transaction;
 
 /**
- * ALV-166 — Registar pagamentos
- * ALV-167 — Registar recebimentos
- * ALV-169 — Testar consultas
+ * DAO para operações sobre a tabela transacao.
+ * A tabela transacao regista depósitos e levantamentos da carteira do utilizador.
+ * Cada transação está ligada a uma conta (tabela conta).
  */
 public class TransactionDAO {
 
@@ -25,51 +25,39 @@ public class TransactionDAO {
     }
 
     // ----------------------------------------------------------------
-    // ALV-166 — Registar pagamento (locatário pagou uma reserva)
+    // Registar depósito
     // ----------------------------------------------------------------
 
-    public boolean registarPagamento(int reservaId, int utilizadorId, double valor) {
-        Transaction t = new Transaction(
-                reservaId,
-                utilizadorId,
-                Transaction.Tipo.PAGAMENTO,
-                valor,
-                "Pagamento pela reserva #" + reservaId
-        );
-        return inserir(t);
+    public boolean registarDeposito(int contaId, double valor) {
+        return inserir(new Transaction(contaId, valor, Transaction.Tipo.deposito));
     }
 
     // ----------------------------------------------------------------
-    // ALV-167 — Registar recebimento (proprietário recebeu dinheiro)
+    // Registar levantamento
     // ----------------------------------------------------------------
 
-    public boolean registarRecebimento(int reservaId, int proprietarioId, double valor) {
-        Transaction t = new Transaction(
-                reservaId,
-                proprietarioId,
-                Transaction.Tipo.RECEBIMENTO,
-                valor,
-                "Recebimento da reserva #" + reservaId
-        );
-        return inserir(t);
+    public boolean registarLevantamento(int contaId, double valor) {
+        return inserir(new Transaction(contaId, valor, Transaction.Tipo.levantamento));
     }
 
     // ----------------------------------------------------------------
-    // ALV-169 — Listar todas as transações de um utilizador
+    // Listar todas as transações de um utilizador (via JOIN com conta)
     // ----------------------------------------------------------------
 
     public List<Transaction> listarPorUtilizador(int utilizadorId) {
         List<Transaction> lista = new ArrayList<>();
 
-        String sql = "SELECT * FROM transacao WHERE utilizadorId = ? ORDER BY data DESC";
+        String sql = """
+                SELECT t.* FROM transacao t
+                JOIN conta c ON t.contaId = c.id
+                WHERE c.utilizadorId = ?
+                ORDER BY t.data DESC
+                """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, utilizadorId);
-
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(mapRow(rs));
-                }
+                while (rs.next()) lista.add(mapRow(rs));
             }
         } catch (SQLException e) {
             System.err.println("[TransactionDAO] Erro ao listar transações: " + e.getMessage());
@@ -78,51 +66,63 @@ public class TransactionDAO {
         return lista;
     }
 
-    // ALV-169 — Listar só pagamentos de um utilizador
-    public List<Transaction> listarPagamentosPorUtilizador(int utilizadorId) {
-        return listarPorUtilizadorETipo(utilizadorId, Transaction.Tipo.PAGAMENTO);
+    // ----------------------------------------------------------------
+    // Listar só depósitos de um utilizador
+    // ----------------------------------------------------------------
+
+    public List<Transaction> listarDepositosPorUtilizador(int utilizadorId) {
+        return listarPorUtilizadorETipo(utilizadorId, Transaction.Tipo.deposito);
     }
 
-    // ALV-169 — Listar só recebimentos de um utilizador
-    public List<Transaction> listarRecebimentosPorUtilizador(int utilizadorId) {
-        return listarPorUtilizadorETipo(utilizadorId, Transaction.Tipo.RECEBIMENTO);
+    // ----------------------------------------------------------------
+    // Listar só levantamentos de um utilizador
+    // ----------------------------------------------------------------
+
+    public List<Transaction> listarLevantamentosPorUtilizador(int utilizadorId) {
+        return listarPorUtilizadorETipo(utilizadorId, Transaction.Tipo.levantamento);
     }
 
-    // ALV-169 — Total pago por um utilizador
-    public double totalPagoPorUtilizador(int utilizadorId) {
-        String sql = "SELECT SUM(valor) FROM transacao WHERE utilizadorId = ? AND tipo = 'PAGAMENTO'";
+    // ----------------------------------------------------------------
+    // Total depositado por um utilizador
+    // ----------------------------------------------------------------
+
+    public double totalDepositadoPorUtilizador(int utilizadorId) {
+        String sql = """
+                SELECT SUM(t.valor) FROM transacao t
+                JOIN conta c ON t.contaId = c.id
+                WHERE c.utilizadorId = ? AND t.tipo = 'deposito'
+                """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, utilizadorId);
-
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getDouble(1);
-                }
+                if (rs.next()) return rs.getDouble(1);
             }
         } catch (SQLException e) {
-            System.err.println("[TransactionDAO] Erro ao calcular total pago: " + e.getMessage());
+            System.err.println("[TransactionDAO] Erro ao calcular total depositado: " + e.getMessage());
         }
-
         return 0.0;
     }
 
-    // ALV-169 — Total recebido por um proprietário
-    public double totalRecebidoPorUtilizador(int utilizadorId) {
-        String sql = "SELECT SUM(valor) FROM transacao WHERE utilizadorId = ? AND tipo = 'RECEBIMENTO'";
+    // ----------------------------------------------------------------
+    // Total levantado por um utilizador
+    // ----------------------------------------------------------------
+
+    public double totalLevantadoPorUtilizador(int utilizadorId) {
+        String sql = """
+                SELECT SUM(t.valor) FROM transacao t
+                JOIN conta c ON t.contaId = c.id
+                WHERE c.utilizadorId = ? AND t.tipo = 'levantamento'
+                """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, utilizadorId);
-
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getDouble(1);
-                }
+                if (rs.next()) return rs.getDouble(1);
             }
         } catch (SQLException e) {
-            System.err.println("[TransactionDAO] Erro ao calcular total recebido: " + e.getMessage());
+            System.err.println("[TransactionDAO] Erro ao calcular total levantado: " + e.getMessage());
         }
-
         return 0.0;
     }
 
@@ -131,67 +131,56 @@ public class TransactionDAO {
     // ----------------------------------------------------------------
 
     private boolean inserir(Transaction t) {
-        String sql = """
-                INSERT INTO transacao (reservaId, utilizadorId, tipo, valor, data, descricao)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """;
+        String sql = "INSERT INTO transacao (contaId, valor, tipo) VALUES (?, ?, ?)";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setInt(1, t.getReservaId());
-            stmt.setInt(2, t.getUtilizadorId());
+            stmt.setInt(1, t.getContaId());
+            stmt.setDouble(2, t.getValor());
             stmt.setString(3, t.getTipo().name());
-            stmt.setDouble(4, t.getValor());
-            stmt.setTimestamp(5, Timestamp.valueOf(t.getData()));
-            stmt.setString(6, t.getDescricao());
 
             int linhas = stmt.executeUpdate();
-
             if (linhas > 0) {
                 try (ResultSet keys = stmt.getGeneratedKeys()) {
-                    if (keys.next()) {
-                        t.setId(keys.getInt(1));
-                    }
+                    if (keys.next()) t.setId(keys.getInt(1));
                 }
                 return true;
             }
-
         } catch (SQLException e) {
             System.err.println("[TransactionDAO] Erro ao inserir transação: " + e.getMessage());
         }
-
         return false;
     }
 
     private List<Transaction> listarPorUtilizadorETipo(int utilizadorId, Transaction.Tipo tipo) {
         List<Transaction> lista = new ArrayList<>();
 
-        String sql = "SELECT * FROM transacao WHERE utilizadorId = ? AND tipo = ? ORDER BY data DESC";
+        String sql = """
+                SELECT t.* FROM transacao t
+                JOIN conta c ON t.contaId = c.id
+                WHERE c.utilizadorId = ? AND t.tipo = ?
+                ORDER BY t.data DESC
+                """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, utilizadorId);
             stmt.setString(2, tipo.name());
-
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(mapRow(rs));
-                }
+                while (rs.next()) lista.add(mapRow(rs));
             }
         } catch (SQLException e) {
             System.err.println("[TransactionDAO] Erro ao listar por tipo: " + e.getMessage());
         }
-
         return lista;
     }
 
     private Transaction mapRow(ResultSet rs) throws SQLException {
+        Timestamp ts = rs.getTimestamp("data");
         return new Transaction(
                 rs.getInt("id"),
-                rs.getInt("reservaId"),
-                rs.getInt("utilizadorId"),
-                Transaction.Tipo.valueOf(rs.getString("tipo")),
+                rs.getInt("contaId"),
                 rs.getDouble("valor"),
-                rs.getTimestamp("data").toLocalDateTime(),
-                rs.getString("descricao")
+                Transaction.Tipo.valueOf(rs.getString("tipo")),
+                ts != null ? ts.toLocalDateTime() : null
         );
     }
 }
