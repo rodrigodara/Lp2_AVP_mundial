@@ -109,6 +109,26 @@ public class VeiculoDAO {
     }
 
     // ============================
+    // 6. LISTAR POR PROPRIETÁRIO — ALV-176
+    // ============================
+    public List<Veiculo> listarPorProprietario(int proprietarioId) throws SQLException {
+        List<Veiculo> lista = new ArrayList<>();
+        String sql = "SELECT * FROM veiculo WHERE proprietarioId = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, proprietarioId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+        }
+        return lista;
+    }
+
+    // ============================
     // MAPEAMENTO ResultSet → Veiculo
     // ============================
     private Veiculo mapRow(ResultSet rs) throws SQLException {
