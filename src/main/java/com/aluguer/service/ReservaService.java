@@ -125,6 +125,36 @@ public class ReservaService {
     }
 
     // ================================================================
+    // Concluir reserva
+    // ================================================================
+
+    public ResultadoOperacao concluirReserva(int reservaId, int proprietarioId) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            com.aluguer.dao.ReservaDAO dao = new com.aluguer.dao.ReservaDAO(conn);
+
+            com.aluguer.model.Reserva reserva = dao.buscarPorId(reservaId);
+            if (reserva == null) {
+                return ResultadoOperacao.erro("Reserva #" + reservaId + " não encontrada.");
+            }
+
+            if (reserva.getEstado() != Estado.ACEITE) {
+                return ResultadoOperacao.erro("Só é possível concluir reservas no estado ACEITE.");
+            }
+
+            boolean ok = dao.atualizarEstado(reservaId, Estado.CONCLUIDO);
+            if (ok) {
+                return ResultadoOperacao.sucesso("Reserva #" + reservaId + " marcada como concluída.");
+            } else {
+                return ResultadoOperacao.erro("Falha ao concluir a reserva.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return ResultadoOperacao.erro("Erro de base de dados: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
     // ALV-89 — Atualizar estado da reserva (uso geral)
     // ================================================================
 

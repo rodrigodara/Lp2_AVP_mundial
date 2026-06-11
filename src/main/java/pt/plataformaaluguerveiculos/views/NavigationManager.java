@@ -103,6 +103,20 @@ public void navegarParaRegisto() {
     navegarPara(registo.getRoot());
 }
 
+    public void navegarParaAvaliar(int reservaId, int avaliadorId, int avaliadoId,
+                                    com.aluguer.model.Avaliacao.TipoAvaliado tipo,
+                                    String nomeAvaliado) {
+        garantirNavbar();
+        AvaliarView view = new AvaliarView(reservaId, avaliadorId, avaliadoId, tipo, nomeAvaliado);
+        navegarPara(view.getRoot());
+    }
+
+    public void navegarParaAvaliacoes(int avaliadoId, String nomeAvaliado) {
+        garantirNavbar();
+        AvaliacoesView view = new AvaliacoesView(avaliadoId, nomeAvaliado);
+        navegarPara(view.getRoot());
+    }
+
     public void sair() {
         navegarParaLogin();
     }
