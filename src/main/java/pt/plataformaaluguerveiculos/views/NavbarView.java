@@ -22,11 +22,12 @@ public class NavbarView {
         Button btnReservas         = new Button("As Minhas Reservas");
         Button btnPedidos          = new Button("Pedidos Recebidos");
         Button btnConta            = new Button("Conta");
+        Button btnHistorico         = new Button("Histórico Veículos");
         Button btnSair             = new Button("Sair");
 
         // Estilos
         for (Button btn : new Button[]{btnDashboard, btnProcurarVeiculos,
-                                       btnReservas, btnPedidos, btnConta, btnSair}) {
+                                       btnReservas, btnPedidos, btnConta, btnHistorico, btnSair}) {
             btn.getStyleClass().add("navbar-button");
         }
 
@@ -43,6 +44,9 @@ public class NavbarView {
         btnPedidos.setOnAction(e ->
             NavigationManager.getInstance().navegarParaPedidosRecebidos());
 
+        btnHistorico.setOnAction(e ->
+            NavigationManager.getInstance().navegarParaHistoricoVeiculos());
+
         // ALV-118: navegar para gestão de conta
         btnConta.setOnAction(e ->
             NavigationManager.getInstance().navegarParaConta());
@@ -51,7 +55,7 @@ public class NavbarView {
             NavigationManager.getInstance().sair());
 
         navbar.getChildren().addAll(
-            btnDashboard, btnProcurarVeiculos, btnReservas, btnPedidos, btnConta, btnSair
+            btnDashboard, btnProcurarVeiculos, btnReservas, btnPedidos, btnConta, btnHistorico, btnSair
         );
         navbar.getStyleClass().add("navbar");
         navbar.setSpacing(10);

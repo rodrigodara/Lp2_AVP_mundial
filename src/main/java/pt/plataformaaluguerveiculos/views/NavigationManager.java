@@ -130,6 +130,14 @@ public class NavigationManager {
         }
     }
 
+    // ALV-181 — Navegar para histórico de alugueres dos veículos
+    public void navegarParaHistoricoVeiculos() {
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+        HistoricoVeiculosView view = new HistoricoVeiculosView(utilizadorLogadoId);
+        navegarPara(view.getRoot());
+    }
+
     public void sair() {
         navegarParaLogin();
     }
