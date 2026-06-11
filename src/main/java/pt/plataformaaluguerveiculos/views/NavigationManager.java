@@ -45,7 +45,6 @@ public class NavigationManager {
     }
 
     public void navegarParaLogin() {
-        // Esconde navbar e mostra login
         if (baseLayout != null) {
             baseLayout.getRoot().setTop(null);
         }
@@ -53,72 +52,36 @@ public class NavigationManager {
         navegarPara(login.getRoot());
     }
 
-    // ALV-64 – ir para formulário de reserva
+    public void navegarParaRegisto() {
+        if (baseLayout != null) {
+            baseLayout.getRoot().setTop(null);
+        }
+        RegistoView registo = new RegistoView();
+        navegarPara(registo.getRoot());
+    }
+
+    // ALV-64 — ir para formulário de reserva
     public void navegarParaCriarReserva(CriarReservaView view) {
         navegarPara(view.getRoot());
     }
 
     public void navegarParaPedidosRecebidos() {
-        if (utilizadorLogadoId < 0) {
-            System.err.println("[NavManager] Utilizador não autenticado.");
-            return;
-        }
+        if (utilizadorLogadoId < 0) return;
         garantirNavbar();
         PedidosRecebidosView pedidos = new PedidosRecebidosView(utilizadorLogadoId);
         navegarPara(pedidos.getRoot());
     }
 
-
     public void navegarParaAprovarReservas(int proprietarioId) {
         navegarPara(new PedidosRecebidosView(proprietarioId).getRoot());
     }
 
-    // ----------------------------------------------------------------
     // ALV-100 — Navegar para "As Minhas Reservas"
-    // ----------------------------------------------------------------
     public void navegarParaMinhasReservas() {
-        if (utilizadorLogadoId < 0) {
-            System.err.println("[NavManager] Utilizador não autenticado.");
-            return;
-        }
+        if (utilizadorLogadoId < 0) return;
         garantirNavbar();
         MinhasReservasView minhasReservas = new MinhasReservasView(utilizadorLogadoId);
         navegarPara(minhasReservas.getRoot());
-    }
-
-    // ----------------------------------------------------------------
-    // Auxiliar — garante que a navbar está visível
-    // ----------------------------------------------------------------
-    private void garantirNavbar() {
-        if (baseLayout != null && baseLayout.getRoot().getTop() == null) {
-            baseLayout.getRoot().setTop(baseLayout.getNavbarView().getNavbar());
-        }
-    }
-
-public void navegarParaRegisto() {
-    if (baseLayout != null) {
-        baseLayout.getRoot().setTop(null);
-    }
-    RegistoView registo = new RegistoView();
-    navegarPara(registo.getRoot());
-}
-
-    public void navegarParaAvaliar(int reservaId, int avaliadorId, int avaliadoId,
-                                    com.aluguer.model.Avaliacao.TipoAvaliado tipo,
-                                    String nomeAvaliado) {
-        garantirNavbar();
-        AvaliarView view = new AvaliarView(reservaId, avaliadorId, avaliadoId, tipo, nomeAvaliado);
-        navegarPara(view.getRoot());
-    }
-
-    public void navegarParaAvaliacoes(int avaliadoId, String nomeAvaliado) {
-        garantirNavbar();
-        AvaliacoesView view = new AvaliacoesView(avaliadoId, nomeAvaliado);
-        navegarPara(view.getRoot());
-    }
-
-    public void sair() {
-        navegarParaLogin();
     }
 
     public void navegarParaProcurarVeiculos() {
@@ -128,10 +91,36 @@ public void navegarParaRegisto() {
     }
 
     public void navegarParaHistoricoTransacoes() {
-    if (utilizadorLogadoId < 0) return;
-    garantirNavbar();
-    HistoricoTransacoesView view = new HistoricoTransacoesView(utilizadorLogadoId);
-    navegarPara(view.getRoot());
-}
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+        HistoricoTransacoesView view = new HistoricoTransacoesView(utilizadorLogadoId);
+        navegarPara(view.getRoot());
+    }
 
+    // ALV-118 — Navegar para gestão de conta (saldo)
+    public void navegarParaConta() {
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+        ContaView view = new ContaView();
+        navegarPara(view.getRoot());
+    }
+
+    // ALV-171 — Navegar para gestão de indisponibilidade de um veículo
+    public void navegarParaIndisponibilidade(int veiculoId) {
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+        IndisponibilidadeView view = new IndisponibilidadeView(veiculoId);
+        navegarPara(view.getRoot());
+    }
+
+    // Auxiliar — garante que a navbar está visível
+    private void garantirNavbar() {
+        if (baseLayout != null && baseLayout.getRoot().getTop() == null) {
+            baseLayout.getRoot().setTop(baseLayout.getNavbarView().getNavbar());
+        }
+    }
+
+    public void sair() {
+        navegarParaLogin();
+    }
 }
