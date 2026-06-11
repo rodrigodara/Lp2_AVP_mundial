@@ -130,7 +130,7 @@
 .btn-secundario:hover { -fx-background-color: #e8eaf6; }
 .reserva-tabs { -fx-tab-min-height: 36px; }
 .reserva-badge-pendente {
-    -fx-background-color: #fff3e0; -fx-text-fill: #e65100;
+    -fx-background-color: #fff3e0; -fx-text-fill: #e60000;
     -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
 }
 .reserva-badge-aceite {
