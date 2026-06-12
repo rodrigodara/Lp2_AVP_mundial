@@ -124,6 +124,82 @@ public class ReservaService {
         }
     }
 
+        // ================================================================
+        // ALV-138 — Cancelar reserva (regra das 48 horas)
+        // ================================================================
+
+        /**
+         * Cancela uma reserva ACEITE pelo utilizador, respeitando a regra das 48 horas.
+         *
+         * Regras:
+         *  - Só o utilizador dono da reserva pode cancelar.
+         *  - Só reservas ACEITES podem ser canceladas.
+         *  - Faltando menos de 48 horas para o início → cancelamento proibido.
+         */
+        public ResultadoOperacao cancelarReserva(int reservaId, int utilizadorId) {
+            try (Connection conn = DatabaseConnection.getConnection()) {
+                com.aluguer.dao.ReservaDAO dao = new com.aluguer.dao.ReservaDAO(conn);
+
+                // 1. Buscar reserva
+                com.aluguer.model.Reserva reserva = dao.buscarPorId(reservaId);
+                if (reserva == null) {
+                    return ResultadoOperacao.erro("Reserva #" + reservaId + " não encontrada.");
+                }
+
+                // 2. Verificar se pertence ao utilizador
+                if (reserva.getUtilizadorId() != utilizadorId) {
+                    return ResultadoOperacao.erro("Não pode cancelar reservas de outros utilizadores.");
+                }
+
+                // 3. Só reservas ACEITES podem ser canceladas
+                if (reserva.getEstado() != Estado.ACEITE) {
+                    return ResultadoOperacao.erro(
+                        "Apenas reservas ACEITES podem ser canceladas. Estado atual: " + reserva.getEstado()
+                    );
+                }
+
+                // 4. Regra das 48 horas
+                long horas = java.time.Duration.between(
+                        java.time.LocalDateTime.now(),
+                        reserva.getDataInicio().atStartOfDay()
+                ).toHours();
+
+                if (horas < 48) {
+                    return ResultadoOperacao.erro(
+                        "Não é possível cancelar: faltam menos de 48 horas para o início."
+                    );
+                }
+
+               
+                // 5. Atualizar estado para CANCELADO
+                boolean ok = dao.atualizarEstado(reservaId, Estado.CANCELADO);
+
+                if (!ok) {
+                    return ResultadoOperacao.erro("Falha ao cancelar a reserva.");
+                }
+
+                // 6. Reembolso (caução + preço total)
+                double reembolso = reserva.getCaucao() + reserva.getPrecoTotal();
+
+                com.aluguer.dao.ContaDAO contaDAO = new com.aluguer.dao.ContaDAO(conn);
+                boolean saldoOk = contaDAO.atualizarSaldo(reserva.getUtilizadorId(), reembolso);
+
+                if (!saldoOk) {
+                    return ResultadoOperacao.erro("Reserva cancelada, mas falhou o reembolso.");
+                }
+
+                return ResultadoOperacao.sucesso(
+                    "Reserva cancelada com sucesso. Reembolso: +" + reembolso + "€"
+                );
+
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                return ResultadoOperacao.erro("Erro de base de dados: " + e.getMessage());
+            }
+        }
+
+
     // ================================================================
     // ALV-89 — Atualizar estado da reserva (uso geral)
     // ================================================================

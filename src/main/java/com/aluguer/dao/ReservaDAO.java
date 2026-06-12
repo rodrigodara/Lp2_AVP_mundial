@@ -132,6 +132,11 @@ public class ReservaDAO {
             return false;
         }
     }
+    
+    public boolean cancelar(int id) {
+    return atualizarEstado(id, Reserva.Estado.CANCELADO);
+    }
+
 
     public boolean existeSobreposicao(int veiculoId, LocalDate inicio, LocalDate fim, int excluirId) {
         String sql = """
