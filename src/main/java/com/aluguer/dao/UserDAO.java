@@ -64,8 +64,8 @@ public class UserDAO {
         String sql = """
                 INSERT INTO utilizadores
                     (email, nome, nif, numero_carta, validade_carta, password_hash,
-                     saldo, perfil, ativo, data_criacao)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                     tipo, saldo, perfil, ativo, data_criacao)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -77,9 +77,10 @@ public class UserDAO {
             ps.setString(4, user.getNumeroCarta());
             ps.setDate(5, Date.valueOf(user.getValidadeCarta()));
             ps.setString(6, user.getPasswordHash());
-            ps.setBigDecimal(7, user.getSaldo());
-            ps.setString(8, user.getPerfil());
-            ps.setBoolean(9, user.isAtivo());
+            ps.setString(7, "locatario");
+            ps.setBigDecimal(8, user.getSaldo());
+            ps.setString(9, user.getPerfil());
+            ps.setBoolean(10, user.isAtivo());
 
             ps.executeUpdate();
 

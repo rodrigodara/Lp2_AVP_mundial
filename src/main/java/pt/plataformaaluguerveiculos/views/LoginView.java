@@ -111,7 +111,12 @@ public class LoginView {
 
         campoPassword.setOnAction(e -> btnEntrar.fire());
 
-        root.getChildren().addAll(titulo, subtitulo, campoEmail, campoPassword, lblErro, btnEntrar);
+        Button btnRegisto = new Button("Não tem conta? Registar-se");
+        btnRegisto.getStyleClass().add("btn-secundario");
+        btnRegisto.setMaxWidth(320);
+        btnRegisto.setOnAction(e -> NavigationManager.getInstance().navegarParaRegisto());
+
+        root.getChildren().addAll(titulo, subtitulo, campoEmail, campoPassword, lblErro, btnEntrar, btnRegisto);
     }
 
     public VBox getRoot() {

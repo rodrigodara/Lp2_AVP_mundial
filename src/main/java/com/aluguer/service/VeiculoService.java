@@ -23,4 +23,20 @@ public class VeiculoService {
     public boolean remover(int veiculoId) throws SQLException {
         return dao.apagar(veiculoId);
     }
+
+    public List<String> getMarcas() throws Exception {
+        return dao.listarMarcas();
+    }
+
+    public List<String> getLocalizacoes() throws Exception {
+        return dao.listarLocalizacoes();
+    }
+
+    public List<Veiculo> getVehiclesComFiltros(String marca, Double precoMax, String localizacao) throws Exception {
+        return dao.listarComFiltros(marca, precoMax, localizacao);
+    }
+
+    public List<Veiculo> pesquisar(String termo) throws Exception {
+        return dao.pesquisar(termo);
+    }
 }

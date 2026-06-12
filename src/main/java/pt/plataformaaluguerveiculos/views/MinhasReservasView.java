@@ -6,11 +6,14 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.aluguer.dao.ReservaDAO;
+import com.aluguer.model.Avaliacao;
 import com.aluguer.model.Reserva;
+import com.aluguer.service.AvaliacaoService;
 import com.aluguer.util.DatabaseConnection;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
@@ -153,6 +156,33 @@ public class MinhasReservasView {
         lblPreco.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
 
         card.getChildren().addAll(topo, lblVeiculo, lblDatas, lblPreco);
+
+        // Botão Avaliar — apenas em reservas CONCLUÍDAS
+        if (r.getEstado() == Reserva.Estado.CONCLUIDO) {
+            try {
+                AvaliacaoService avaliacaoService = new AvaliacaoService();
+                boolean jaAvaliou = avaliacaoService.jaAvaliou(r.getId(), utilizadorId);
+
+                Button btnAvaliar = new Button(jaAvaliou ? "Já avaliou" : "Avaliar Proprietário");
+                btnAvaliar.getStyleClass().add(jaAvaliou ? "btn-secundario" : "btn-primario");
+                btnAvaliar.setDisable(jaAvaliou);
+                btnAvaliar.setOnAction(e -> NavigationManager.getInstance().navegarParaAvaliar(
+                    r.getId(),
+                    utilizadorId,
+                    r.getVeiculoId(), // será resolvido para o proprietário na view
+                    Avaliacao.TipoAvaliado.PROPRIETARIO,
+                    "Proprietário do veículo #" + r.getVeiculoId()
+                ));
+
+                HBox acoes = new HBox(btnAvaliar);
+                acoes.setAlignment(Pos.CENTER_RIGHT);
+                card.getChildren().add(acoes);
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
         return card;
     }
 
