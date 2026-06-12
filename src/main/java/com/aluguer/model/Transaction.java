@@ -5,75 +5,58 @@ import java.time.LocalDateTime;
 public class Transaction {
 
     public enum Tipo {
-        PAGAMENTO,
-        RECEBIMENTO
+        deposito,
+        levantamento
     }
 
     private int id;
-    private int reservaId;
-    private int utilizadorId;
-    private Tipo tipo;
+    private int contaId;
     private double valor;
+    private Tipo tipo;
     private LocalDateTime data;
-    private String descricao;
 
     // Construtor completo (usado pelo DAO ao mapear da BD)
-    public Transaction(int id, int reservaId, int utilizadorId,
-                       Tipo tipo, double valor,
-                       LocalDateTime data, String descricao) {
-        this.id = id;
-        this.reservaId = reservaId;
-        this.utilizadorId = utilizadorId;
-        this.tipo = tipo;
-        this.valor = valor;
-        this.data = data;
-        this.descricao = descricao;
+    public Transaction(int id, int contaId, double valor, Tipo tipo, LocalDateTime data) {
+        this.id      = id;
+        this.contaId = contaId;
+        this.valor   = valor;
+        this.tipo    = tipo;
+        this.data    = data;
     }
 
     // Construtor sem id (para inserir na BD)
-    public Transaction(int reservaId, int utilizadorId,
-                       Tipo tipo, double valor, String descricao) {
-        this.reservaId = reservaId;
-        this.utilizadorId = utilizadorId;
-        this.tipo = tipo;
-        this.valor = valor;
-        this.data = LocalDateTime.now();
-        this.descricao = descricao;
+    public Transaction(int contaId, double valor, Tipo tipo) {
+        this.contaId = contaId;
+        this.valor   = valor;
+        this.tipo    = tipo;
+        this.data    = LocalDateTime.now();
     }
 
     // ----------------------------------------------------------------
     // Getters & Setters
     // ----------------------------------------------------------------
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public int getId()             { return id; }
+    public void setId(int id)      { this.id = id; }
 
-    public int getReservaId() { return reservaId; }
-    public void setReservaId(int reservaId) { this.reservaId = reservaId; }
+    public int getContaId()              { return contaId; }
+    public void setContaId(int contaId)  { this.contaId = contaId; }
 
-    public int getUtilizadorId() { return utilizadorId; }
-    public void setUtilizadorId(int utilizadorId) { this.utilizadorId = utilizadorId; }
+    public double getValor()             { return valor; }
+    public void setValor(double valor)   { this.valor = valor; }
 
-    public Tipo getTipo() { return tipo; }
-    public void setTipo(Tipo tipo) { this.tipo = tipo; }
+    public Tipo getTipo()                { return tipo; }
+    public void setTipo(Tipo tipo)       { this.tipo = tipo; }
 
-    public double getValor() { return valor; }
-    public void setValor(double valor) { this.valor = valor; }
-
-    public LocalDateTime getData() { return data; }
-    public void setData(LocalDateTime data) { this.data = data; }
-
-    public String getDescricao() { return descricao; }
-    public void setDescricao(String descricao) { this.descricao = descricao; }
+    public LocalDateTime getData()                { return data; }
+    public void setData(LocalDateTime data)       { this.data = data; }
 
     @Override
     public String toString() {
         return "Transaction #" + id +
-                " | Reserva: " + reservaId +
-                " | Utilizador: " + utilizadorId +
+                " | Conta: " + contaId +
                 " | Tipo: " + tipo +
                 " | Valor: " + String.format("%.2f€", valor) +
-                " | Data: " + data +
-                " | " + descricao;
+                " | Data: " + data;
     }
 }
