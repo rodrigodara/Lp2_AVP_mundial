@@ -4,7 +4,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 import com.aluguer.dao.AvailabilityDAO;
+import com.aluguer.dao.ReservaDAO;
+import com.aluguer.dao.VeiculoDAO;
+import com.aluguer.model.Reserva;
 import com.aluguer.model.Reserva.Estado;
+import com.aluguer.model.Veiculo;
 import com.aluguer.util.DatabaseConnection;
 
 /**
@@ -22,57 +26,67 @@ public class ReservaService {
     // ================================================================
 
     public ResultadoOperacao aceitarReserva(int reservaId, int proprietarioId) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            com.aluguer.dao.ReservaDAO dao = new com.aluguer.dao.ReservaDAO(conn);
+    try (Connection conn = DatabaseConnection.getConnection()) {
 
-            com.aluguer.model.Reserva reserva = dao.buscarPorId(reservaId);
-            if (reserva == null) {
-                return ResultadoOperacao.erro("Reserva #" + reservaId + " não encontrada.");
-            }
+        ReservaDAO dao = new ReservaDAO(conn);
 
-            if (reserva.getEstado() != Estado.PENDENTE) {
-                return ResultadoOperacao.erro(
-                    "Não é possível aceitar uma reserva no estado: " + reserva.getEstado()
-                );
-            }
-
-            boolean sobreposicao = dao.existeSobreposicao(
-                reserva.getVeiculoId(),
-                reserva.getDataInicio(),
-                reserva.getDataFim(),
-                reservaId
-            );
-            if (sobreposicao) {
-                return ResultadoOperacao.erro(
-                    "Existe conflito de datas com outra reserva aceite para este veículo."
-                );
-            }
-
-            // ALV-174 — Verificar indisponibilidade do veículo
-            AvailabilityDAO availabilityDAO = new AvailabilityDAO(conn);
-            boolean indisponivel = availabilityDAO.estaIndisponivel(
-                reserva.getVeiculoId(),
-                reserva.getDataInicio(),
-                reserva.getDataFim()
-            );
-            if (indisponivel) {
-                return ResultadoOperacao.erro(
-                    "O veículo está marcado como indisponível nessas datas."
-                );
-            }
-
-            boolean ok = dao.atualizarEstado(reservaId, Estado.ACEITE);
-            if (ok) {
-                return ResultadoOperacao.sucesso("Reserva #" + reservaId + " aceite com sucesso.");
-            } else {
-                return ResultadoOperacao.erro("Falha ao aceitar a reserva. Tente novamente.");
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            return ResultadoOperacao.erro("Erro de base de dados: " + e.getMessage());
+        Reserva reserva = dao.buscarPorId(reservaId);
+        if (reserva == null) {
+            return ResultadoOperacao.erro("Reserva #" + reservaId + " não encontrada.");
         }
+
+        if (reserva.getEstado() != Estado.PENDENTE) {
+            return ResultadoOperacao.erro(
+                "Não é possível aceitar uma reserva no estado: " + reserva.getEstado()
+            );
+        }
+
+        boolean sobreposicao = dao.existeSobreposicao(
+            reserva.getVeiculoId(),
+            reserva.getDataInicio(),
+            reserva.getDataFim(),
+            reservaId
+        );
+        if (sobreposicao) {
+            return ResultadoOperacao.erro(
+                "Existe conflito de datas com outra reserva aceite para este veículo."
+            );
+        }
+
+        // ALV-174 — Verificar indisponibilidade do veículo
+        AvailabilityDAO availabilityDAO = new AvailabilityDAO(conn);
+        boolean indisponivel = availabilityDAO.estaIndisponivel(
+            reserva.getVeiculoId(),
+            reserva.getDataInicio(),
+            reserva.getDataFim()
+        );
+        if (indisponivel) {
+            return ResultadoOperacao.erro(
+                "O veículo está marcado como indisponível nessas datas."
+            );
+        }
+
+        boolean ok = dao.atualizarEstado(reservaId, Estado.ACEITE);
+
+        if (ok) {
+
+            // ALV-143 — Registar km inicial
+            VeiculoDAO veiculoDAO = new VeiculoDAO(conn);
+            int kmAtual = veiculoDAO.buscarKmAtual(reserva.getVeiculoId());
+            dao.atualizarKmInicial(reservaId, kmAtual);
+
+            return ResultadoOperacao.sucesso("Reserva #" + reservaId + " aceite com sucesso.");
+
+        } else {
+            return ResultadoOperacao.erro("Falha ao aceitar a reserva. Tente novamente.");
+        }
+
+    } catch (SQLException e) {
+        e.printStackTrace();
+        return ResultadoOperacao.erro("Erro de base de dados: " + e.getMessage());
     }
+}
+
 
     // ================================================================
     // ALV-88 — Rejeitar reserva
@@ -267,6 +281,76 @@ public class ReservaService {
                 return false;
         }
     }
+
+    // ------------------------------------------------------------------
+    // ALV-146 — Calcular kms percorridos
+    // ------------------------------------------------------------------
+    private int calcularKmsPercorridos(Reserva r) {
+        return r.getKmFinal() - r.getKmInicial();
+    }
+
+    // ------------------------------------------------------------------
+    // ALV-147 — Calcular combustível gasto
+    // ------------------------------------------------------------------
+    private double calcularCombustivelGasto(int kmsPercorridos, double consumoMedio) {
+        return (kmsPercorridos / 100.0) * consumoMedio;
+    }
+
+    // ------------------------------------------------------------------
+    // ALV-148 — Calcular custo efetivo
+    // ------------------------------------------------------------------
+    private double calcularCustoEfetivo(Reserva reserva, int kmsPercorridos, double precoPorKm) {
+        return reserva.getPrecoTotal() + (kmsPercorridos * precoPorKm);
+    }
+
+
+    // ------------------------------------------------------------------
+    // ALV-149 — Encerrar aluguer
+    // ------------------------------------------------------------------
+    public ResultadoOperacao encerrarAluguer(int reservaId, int kmFinal) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+
+            ReservaDAO reservaDAO = new ReservaDAO(conn);
+            VeiculoDAO veiculoDAO = new VeiculoDAO(conn);
+
+            Reserva reserva = reservaDAO.buscarPorId(reservaId);
+            if (reserva == null) {
+                return ResultadoOperacao.erro("Reserva não encontrada.");
+            }
+
+            if (kmFinal < reserva.getKmInicial()) {
+                return ResultadoOperacao.erro("Km final não pode ser inferior ao km inicial.");
+            }
+
+            // Atualizar km final
+            reservaDAO.atualizarKmFinal(reservaId, kmFinal);
+
+            // Recarregar reserva
+            reserva = reservaDAO.buscarPorId(reservaId);
+
+            int kmsPercorridos = calcularKmsPercorridos(reserva);
+
+            Veiculo veiculo = veiculoDAO.buscarPorId(reserva.getVeiculoId());
+            double combustivelGasto = calcularCombustivelGasto(kmsPercorridos, veiculo.getConsumoMedio());
+            double custoEfetivo = calcularCustoEfetivo(reserva, kmsPercorridos, veiculo.getPrecoPorKm());
+
+            // Atualizar custo final
+            reservaDAO.atualizarPrecoTotal(reservaId, custoEfetivo);
+
+            // Atualizar quilometragem do veículo
+            veiculoDAO.atualizarKm(veiculo.getId(), kmFinal);
+
+            // Marcar como concluída
+            reservaDAO.atualizarEstado(reservaId, Reserva.Estado.CONCLUIDO);
+
+            return ResultadoOperacao.sucesso("Aluguer encerrado com sucesso.");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return ResultadoOperacao.erro("Erro de base de dados: " + e.getMessage());
+        }
+    }
+
 
     // ================================================================
     // Classe auxiliar de resultado
