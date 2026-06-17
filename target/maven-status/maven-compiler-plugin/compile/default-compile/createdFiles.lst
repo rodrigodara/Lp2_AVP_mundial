@@ -4,11 +4,14 @@ pt\plataformaaluguerveiculos\views\FeedbackView.class
 com\aluguer\model\Reserva.class
 com\aluguer\service\ReservaService.class
 com\aluguer\controller\RegistoController.class
+pt\plataformaaluguerveiculos\views\DetalheVeiculoView.class
 com\aluguer\model\Veiculo.class
 pt\plataformaaluguerveiculos\views\LoginView.class
 com\aluguer\controller\ReservaService.class
+com\aluguer\model\ReceitaVeiculo.class
 pt\plataformaaluguerveiculos\App.class
 com\aluguer\util\SessionManager.class
+pt\plataformaaluguerveiculos\views\ConsultaReceitaView.class
 pt\plataformaaluguerveiculos\views\HistoricoVeiculosView$1.class
 com\aluguer\controller\LoginController.class
 pt\plataformaaluguerveiculos\views\BaseLayoutView.class
@@ -21,6 +24,7 @@ pt\plataformaaluguerveiculos\views\PedidosRecebidosView.class
 com\aluguer\controller\ReservaService$ReservaException.class
 com\aluguer\model\Reserva$Estado.class
 com\aluguer\controller\LoginService.class
+com\aluguer\dao\ReceitaVeiculoDAO.class
 com\aluguer\dao\UserDAO.class
 com\aluguer\service\VeiculoService.class
 com\aluguer\service\ReservaService$ResultadoOperacao.class
@@ -29,6 +33,7 @@ com\aluguer\MainApp.class
 com\aluguer\controller\RegistoService.class
 pt\plataformaaluguerveiculos\views\NavbarView.class
 com\aluguer\model\User.class
+pt\plataformaaluguerveiculos\views\MeusVeiculosView.class
 com\aluguer\util\PasswordUtil.class
 pt\plataformaaluguerveiculos\views\HistoricoVeiculosView.class
 com\aluguer\service\PrecoDinamicoService.class
