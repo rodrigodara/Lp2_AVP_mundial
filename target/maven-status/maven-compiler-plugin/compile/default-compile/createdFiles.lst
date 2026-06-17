@@ -1,3 +1,4 @@
+com\aluguer\service\ReservaService$1.class
 com\aluguer\util\DatabaseConnection.class
 pt\plataformaaluguerveiculos\views\FeedbackView.class
 com\aluguer\model\Reserva.class
@@ -7,6 +8,7 @@ com\aluguer\controller\ReservaService.class
 com\aluguer\model\ReceitaVeiculo.class
 com\aluguer\util\SessionManager.class
 pt\plataformaaluguerveiculos\views\ConsultaReceitaView.class
+pt\plataformaaluguerveiculos\views\HistoricoVeiculosView$1.class
 com\aluguer\dao\VeiculoDAO.class
 pt\plataformaaluguerveiculos\views\CriarReservaView$2.class
 pt\plataformaaluguerveiculos\views\CriarReservaView$1.class

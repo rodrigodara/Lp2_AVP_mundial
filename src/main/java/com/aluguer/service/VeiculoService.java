@@ -14,6 +14,10 @@ public class VeiculoService {
         return dao.listarTodos();
     }
 
+    public boolean inserir(Veiculo v) throws SQLException {
+        return dao.inserir(v);
+    }
+
     // ALV-176 — endpoint GET myVehicles
     public List<Veiculo> listarPorProprietario(int proprietarioId) throws SQLException {
         return dao.listarPorProprietario(proprietarioId);
