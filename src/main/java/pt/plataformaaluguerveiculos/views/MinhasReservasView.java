@@ -157,6 +157,19 @@ public class MinhasReservasView {
 
         card.getChildren().addAll(topo, lblVeiculo, lblDatas, lblPreco);
 
+        // Botão Cancelar (só aparece se puder cancelar)
+        javafx.scene.control.Button btnCancelar = new javafx.scene.control.Button("Cancelar");
+        btnCancelar.setStyle(
+            "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold; " +
+            "-fx-background-radius: 6; -fx-padding: 6 12;"
+        );
+
+        // Verificar se pode cancelar
+        if (podeCancelar(r)) {
+            btnCancelar.setOnAction(e -> cancelarReserva(r));
+            card.getChildren().add(btnCancelar);
+        }
+
         // Botão Avaliar — apenas em reservas CONCLUÍDAS
         if (r.getEstado() == Reserva.Estado.CONCLUIDO) {
             try {
@@ -185,6 +198,40 @@ public class MinhasReservasView {
 
         return card;
     }
+
+    //METODOS CACELAMENTO RESERVAS
+    private boolean podeCancelar(Reserva r) {
+
+    // 1. Só reservas ACEITES podem ser canceladas
+    if (r.getEstado() != Reserva.Estado.ACEITE)
+        return false;
+
+    // 2. Regra das 48 horas
+    long horas = java.time.Duration.between(
+            java.time.LocalDateTime.now(),
+            r.getDataInicio().atStartOfDay()
+    ).toHours();
+
+    return horas >= 48;
+    }
+
+    private void cancelarReserva(Reserva r) {
+    com.aluguer.service.ReservaService service = new com.aluguer.service.ReservaService();
+    var resultado = service.cancelarReserva(r.getId(), utilizadorId);
+
+    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+        resultado.isSucesso() ? javafx.scene.control.Alert.AlertType.INFORMATION
+                              : javafx.scene.control.Alert.AlertType.ERROR
+    );
+    alert.setHeaderText(null);
+    alert.setContentText(resultado.getMensagem());
+    alert.showAndWait();
+
+    if (resultado.isSucesso()) {
+        construirPagina(); // refresca a página
+    }
+    }
+    //FIM METODOS CANCELAR VIAGENS
 
     private List<Reserva> carregarReservas() {
         try (Connection conn = DatabaseConnection.getConnection()) {

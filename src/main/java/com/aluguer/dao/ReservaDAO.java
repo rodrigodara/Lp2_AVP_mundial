@@ -132,6 +132,11 @@ public class ReservaDAO {
             return false;
         }
     }
+    
+    public boolean cancelar(int id) {
+    return atualizarEstado(id, Reserva.Estado.CANCELADO);
+    }
+
 
     public boolean existeSobreposicao(int veiculoId, LocalDate inicio, LocalDate fim, int excluirId) {
         String sql = """
@@ -251,6 +256,66 @@ public class ReservaDAO {
             return false;
         }
     }
+    // ------------------------------------------------------------------
+    // ALV-143 — Registar km inicial
+    // ------------------------------------------------------------------
+
+    /**
+     * Regista a quilometragem inicial do veículo na reserva, no momento
+     * em que o aluguer é aceite.
+     *
+     * O valor corresponde à quilometragem atual do veículo e é usado
+     * posteriormente para calcular os quilómetros percorridos.
+     */
+    public boolean atualizarKmInicial(int reservaId, int kmInicial) {
+        String sql = "UPDATE reserva SET kmInicial = ? WHERE id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, kmInicial);
+            stmt.setInt(2, reservaId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao atualizar kmInicial: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // ALV-144 — Registar km final
+    // ------------------------------------------------------------------
+
+    /**
+     * Atualiza o kmFinal da reserva no encerramento do aluguer.
+     * O valor deve ser >= kmInicial.
+     */
+    public boolean atualizarKmFinal(int reservaId, int kmFinal) {
+        String sql = "UPDATE reserva SET kmFinal = ? WHERE id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, kmFinal);
+            stmt.setInt(2, reservaId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao atualizar kmFinal: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public boolean atualizarPrecoTotal(int reservaId, double precoTotal) {
+        String sql = "UPDATE reserva SET precoTotal = ? WHERE id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDouble(1, precoTotal);
+            stmt.setInt(2, reservaId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao atualizar precoTotal: " + e.getMessage());
+            return false;
+        }
+    }
+
+
+
 
     // ------------------------------------------------------------------
     // ALV-127 — Verificar reservas existentes para um veículo

@@ -149,6 +149,43 @@ public class VeiculoDAO {
         return lista;
     }
 
+    // ------------------------------------------------------------------
+// ALV-145 — Atualizar quilometragem do veículo
+// ------------------------------------------------------------------
+
+/**
+ * Atualiza a quilometragem total do veículo após o aluguer terminar.
+ * O valor deve corresponder ao kmFinal registado na reserva.
+ */
+public boolean atualizarKm(int veiculoId, int novoKm) {
+    String sql = "UPDATE veiculo SET quilometragem = ? WHERE id = ?";
+
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setInt(1, novoKm);
+        stmt.setInt(2, veiculoId);
+        return stmt.executeUpdate() > 0;
+    } catch (SQLException e) {
+        System.err.println("[VeiculoDAO] Erro ao atualizar quilometragem: " + e.getMessage());
+        return false;
+    }
+}
+
+public int buscarKmAtual(int veiculoId) {
+    String sql = "SELECT quilometragem FROM veiculo WHERE id = ?";
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        stmt.setInt(1, veiculoId);
+        try (ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) return rs.getInt("quilometragem");
+        }
+    } catch (SQLException e) {
+        System.err.println("[VeiculoDAO] Erro ao buscar quilometragem: " + e.getMessage());
+    }
+    return 0;
+}
+
+
     private Veiculo mapRow(ResultSet rs) throws SQLException {
         return new Veiculo(
             rs.getInt("id"),
