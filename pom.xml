@@ -15,9 +15,14 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javafx.version>21.0.2</javafx.version>
     </properties>
+    
 
     <dependencies>
-
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
         <!-- JavaFX — interface gráfica (ALV-29) -->
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -41,7 +46,11 @@
             <version>4.13.2</version>
             <scope>test</scope>
         </dependency> 
-
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.vintage</groupId>
             <artifactId>junit-vintage-engine</artifactId>

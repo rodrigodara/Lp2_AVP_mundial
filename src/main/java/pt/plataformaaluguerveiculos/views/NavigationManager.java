@@ -41,6 +41,13 @@ public class NavigationManager {
             baseLayout.setContent(pagina);
         }
     }
+    public void navegarParaRecuperarPassword() {
+        if (baseLayout != null) {
+            baseLayout.getRoot().setTop(null);
+        }
+        RecuperarPasswordView view = new RecuperarPasswordView();
+        navegarPara(view.getRoot());
+    }
 
     public void navegarParaDashboard() {
         DashboardView dashboard = new DashboardView();

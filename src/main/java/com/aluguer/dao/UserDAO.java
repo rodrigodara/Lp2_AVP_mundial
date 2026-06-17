@@ -12,27 +12,8 @@ import java.util.Optional;
 import com.aluguer.model.User;
 import com.aluguer.util.DatabaseConnection;
 
-/**
- * ALV-27 / ALV-28 — DAO para operações de utilizador na base de dados.
- *
- * Responsabilidades:
- *   - Registar novo utilizador (insert)
- *   - Verificar se email já existe (ALV-28)
- *   - Buscar utilizador por email (para login)
- *   - Buscar utilizador por id
- */
 public class UserDAO {
 
-    // -----------------------------------------------------------------
-    // ALV-28: Validar email único
-    // -----------------------------------------------------------------
-
-    /**
-     * Verifica se já existe um utilizador com o email dado.
-     *
-     * @param email email a verificar
-     * @return true se o email já estiver registado
-     */
     public boolean emailExiste(String email) throws SQLException {
         String sql = "SELECT 1 FROM utilizadores WHERE email = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -44,28 +25,30 @@ public class UserDAO {
         }
     }
 
-    // -----------------------------------------------------------------
-    // ALV-27: Endpoint de registo — inserir novo utilizador
-    // -----------------------------------------------------------------
+    public boolean nifExiste(String nif) throws SQLException {
+        String sql = "SELECT 1 FROM utilizadores WHERE nif = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nif);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
 
-    /**
-     * Insere um novo utilizador na base de dados.
-     * A password já deve vir em hash BCrypt (gerada em ALV-26).
-     *
-     * @param user utilizador a registar
-     * @return id gerado pelo MySQL
-     * @throws IllegalArgumentException se o email já existir
-     */
     public int registar(User user) throws SQLException {
         if (emailExiste(user.getEmail())) {
             throw new IllegalArgumentException("O email já está registado: " + user.getEmail());
+        }
+        if (nifExiste(user.getNif())) {
+            throw new IllegalArgumentException("O NIF já está registado: " + user.getNif());
         }
 
         String sql = """
                 INSERT INTO utilizadores
                     (email, nome, nif, numero_carta, validade_carta, password_hash,
-                     tipo, saldo, perfil, ativo, data_criacao)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                     tipo, saldo, perfil, ativo, data_criacao, security_question, security_answer)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -81,6 +64,8 @@ public class UserDAO {
             ps.setBigDecimal(8, user.getSaldo());
             ps.setString(9, user.getPerfil());
             ps.setBoolean(10, user.isAtivo());
+            ps.setString(11, user.getSecurityQuestion());
+            ps.setString(12, user.getSecurityAnswer());
 
             ps.executeUpdate();
 
@@ -95,16 +80,6 @@ public class UserDAO {
         throw new SQLException("Falha ao obter o id gerado após registo.");
     }
 
-    // -----------------------------------------------------------------
-    // Buscar por email — usado no login (ALV-30/31)
-    // -----------------------------------------------------------------
-
-    /**
-     * Devolve o utilizador com o email dado, se existir.
-     *
-     * @param email email de login
-     * @return Optional com o utilizador ou vazio se não encontrado
-     */
     public Optional<User> findByEmail(String email) throws SQLException {
         String sql = "SELECT * FROM utilizadores WHERE email = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -119,9 +94,6 @@ public class UserDAO {
         return Optional.empty();
     }
 
-    /**
-     * Devolve o utilizador com o id dado, se existir.
-     */
     public Optional<User> findById(int id) throws SQLException {
         String sql = "SELECT * FROM utilizadores WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -136,9 +108,40 @@ public class UserDAO {
         return Optional.empty();
     }
 
-    // -----------------------------------------------------------------
-    // Mapeamento ResultSet → User
-    // -----------------------------------------------------------------
+    public String getSecurityQuestion(String email) throws SQLException {
+        String sql = "SELECT security_question FROM utilizadores WHERE email = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                String q = rs.getString("security_question");
+                return (q == null || q.isBlank()) ? "" : q;
+            }
+        }
+    }
+
+    public String getSecurityAnswerHash(String email) throws SQLException {
+        String sql = "SELECT security_answer FROM utilizadores WHERE email = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("security_answer");
+            }
+        }
+        return null;
+    }
+
+    public boolean updatePassword(String email, String newHashedPassword) throws SQLException {
+        String sql = "UPDATE utilizadores SET password_hash = ? WHERE email = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, newHashedPassword);
+            ps.setString(2, email);
+            return ps.executeUpdate() > 0;
+        }
+    }
 
     private User mapRow(ResultSet rs) throws SQLException {
         Date validadeDate = rs.getDate("validade_carta");

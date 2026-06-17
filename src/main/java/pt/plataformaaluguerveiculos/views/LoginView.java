@@ -116,7 +116,12 @@ public class LoginView {
         btnRegisto.setMaxWidth(320);
         btnRegisto.setOnAction(e -> NavigationManager.getInstance().navegarParaRegisto());
 
-        root.getChildren().addAll(titulo, subtitulo, campoEmail, campoPassword, lblErro, btnEntrar, btnRegisto);
+        Button btnRecuperar = new Button("Esqueceste a password?");
+        btnRecuperar.getStyleClass().add("btn-secundario");
+        btnRecuperar.setMaxWidth(320);
+        btnRecuperar.setOnAction(e -> NavigationManager.getInstance().navegarParaRecuperarPassword());
+
+        root.getChildren().addAll(titulo, subtitulo, campoEmail, campoPassword, lblErro, btnEntrar, btnRecuperar, btnRegisto);
     }
 
     public VBox getRoot() {
