@@ -168,6 +168,8 @@ public class MinhasReservasView {
         if (podeCancelar(r)) {
             btnCancelar.setOnAction(e -> cancelarReserva(r));
             card.getChildren().add(btnCancelar);
+        }
+
         // Botão Avaliar — apenas em reservas CONCLUÍDAS
         if (r.getEstado() == Reserva.Estado.CONCLUIDO) {
             try {

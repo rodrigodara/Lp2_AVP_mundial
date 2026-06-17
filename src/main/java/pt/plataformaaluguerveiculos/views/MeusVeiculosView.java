@@ -77,6 +77,12 @@ public class MeusVeiculosView {
         // ============================
         // BOTÕES AÇÕES
         // ============================
+        Button btnAdicionar = new Button("+ Adicionar Veículo");
+        btnAdicionar.getStyleClass().add("btn-primario");
+        btnAdicionar.setOnAction(e ->
+            NavigationManager.getInstance().navegarParaAdicionarVeiculo()
+        );
+
         Button btnDetalhes = new Button("Ver Detalhes");
         btnDetalhes.getStyleClass().add("btn-primario");
         btnDetalhes.setDisable(true);
@@ -107,7 +113,7 @@ public class MeusVeiculosView {
             removerVeiculo(tabela.getSelectionModel().getSelectedItem())
         );
 
-        HBox acoes = new HBox(15, btnDetalhes, btnRemover);
+        HBox acoes = new HBox(15, btnAdicionar, btnDetalhes, btnRemover);
         acoes.setAlignment(Pos.CENTER);
 
         // ============================

@@ -71,7 +71,7 @@ public class ReservaService {
         if (ok) {
 
             // ALV-143 — Registar km inicial
-            VeiculoDAO veiculoDAO = new VeiculoDAO(conn);
+            VeiculoDAO veiculoDAO = new VeiculoDAO();
             int kmAtual = veiculoDAO.buscarKmAtual(reserva.getVeiculoId());
             dao.atualizarKmInicial(reservaId, kmAtual);
 
@@ -311,7 +311,7 @@ public class ReservaService {
         try (Connection conn = DatabaseConnection.getConnection()) {
 
             ReservaDAO reservaDAO = new ReservaDAO(conn);
-            VeiculoDAO veiculoDAO = new VeiculoDAO(conn);
+            VeiculoDAO veiculoDAO = new VeiculoDAO();
 
             Reserva reserva = reservaDAO.buscarPorId(reservaId);
             if (reserva == null) {
@@ -331,11 +331,9 @@ public class ReservaService {
             int kmsPercorridos = calcularKmsPercorridos(reserva);
 
             Veiculo veiculo = veiculoDAO.buscarPorId(reserva.getVeiculoId());
-            double combustivelGasto = calcularCombustivelGasto(kmsPercorridos, veiculo.getConsumoMedio());
-            double custoEfetivo = calcularCustoEfetivo(reserva, kmsPercorridos, veiculo.getPrecoPorKm());
 
             // Atualizar custo final
-            reservaDAO.atualizarPrecoTotal(reservaId, custoEfetivo);
+            reservaDAO.atualizarPrecoTotal(reservaId, reserva.getPrecoTotal());
 
             // Atualizar quilometragem do veículo
             veiculoDAO.atualizarKm(veiculo.getId(), kmFinal);

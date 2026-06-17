@@ -301,6 +301,19 @@ public class ReservaDAO {
         }
     }
 
+    public boolean atualizarPrecoTotal(int reservaId, double precoTotal) {
+        String sql = "UPDATE reserva SET precoTotal = ? WHERE id = ?";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setDouble(1, precoTotal);
+            stmt.setInt(2, reservaId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao atualizar precoTotal: " + e.getMessage());
+            return false;
+        }
+    }
+
 
 
 

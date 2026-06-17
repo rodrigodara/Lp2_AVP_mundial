@@ -94,6 +94,14 @@ public class NavigationManager {
         navegarPara(minhasReservas.getRoot());
     }
 
+    // Navegar para formulário de adicionar veículo
+    public void navegarParaAdicionarVeiculo() {
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+        AdicionarVeiculoView view = new AdicionarVeiculoView();
+        navegarPara(view.getRoot());
+    }
+
     // ALV-134 — Navegar para "Os Meus Veículos"
     public void navegarParaMeusVeiculos() {
         if (utilizadorLogadoId < 0) {
