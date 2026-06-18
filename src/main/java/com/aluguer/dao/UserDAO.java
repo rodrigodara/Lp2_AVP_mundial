@@ -147,7 +147,7 @@ public class UserDAO {
         Date validadeDate = rs.getDate("validade_carta");
         Timestamp dataCriacao = rs.getTimestamp("data_criacao");
 
-        return new User(
+        User user = new User(
                 rs.getInt("id"),
                 rs.getString("email"),
                 rs.getString("nome"),
@@ -160,5 +160,7 @@ public class UserDAO {
                 rs.getBoolean("ativo"),
                 dataCriacao != null ? dataCriacao.toLocalDateTime() : null
         );
+        user.setTipo(rs.getString("tipo"));
+        return user;
     }
 }
