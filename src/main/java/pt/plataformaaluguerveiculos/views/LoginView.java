@@ -98,9 +98,17 @@ public class LoginView {
 
                 BaseLayoutView layout = nav.getBaseLayout();
                 if (layout != null) {
+                    // Reconstrói a navbar de acordo com o perfil agora conhecido (RF6)
+                    layout.getNavbarView().atualizar();
                     layout.getRoot().setTop(layout.getNavbarView().getNavbar());
                 }
-                nav.navegarParaDashboard();
+
+                if (user.isAdministrador()) {
+                    // O administrador não faz parte do "mercado": vai direto para o Painel de Administração
+                    nav.navegarParaAdmin();
+                } else {
+                    nav.navegarParaDashboard();
+                }
 
             } catch (SQLException ex) {
                 ex.printStackTrace();
