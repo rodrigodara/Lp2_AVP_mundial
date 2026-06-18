@@ -9,11 +9,13 @@ import javafx.scene.Node;
 
 public class NavigationManager {
 
+    private SinhoNotificacoesView sinoView;
     private static NavigationManager instance;
     private BaseLayoutView baseLayout;
     private int utilizadorLogadoId = -1;
 
-    private NavigationManager() {}
+    private NavigationManager() {
+    }
 
     public static NavigationManager getInstance() {
         if (instance == null) {
@@ -24,7 +26,16 @@ public class NavigationManager {
 
     public void init(BaseLayoutView baseLayout) {
         this.baseLayout = baseLayout;
+
+        // cria o sino UMA vez (estado global)
+        this.sinoView = new SinhoNotificacoesView();
     }
+
+    public SinhoNotificacoesView getSinoView() {
+        return sinoView;
+    }
+
+
 
     public BaseLayoutView getBaseLayout() {
         return baseLayout;
@@ -45,199 +56,159 @@ public class NavigationManager {
     }
 
     // =========================
+    // NOTIFICAÇÕES (NOVO)
+    // =========================
+    public void navegarParaNotificacoes() {
+
+        if (bloquearSeAdmin("ver notificações")) {
+            return;
+        }
+        if (utilizadorLogadoId < 0) {
+            return;
+        }
+
+        garantirNavbar();
+
+        SinhoNotificacoesView view
+                = new SinhoNotificacoesView();
+
+        navegarPara(sinoView.getSino());
+
+        if (sinoView == null) {
+            sinoView = new SinhoNotificacoesView();
+        }
+        navegarPara(sinoView.getSino());
+    }
+    
+
+    public void navegarParaAdicionarVeiculo() {
+        navegarPara(new AdicionarVeiculoView().getRoot());
+    }
+
+    public void navegarParaAvaliar(int reservaId, int avaliadorId, int avaliadoId,
+            Avaliacao.TipoAvaliado tipo, String nome) {
+        navegarPara(new AvaliarView(reservaId, avaliadorId, avaliadoId, tipo, nome).getRoot());
+    }
+
+    public void navegarParaCriarReserva(CriarReservaView view) {
+        navegarPara(view.getRoot());
+    }
+
+    // =========================
     // AUTENTICAÇÃO / BASE
     // =========================
-
     public void navegarParaRecuperarPassword() {
         if (baseLayout != null) {
             baseLayout.getRoot().setTop(null);
         }
-        RecuperarPasswordView view = new RecuperarPasswordView();
-        navegarPara(view.getRoot());
+        navegarPara(new RecuperarPasswordView().getRoot());
     }
 
     public void navegarParaDashboard() {
-        if (bloquearSeAdmin("acede ao dashboard")) return;
-        DashboardView dashboard = new DashboardView();
-        navegarPara(dashboard.getRoot());
+        if (bloquearSeAdmin("acede ao dashboard")) {
+            return;
+        }
+        navegarPara(new DashboardView().getRoot());
     }
 
     public void navegarParaLogin() {
         if (baseLayout != null) {
             baseLayout.getRoot().setTop(null);
         }
-        LoginView login = new LoginView();
-        navegarPara(login.getRoot());
+        navegarPara(new LoginView().getRoot());
     }
 
     public void navegarParaRegisto() {
         if (baseLayout != null) {
             baseLayout.getRoot().setTop(null);
         }
-        RegistoView registo = new RegistoView();
-        navegarPara(registo.getRoot());
+        navegarPara(new RegistoView().getRoot());
     }
 
     // =========================
     // ADMIN
     // =========================
-
     public void navegarParaAdmin() {
 
         User user = SessionManager.getInstance().getUtilizador();
 
         if (user == null || !user.isAdministrador()) {
-            System.err.println("[NavManager] Acesso negado: utilizador não é administrador.");
+            System.err.println("[NavManager] Acesso negado.");
             return;
         }
 
         garantirNavbar();
-
-        AdminView view = new AdminView();
-        navegarPara(view.getRoot());
+        navegarPara(new AdminView().getRoot());
     }
 
     // =========================
     // RESERVAS
     // =========================
-
-    public void navegarParaCriarReserva(CriarReservaView view) {
-        if (bloquearSeAdmin("aluga veículos")) return;
-        navegarPara(view.getRoot());
-    }
-
     public void navegarParaPedidosRecebidos() {
-        if (bloquearSeAdmin("vê pedidos de reserva recebidos")) return;
-        if (utilizadorLogadoId < 0) return;
-        garantirNavbar();
-        PedidosRecebidosView pedidos = new PedidosRecebidosView(utilizadorLogadoId);
-        navegarPara(pedidos.getRoot());
-    }
+        if (bloquearSeAdmin("vê pedidos")) {
+            return;
+        }
+        if (utilizadorLogadoId < 0) {
+            return;
+        }
 
-    public void navegarParaAprovarReservas(int proprietarioId) {
-        if (bloquearSeAdmin("aprova reservas")) return;
-        navegarPara(new PedidosRecebidosView(proprietarioId).getRoot());
+        garantirNavbar();
+        navegarPara(new PedidosRecebidosView(utilizadorLogadoId).getRoot());
     }
 
     public void navegarParaMinhasReservas() {
-        if (bloquearSeAdmin("tem reservas próprias")) return;
-        if (utilizadorLogadoId < 0) return;
+        if (bloquearSeAdmin("ver reservas")) {
+            return;
+        }
+        if (utilizadorLogadoId < 0) {
+            return;
+        }
+
         garantirNavbar();
-        MinhasReservasView minhasReservas = new MinhasReservasView(utilizadorLogadoId);
-        navegarPara(minhasReservas.getRoot());
+        navegarPara(new MinhasReservasView(utilizadorLogadoId).getRoot());
     }
 
     // =========================
     // VEÍCULOS
     // =========================
-
-    public void navegarParaAdicionarVeiculo() {
-        if (bloquearSeAdmin("adiciona veículos")) return;
-        if (utilizadorLogadoId < 0) return;
-        garantirNavbar();
-        AdicionarVeiculoView view = new AdicionarVeiculoView();
-        navegarPara(view.getRoot());
-    }
-
     public void navegarParaMeusVeiculos() {
-        if (bloquearSeAdmin("tem veículos próprios")) return;
-        if (utilizadorLogadoId < 0) {
-            System.err.println("[NavManager] Utilizador não autenticado.");
+        if (bloquearSeAdmin("ver veículos")) {
             return;
         }
-        garantirNavbar();
-        MeusVeiculosView view = new MeusVeiculosView();
-        navegarPara(view.getRoot());
-    }
+        if (utilizadorLogadoId < 0) {
+            return;
+        }
 
-    public void navegarParaDetalheVeiculo(Veiculo veiculo) {
-        if (bloquearSeAdmin("aluga veículos")) return;
         garantirNavbar();
-        DetalheVeiculoView view = new DetalheVeiculoView(veiculo);
-        navegarPara(view.getRoot());
+        navegarPara(new MeusVeiculosView().getRoot());
     }
 
     public void navegarParaProcurarVeiculos() {
-        if (bloquearSeAdmin("faz parte do mercado de aluguer")) return;
+        if (bloquearSeAdmin("procurar veículos")) {
+            return;
+        }
+
         garantirNavbar();
-        ProcurarVeiculosView view = new ProcurarVeiculosView();
-        navegarPara(view.getRoot());
+        navegarPara(new ProcurarVeiculosView().getRoot());
+    }
+
+    public void navegarParaDetalheVeiculo(Veiculo veiculo) {
+        if (bloquearSeAdmin("ver veículo")) {
+            return;
+        }
+
+        garantirNavbar();
+        navegarPara(new DetalheVeiculoView(veiculo).getRoot());
     }
 
     // =========================
-    // TRANSAÇÕES
+    // CONTROLO DE ACESSO ADMIN
     // =========================
-
-    public void navegarParaHistoricoTransacoes() {
-        if (bloquearSeAdmin("tem transações próprias")) return;
-        if (utilizadorLogadoId < 0) return;
-        garantirNavbar();
-        HistoricoTransacoesView view = new HistoricoTransacoesView(utilizadorLogadoId);
-        navegarPara(view.getRoot());
-    }
-
-    public void navegarParaConta() {
-        if (bloquearSeAdmin("gere saldo/conta própria")) return;
-        if (utilizadorLogadoId < 0) return;
-        garantirNavbar();
-        ContaView view = new ContaView();
-        navegarPara(view.getRoot());
-    }
-
-    // =========================
-    // DISPONIBILIDADE
-    // =========================
-
-    public void navegarParaIndisponibilidade(int veiculoId) {
-        if (bloquearSeAdmin("gere disponibilidade de veículos")) return;
-        if (utilizadorLogadoId < 0) return;
-        garantirNavbar();
-        IndisponibilidadeView view = new IndisponibilidadeView(veiculoId);
-        navegarPara(view.getRoot());
-    }
-
-    // =========================
-    // AVALIAÇÕES
-    // =========================
-
-    public void navegarParaAvaliar(int reservaId, int avaliadorId, int avaliadoId,
-                                   Avaliacao.TipoAvaliado tipo, String nomeAvaliado) {
-        if (bloquearSeAdmin("avalia outros utilizadores")) return;
-        garantirNavbar();
-        AvaliarView view = new AvaliarView(reservaId, avaliadorId, avaliadoId, tipo, nomeAvaliado);
-        navegarPara(view.getRoot());
-    }
-
-    // =========================
-    // HISTÓRICO
-    // =========================
-
-    public void navegarParaHistoricoVeiculos() {
-        if (bloquearSeAdmin("tem histórico de veículos próprios")) return;
-        if (utilizadorLogadoId < 0) return;
-        garantirNavbar();
-        HistoricoVeiculosView view = new HistoricoVeiculosView(utilizadorLogadoId);
-        navegarPara(view.getRoot());
-    }
-
-    // =========================
-    // AUXILIAR
-    // =========================
-
-    /**
-     * RF6 — Bloqueia o acesso de administradores a funcionalidades de "mercado"
-     * (comprar/alugar/anunciar veículos entre utilizadores). Um administrador
-     * gere a plataforma, mas não é um participante do mercado.
-     *
-     * @param acaoDescricao descrição da ação bloqueada, usada apenas para log
-     * @return true se o utilizador é administrador e a navegação foi bloqueada
-     *         (e redirecionada para o Painel de Administração); false caso
-     *         contrário, permitindo que a navegação original continue.
-     */
     private boolean bloquearSeAdmin(String acaoDescricao) {
         User user = SessionManager.getInstance().getUtilizador();
+
         if (user != null && user.isAdministrador()) {
-            System.err.println("[NavManager] Acesso negado: administrador não pode " + acaoDescricao + ".");
+            System.err.println("[NavManager] Admin bloqueado: " + acaoDescricao);
             navegarParaAdmin();
             return true;
         }
@@ -246,8 +217,45 @@ public class NavigationManager {
 
     private void garantirNavbar() {
         if (baseLayout != null && baseLayout.getRoot().getTop() == null) {
-            baseLayout.getRoot().setTop(baseLayout.getNavbarView().getNavbar());
+            baseLayout.getRoot().setTop(
+                    baseLayout.getNavbarView().getNavbar()
+            );
         }
+    }// =========================
+// CONTA
+// =========================
+
+    public void navegarParaConta() {
+        if (bloquearSeAdmin("ver conta")) {
+            return;
+        }
+        if (utilizadorLogadoId < 0) {
+            return;
+        }
+
+        garantirNavbar();
+
+        ContaView view = new ContaView();
+        navegarPara(view.getRoot());
+    }
+
+// =========================
+// HISTÓRICO VEÍCULOS
+// =========================
+    public void navegarParaHistoricoVeiculos() {
+        if (bloquearSeAdmin("ver histórico de veículos")) {
+            return;
+        }
+        if (utilizadorLogadoId < 0) {
+            return;
+        }
+
+        garantirNavbar();
+
+        HistoricoVeiculosView view
+                = new HistoricoVeiculosView(utilizadorLogadoId);
+
+        navegarPara(view.getRoot());
     }
 
     public void sair() {
