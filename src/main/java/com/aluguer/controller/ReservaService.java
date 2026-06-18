@@ -1,12 +1,15 @@
 package com.aluguer.controller;
 
-import com.aluguer.dao.ReservaDAO;
-import com.aluguer.model.Reserva;
-import com.aluguer.service.PrecoDinamicoService;
-
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+
+import com.aluguer.dao.ReservaDAO;
+import com.aluguer.dao.VeiculoDAO;
+import com.aluguer.model.Reserva;
+import com.aluguer.model.Veiculo;
+import com.aluguer.service.NotificacaoService;
+import com.aluguer.service.PrecoDinamicoService;
 
 /**
  * ALV-89 – Lógica de negócio para criação de pedidos de reserva.
@@ -156,6 +159,24 @@ public class ReservaService {
         Reserva reserva = new Reserva(utilizadorId, veiculoId, inicio, fim, renda, caucao);
         if (!reservaDAO.inserir(reserva))
             throw new ReservaException("Erro ao guardar a reserva. Tente novamente.");
+
+        // notificar o proprietario do veiculo do novo pedido
+        try {
+            VeiculoDAO veiculoDAO = new VeiculoDAO();
+            Veiculo veiculo = veiculoDAO.buscarPorId(veiculoId);
+            if (veiculo != null) {
+                String nomeVeiculo = veiculo.getMarca() + " " + veiculo.getModelo();
+                NotificacaoService.getInstance().criarNotificacao(
+                    veiculo.getProprietarioId(),
+                    "PROPOSTA",
+                    "Novo pedido de reserva para o teu " + nomeVeiculo
+                        + " de " + inicio + " a " + fim + "."
+                );
+            }
+        } catch (Exception e) {
+            System.err.println("[ReservaService] Aviso: falha ao criar notificacao: " + e.getMessage());
+        }
+
         return reserva;
     }
 

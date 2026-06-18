@@ -24,11 +24,13 @@ C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\model\User.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\model\Veiculo.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\service\AvaliacaoService.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\service\ContaService.java
+C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\service\NotificacaoService.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\service\PasswordRecoveryService.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\service\PrecoDinamicoService.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\service\ReservaService.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\service\VeiculoService.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\util\DatabaseConnection.java
+C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\util\EmailService.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\util\PasswordUtil.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\com\aluguer\util\SessionManager.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\pt\plataformaaluguerveiculos\App.java
@@ -55,3 +57,4 @@ C:\Users\danie\Desktop\AVL-Mundial\src\main\java\pt\plataformaaluguerveiculos\vi
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\pt\plataformaaluguerveiculos\views\ProcurarVeiculosView.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\pt\plataformaaluguerveiculos\views\RecuperarPasswordView.java
 C:\Users\danie\Desktop\AVL-Mundial\src\main\java\pt\plataformaaluguerveiculos\views\RegistoView.java
+C:\Users\danie\Desktop\AVL-Mundial\src\main\java\pt\plataformaaluguerveiculos\views\SinhoNotificacoesView.java

@@ -12,25 +12,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.aluguer.model.User;
+import com.aluguer.service.NotificacaoService;
 import com.aluguer.util.DatabaseConnection;
 
-/**
- * AdminDAO — operações de base de dados exclusivas do painel de administração.
- *
- * Tabelas usadas (schema aluguer_veiculos):
- *   utilizadores  — id, email, nome, nif, numero_carta, validade_carta,
- *                   password_hash, tipo, saldo, perfil, ativo, data_criacao
- *   veiculo       — id, marca, modelo, ano, combustivel, precoDiario,
- *                   localizacao, proprietarioId, estado
- *   reserva       — id, utilizadorId, veiculoId, dataInicio, dataFim,
- *                   estado (PENDENTE/ACEITE/REJEITADO/CONCLUIDO),
- *                   precoTotal, caucao, kmInicial, kmFinal
- *   avisos_admin  — id, utilizadorId, motivo, data_aviso  [criada via SQL]
- *
- * Lógica de avisos:
- *   1.º e 2.º aviso → só regista
- *   3.º aviso       → bane automaticamente (ativo = 0)
- */
+
 public class AdminDAO {
 
     // =========================================================================
@@ -127,34 +112,40 @@ public class AdminDAO {
         }
     }
 
-    /**
-     * Emite um aviso ao utilizador.
-     * Regra de negócio:
-     *   - 1.º e 2.º aviso → só regista, conta permanece ativa
-     *   - 3.º aviso       → bane automaticamente (ativo = 0)
-     *
-     * @return true se o utilizador foi banido nesta chamada, false caso contrário
-     */
-    public boolean emitirAviso(int userId, String motivo) throws SQLException {
-        String ins = "INSERT INTO avisos_admin (utilizadorId, motivo, data_aviso) VALUES (?, ?, NOW())";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(ins)) {
-            ps.setInt(1, userId);
-            ps.setString(2, motivo);
-            ps.executeUpdate();
-        }
-        int total = contarAvisos(userId);
-        if (total >= 3) {
-            setAtivo(userId, false);
-            return true;   // banido
-        }
-        return false;
+
+public boolean emitirAviso(int userId, String motivo) throws SQLException {
+    String ins = "INSERT INTO avisos_admin (utilizadorId, motivo, data_aviso) VALUES (?, ?, NOW())";
+    try (Connection conn = DatabaseConnection.getConnection();
+         PreparedStatement ps = conn.prepareStatement(ins)) {
+        ps.setInt(1, userId);
+        ps.setString(2, motivo);
+        ps.executeUpdate();
     }
 
-    /**
-     * Lista o histórico de avisos de um utilizador, do mais recente para o mais antigo.
-     * Cada entrada é String[]{motivo, data_aviso}.
-     */
+    // ✅ ADICIONA ISTO — criar notificação no sino do utilizador
+    NotificacaoService.getInstance().criarNotificacao(
+        userId,
+        "AVISO",
+        "⚠️ Recebeste um aviso da administração: " + motivo
+    );
+
+    int total = contarAvisos(userId);
+    if (total >= 3) {
+        setAtivo(userId, false);
+
+        // ✅ OPCIONAL — notificar que foi banido
+        NotificacaoService.getInstance().criarNotificacao(
+            userId,
+            "AVISO",
+            "🚫 A tua conta foi suspensa após 3 avisos."
+        );
+
+        return true;
+    }
+    return false;
+}
+
+
     public List<String[]> listarAvisos(int userId) throws SQLException {
         List<String[]> lista = new ArrayList<>();
         String sql = "SELECT motivo, data_aviso "
@@ -179,12 +170,6 @@ public class AdminDAO {
     // 3. GESTÃO DE VEÍCULOS
     // =========================================================================
 
-    /**
-     * Lista todos os veículos com o nome e id do proprietário.
-     * Devolve Object[]{id, marca, modelo, ano, combustivel,
-     *                   precoDiario, localizacao, estado,
-     *                   nomeProprietario, proprietarioId}
-     */
     public List<Object[]> listarVeiculosComProprietario() throws SQLException {
         List<Object[]> lista = new ArrayList<>();
         String sql = "SELECT v.id, v.marca, v.modelo, v.ano, v.combustivel, "
@@ -252,18 +237,7 @@ public class AdminDAO {
         return lista;
     }
 
-    /**
-     * Detalhe completo de um veículo, para o Admin analisar se está
-     * em conformidade com as regras da plataforma. Apenas leitura —
-     * o Admin não edita dados de veículos, só consulta.
-     *
-     * @return Object[]{
-     *   0 id, 1 marca, 2 modelo, 3 ano, 4 combustivel, 5 precoDiario,
-     *   6 localizacao, 7 estado, 8 matricula, 9 quilometragem,
-     *   10 proprietarioNome, 11 proprietarioEmail, 12 proprietarioId,
-     *   13 totalReservas, 14 receitaTotal
-     * }, ou null se o veículo não existir.
-     */
+
     public Object[] obterDetalheVeiculo(int veiculoId) throws SQLException {
         String sql = "SELECT v.id, v.marca, v.modelo, v.ano, v.combustivel, v.precoDiario, "
                    + "       v.localizacao, v.estado, v.matricula, v.quilometragem, "
@@ -302,18 +276,7 @@ public class AdminDAO {
         return null;
     }
 
-    /**
-     * Remove um veículo por violação de regras.
-     *
-     * Ordem de eliminação para respeitar as FK do schema:
-     *   1. pagamento  (FK → reserva)
-     *   2. avaliacao  (FK → reserva)
-     *   3. reserva    (FK → veiculo)
-     *   4. indisponibilidade (FK → veiculo)
-     *   5. veiculo
-     *
-     * Usa uma única Connection para garantir consistência.
-     */
+
     public boolean removerVeiculo(int veiculoId) throws SQLException {
         String delPagamento        = "DELETE FROM pagamento WHERE reservaId IN "
                                    + "(SELECT id FROM reserva WHERE veiculoId = ?)";
@@ -349,16 +312,6 @@ public class AdminDAO {
     // 4. ESTATÍSTICAS
     // =========================================================================
 
-    /**
-     * Totais gerais da plataforma.
-     * Devolve int[6]:
-     *   [0] total utilizadores
-     *   [1] contas ativas
-     *   [2] contas bloqueadas
-     *   [3] total veículos
-     *   [4] total reservas
-     *   [5] receita total (ACEITE + CONCLUIDO) — arredondada para inteiro
-     */
     public int[] estatisticasGerais() throws SQLException {
         int[] s = new int[6];
         try (Connection conn = DatabaseConnection.getConnection()) {
@@ -403,13 +356,6 @@ public class AdminDAO {
         return s;
     }
 
-    /**
-     * Reservas agrupadas por período temporal.
-     *
-     * @param agrupamento "DAY" | "MONTH" | "YEAR"
-     * @return Lista de Object[]{String periodo, int total, double receita}
-     *         ordenada do mais recente para o mais antigo (máx. 24 linhas)
-     */
     public List<Object[]> estatisticasPorPeriodo(String agrupamento) throws SQLException {
         List<Object[]> lista = new ArrayList<>();
         String fmt = switch (agrupamento) {
@@ -439,26 +385,12 @@ public class AdminDAO {
         return lista;
     }
 
-    /**
-     * Reservas e receita agrupadas por marca de veículo (sem filtro de período).
-     * Inclui veículos sem reservas (COUNT = 0) via LEFT JOIN.
-     * @return Lista de Object[]{String marca, int total, double receita}
-     */
+
     public List<Object[]> estatisticasPorMarca() throws SQLException {
         return estatisticasPorMarca(null, null);
     }
 
-    /**
-     * Reservas e receita agrupadas por marca de veículo, com filtro opcional
-     * por intervalo de datas (baseado em reserva.dataInicio).
-     * Inclui veículos sem reservas (COUNT = 0) via LEFT JOIN — a condição de
-     * datas é colocada no ON do JOIN (e não no WHERE) precisamente para não
-     * eliminar veículos que não têm nenhuma reserva nesse período.
-     *
-     * @param inicio data inicial do intervalo (inclusive), ou null para não filtrar
-     * @param fim    data final do intervalo (inclusive), ou null para não filtrar
-     * @return Lista de Object[]{String marca, int total, double receita}
-     */
+
     public List<Object[]> estatisticasPorMarca(LocalDate inicio, LocalDate fim) throws SQLException {
         List<Object[]> lista = new ArrayList<>();
         boolean comFiltro = inicio != null && fim != null;
@@ -491,26 +423,10 @@ public class AdminDAO {
         return lista;
     }
 
-    /**
-     * Reservas e receita agrupadas por região (campo localizacao do veículo),
-     * sem filtro de período.
-     * Inclui regiões sem reservas via LEFT JOIN.
-     * @return Lista de Object[]{String regiao, int total, double receita}
-     */
     public List<Object[]> estatisticasPorRegiao() throws SQLException {
         return estatisticasPorRegiao(null, null);
     }
 
-    /**
-     * Reservas e receita agrupadas por região (campo localizacao do veículo),
-     * com filtro opcional por intervalo de datas (baseado em reserva.dataInicio).
-     * Inclui regiões sem reservas via LEFT JOIN — ver nota em
-     * {@link #estatisticasPorMarca(LocalDate, LocalDate)} sobre a posição do filtro.
-     *
-     * @param inicio data inicial do intervalo (inclusive), ou null para não filtrar
-     * @param fim    data final do intervalo (inclusive), ou null para não filtrar
-     * @return Lista de Object[]{String regiao, int total, double receita}
-     */
     public List<Object[]> estatisticasPorRegiao(LocalDate inicio, LocalDate fim) throws SQLException {
         List<Object[]> lista = new ArrayList<>();
         boolean comFiltro = inicio != null && fim != null;
@@ -543,15 +459,7 @@ public class AdminDAO {
         return lista;
     }
 
-    // =========================================================================
-    // HELPER PRIVADO
-    // =========================================================================
 
-    /**
-     * Mapeia uma linha do ResultSet da tabela `utilizadores` para um objeto User.
-     * Colunas usadas: id, email, nome, nif, numero_carta, validade_carta,
-     *                 password_hash, saldo, perfil, ativo, data_criacao
-     */
     private User mapUser(ResultSet rs) throws SQLException {
         Date      validadeDate = rs.getDate("validade_carta");
         Timestamp dataCriacao  = rs.getTimestamp("data_criacao");

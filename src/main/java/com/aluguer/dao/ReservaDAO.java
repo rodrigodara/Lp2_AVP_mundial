@@ -119,16 +119,30 @@ public class ReservaDAO {
     }
 
     public boolean atualizarEstado(int id, Reserva.Estado estado) {
-        String sql = "UPDATE reserva SET estado = ? WHERE id = ?";
+        // Quando muda para ACEITE ou REJEITADO grava o timestamp e limpa a flag de lida
+        boolean registarData = (estado == Reserva.Estado.ACEITE || estado == Reserva.Estado.REJEITADO);
+        String sql = registarData
+            ? "UPDATE reserva SET estado = ?, estado_data = NOW(), notif_lida = 0 WHERE id = ?"
+            : "UPDATE reserva SET estado = ? WHERE id = ?";
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, estado.name());
             stmt.setInt(2, id);
-
             return stmt.executeUpdate() > 0;
-
         } catch (SQLException e) {
             System.err.println("[ReservaDAO] Erro ao atualizar estado da reserva: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /** Marca a notificação de uma reserva como lida. */
+    public boolean marcarNotifLida(int reservaId) {
+        String sql = "UPDATE reserva SET notif_lida = 1 WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, reservaId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao marcar notif como lida: " + e.getMessage());
             return false;
         }
     }
@@ -396,7 +410,7 @@ public class ReservaDAO {
     }
 
     private Reserva mapRow(ResultSet rs) throws SQLException {
-        return new Reserva(
+        Reserva r = new Reserva(
                 rs.getInt("id"),
                 rs.getInt("utilizadorId"),
                 rs.getInt("veiculoId"),
@@ -408,5 +422,10 @@ public class ReservaDAO {
                 rs.getInt("kmInicial"),
                 rs.getInt("kmFinal")
         );
+        // campos novos — podem ser NULL se a reserva ainda é PENDENTE
+        java.sql.Timestamp ts = rs.getTimestamp("estado_data");
+        if (ts != null) r.setEstadoData(ts.toLocalDateTime());
+        r.setNotifLida(rs.getBoolean("notif_lida"));
+        return r;
     }
 }

@@ -1,15 +1,18 @@
 package com.aluguer.util;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
 import com.aluguer.model.User;
 
-/**
- * Singleton que guarda o utilizador autenticado durante a sessão.
- * Usar SessionManager.getInstance().getUtilizador() em qualquer controller.
- */
 public class SessionManager {
 
     private static SessionManager instance;
     private User utilizadorAtual;
+
+    // 👇 NOVO: listeners para UI reagir a mudanças
+    private final List<Consumer<User>> listeners = new ArrayList<>();
 
     private SessionManager() {}
 
@@ -23,20 +26,35 @@ public class SessionManager {
     /** Guarda o utilizador após login bem-sucedido. */
     public void iniciarSessao(User user) {
         this.utilizadorAtual = user;
+        notificar();
     }
 
     /** Limpa a sessão — chamar no logout. */
     public void terminarSessao() {
         this.utilizadorAtual = null;
+        notificar();
     }
 
-    /** Devolve o utilizador atual, ou null se não há sessão. */
+    /** Devolve o utilizador atual */
     public User getUtilizador() {
         return utilizadorAtual;
     }
 
-    /** true se existe uma sessão ativa. */
     public boolean estaAutenticado() {
         return utilizadorAtual != null;
+    }
+
+    // =========================
+    // 🔔 NOVO SISTEMA DE REACT
+    // =========================
+
+    public void addListener(Consumer<User> listener) {
+        listeners.add(listener);
+    }
+
+    private void notificar() {
+        for (Consumer<User> l : listeners) {
+            l.accept(utilizadorAtual);
+        }
     }
 }
