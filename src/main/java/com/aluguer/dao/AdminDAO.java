@@ -1,11 +1,18 @@
 package com.aluguer.dao;
 
-import com.aluguer.model.User;
-import com.aluguer.util.DatabaseConnection;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.aluguer.model.User;
+import com.aluguer.util.DatabaseConnection;
 
 /**
  * AdminDAO — operações de base de dados exclusivas do painel de administração.
@@ -64,6 +71,30 @@ public class AdminDAO {
             }
         }
         return lista;
+    }
+
+    /**
+     * Atualiza o tipo de um utilizador (coluna `tipo`: proprietario/locatario/admin),
+     * mantendo o `perfil` sincronizado:
+     *   - tipo = "admin"          → perfil = "ADMINISTRADOR"
+     *   - tipo = qualquer outro   → perfil = "UTILIZADOR"
+     * (o `perfil` é o campo que efetivamente controla as permissões na aplicação).
+     *
+     * @param userId   id do utilizador a atualizar
+     * @param novoTipo "proprietario" | "locatario" | "admin"
+     * @return true se uma linha foi atualizada
+     */
+    public boolean atualizarTipoUtilizador(int userId, String novoTipo) throws SQLException {
+        String novoPerfil = "admin".equalsIgnoreCase(novoTipo) ? "ADMINISTRADOR" : "UTILIZADOR";
+
+        String sql = "UPDATE utilizadores SET tipo = ?, perfil = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, novoTipo);
+            ps.setString(2, novoPerfil);
+            ps.setInt(3, userId);
+            return ps.executeUpdate() > 0;
+        }
     }
 
     /**
@@ -409,56 +440,104 @@ public class AdminDAO {
     }
 
     /**
-     * Reservas e receita agrupadas por marca de veículo.
+     * Reservas e receita agrupadas por marca de veículo (sem filtro de período).
      * Inclui veículos sem reservas (COUNT = 0) via LEFT JOIN.
      * @return Lista de Object[]{String marca, int total, double receita}
      */
     public List<Object[]> estatisticasPorMarca() throws SQLException {
+        return estatisticasPorMarca(null, null);
+    }
+
+    /**
+     * Reservas e receita agrupadas por marca de veículo, com filtro opcional
+     * por intervalo de datas (baseado em reserva.dataInicio).
+     * Inclui veículos sem reservas (COUNT = 0) via LEFT JOIN — a condição de
+     * datas é colocada no ON do JOIN (e não no WHERE) precisamente para não
+     * eliminar veículos que não têm nenhuma reserva nesse período.
+     *
+     * @param inicio data inicial do intervalo (inclusive), ou null para não filtrar
+     * @param fim    data final do intervalo (inclusive), ou null para não filtrar
+     * @return Lista de Object[]{String marca, int total, double receita}
+     */
+    public List<Object[]> estatisticasPorMarca(LocalDate inicio, LocalDate fim) throws SQLException {
         List<Object[]> lista = new ArrayList<>();
+        boolean comFiltro = inicio != null && fim != null;
+
         String sql = "SELECT v.marca, "
                    + "       COUNT(r.id)                    AS total, "
                    + "       COALESCE(SUM(r.precoTotal), 0) AS receita "
                    + "FROM veiculo v "
-                   + "LEFT JOIN reserva r ON r.veiculoId = v.id "
-                   + "GROUP BY v.marca "
+                   + "LEFT JOIN reserva r ON r.veiculoId = v.id"
+                   + (comFiltro ? " AND r.dataInicio BETWEEN ? AND ?" : "")
+                   + " GROUP BY v.marca "
                    + "ORDER BY total DESC, v.marca";
+
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement st   = conn.createStatement();
-             ResultSet rs   = st.executeQuery(sql)) {
-            while (rs.next()) {
-                lista.add(new Object[]{
-                    rs.getString("marca"),
-                    rs.getInt("total"),
-                    rs.getDouble("receita")
-                });
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (comFiltro) {
+                ps.setDate(1, Date.valueOf(inicio));
+                ps.setDate(2, Date.valueOf(fim));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new Object[]{
+                        rs.getString("marca"),
+                        rs.getInt("total"),
+                        rs.getDouble("receita")
+                    });
+                }
             }
         }
         return lista;
     }
 
     /**
-     * Reservas e receita agrupadas por região (campo localizacao do veículo).
+     * Reservas e receita agrupadas por região (campo localizacao do veículo),
+     * sem filtro de período.
      * Inclui regiões sem reservas via LEFT JOIN.
      * @return Lista de Object[]{String regiao, int total, double receita}
      */
     public List<Object[]> estatisticasPorRegiao() throws SQLException {
+        return estatisticasPorRegiao(null, null);
+    }
+
+    /**
+     * Reservas e receita agrupadas por região (campo localizacao do veículo),
+     * com filtro opcional por intervalo de datas (baseado em reserva.dataInicio).
+     * Inclui regiões sem reservas via LEFT JOIN — ver nota em
+     * {@link #estatisticasPorMarca(LocalDate, LocalDate)} sobre a posição do filtro.
+     *
+     * @param inicio data inicial do intervalo (inclusive), ou null para não filtrar
+     * @param fim    data final do intervalo (inclusive), ou null para não filtrar
+     * @return Lista de Object[]{String regiao, int total, double receita}
+     */
+    public List<Object[]> estatisticasPorRegiao(LocalDate inicio, LocalDate fim) throws SQLException {
         List<Object[]> lista = new ArrayList<>();
+        boolean comFiltro = inicio != null && fim != null;
+
         String sql = "SELECT v.localizacao               AS regiao, "
                    + "       COUNT(r.id)                    AS total, "
                    + "       COALESCE(SUM(r.precoTotal), 0) AS receita "
                    + "FROM veiculo v "
-                   + "LEFT JOIN reserva r ON r.veiculoId = v.id "
-                   + "GROUP BY v.localizacao "
+                   + "LEFT JOIN reserva r ON r.veiculoId = v.id"
+                   + (comFiltro ? " AND r.dataInicio BETWEEN ? AND ?" : "")
+                   + " GROUP BY v.localizacao "
                    + "ORDER BY total DESC, v.localizacao";
+
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement st   = conn.createStatement();
-             ResultSet rs   = st.executeQuery(sql)) {
-            while (rs.next()) {
-                lista.add(new Object[]{
-                    rs.getString("regiao"),
-                    rs.getInt("total"),
-                    rs.getDouble("receita")
-                });
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            if (comFiltro) {
+                ps.setDate(1, Date.valueOf(inicio));
+                ps.setDate(2, Date.valueOf(fim));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new Object[]{
+                        rs.getString("regiao"),
+                        rs.getInt("total"),
+                        rs.getDouble("receita")
+                    });
+                }
             }
         }
         return lista;
