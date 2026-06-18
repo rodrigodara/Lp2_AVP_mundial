@@ -1,5 +1,10 @@
 package pt.plataformaaluguerveiculos.views;
 
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import com.aluguer.dao.AdminDAO;
 import com.aluguer.dao.AvaliacaoDAO;
 import com.aluguer.model.User;
@@ -10,16 +15,34 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.DatePicker;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
-
-import java.sql.SQLException;
-import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 /**
  * AdminView — Painel de Administração.
@@ -146,12 +169,13 @@ public class AdminView {
         Label lblAcoes = label("Ações sobre utilizador selecionado", 15, true, "#1a237e");
 
         Button btnDetalhes    = botao("🔍 Ver Detalhes",      "#1a237e", "white");
+        Button btnTipo        = botao("⚒️ Alterar Tipo",      "#6a1b9a", "white");
         Button btnBloquear    = botao("🔒 Bloquear",          "#c62828", "white");
         Button btnDesbloquear = botao("🔓 Desbloquear",       "#2e7d32", "white");
-        Button btnAviso       = botao("⚠️ Emitir Aviso",      "#e65100", "white");
+        Button btnAviso       = botao("⚠︎ Emitir Aviso",      "#e65100", "white");
         Button btnVerAvisos   = botao("📋 Ver Avisos",        "#37474f", "white");
 
-        HBox acoes = new HBox(10, btnDetalhes, btnBloquear, btnDesbloquear, btnAviso, btnVerAvisos);
+        HBox acoes = new HBox(10, btnDetalhes, btnTipo, btnBloquear, btnDesbloquear, btnAviso, btnVerAvisos);
         acoes.setAlignment(Pos.CENTER_LEFT);
 
         Label lblFeedback = new Label();
@@ -161,6 +185,39 @@ public class AdminView {
             User sel = tabela.getSelectionModel().getSelectedItem();
             if (sel == null) { aviso("Selecione um utilizador.", lblFeedback); return; }
             mostrarDetalhesUtilizador(sel);
+        });
+
+        btnTipo.setOnAction(e -> {
+            User sel = tabela.getSelectionModel().getSelectedItem();
+            if (sel == null) { aviso("Selecione um utilizador.", lblFeedback); return; }
+
+            String tipoAtual = sel.getTipo() == null ? "locatario" : sel.getTipo();
+            ChoiceDialog<String> dialog = new ChoiceDialog<>(
+                tipoAtual, "proprietario", "locatario", "admin");
+            dialog.setTitle("Alterar Tipo de Utilizador");
+            dialog.setHeaderText("Selecione o novo tipo para " + sel.getNome() + ":");
+            dialog.setContentText("Tipo:");
+
+            dialog.showAndWait().ifPresent(novoTipo -> {
+                if (novoTipo.equals(tipoAtual)) {
+                    aviso("O tipo selecionado é igual ao atual — nada foi alterado.", lblFeedback);
+                    return;
+                }
+
+                String mensagemConfirmacao = "admin".equals(novoTipo)
+                    ? "Tornar " + sel.getNome() + " ADMINISTRADOR? O perfil será definido como ADMINISTRADOR — passará a ter acesso ao Painel de Administração e perderá o acesso ao mercado (alugar/anunciar veículos)."
+                    : "Alterar o tipo de " + sel.getNome() + " para '" + novoTipo + "'? O perfil será definido como UTILIZADOR.";
+
+                confirmar(mensagemConfirmacao, () -> {
+                    try {
+                        dao.atualizarTipoUtilizador(sel.getId(), novoTipo);
+                        sucesso("Tipo atualizado para '" + novoTipo + "'"
+                            + ("admin".equals(novoTipo) ? " — perfil definido como ADMINISTRADOR." : " — perfil definido como UTILIZADOR.")
+                            , lblFeedback);
+                        carregarUtilizadores(tabela, null);
+                    } catch (SQLException ex) { erro(ex, lblFeedback); }
+                });
+            });
         });
 
         btnBloquear.setOnAction(e -> {
@@ -524,29 +581,83 @@ public class AdminView {
         try { preencherTabelaStats(tblPeriodo, dao.estatisticasPorPeriodo("MONTH")); }
         catch (SQLException ignored) {}
 
+        // ---- Filtro por intervalo de datas (aplica-se a Marca + Região) ----
+        Label lblFiltroData = label("Filtrar Marca / Região por Período", 16, true, "#37474f");
+
+        DatePicker dpInicio = new DatePicker();
+        dpInicio.setPromptText("Data início");
+        dpInicio.setPrefWidth(150);
+
+        DatePicker dpFim = new DatePicker();
+        dpFim.setPromptText("Data fim");
+        dpFim.setPrefWidth(150);
+
+        Button btnFiltrarData = botao("Filtrar Período", "#1a237e", "white");
+        Button btnLimparData  = botao("Limpar Filtro",   "#546e7a", "white");
+
+        Label lblFiltroFeedback = new Label();
+        lblFiltroFeedback.setFont(Font.font(13));
+
+        HBox filtroDataBox = new HBox(10,
+            new Label("De:"),  dpInicio,
+            new Label("Até:"), dpFim,
+            btnFiltrarData, btnLimparData
+        );
+        filtroDataBox.setAlignment(Pos.CENTER_LEFT);
+
         // ---- Por marca ----
         Label lblMarca = label("Análise por Marca", 16, true, "#37474f");
+        BarChart<String, Number> grafMarca = criarGraficoBarras("Receita (€)");
         TableView<ObservableList<String>> tblMarca = criarTabelaStats(
             new String[]{"Marca", "Reservas", "Receita (€)"});
-        Button btnMarca = botao("Atualizar", "#1a237e", "white");
-        btnMarca.setOnAction(e -> {
-            try { preencherTabelaStats(tblMarca, dao.estatisticasPorMarca()); }
-            catch (SQLException ex) { ex.printStackTrace(); }
-        });
-        try { preencherTabelaStats(tblMarca, dao.estatisticasPorMarca()); }
-        catch (SQLException ignored) {}
+        tblMarca.setPrefHeight(280);
 
         // ---- Por região ----
         Label lblRegiao = label("Análise por Região", 16, true, "#37474f");
+        BarChart<String, Number> grafRegiao = criarGraficoBarras("Receita (€)");
         TableView<ObservableList<String>> tblRegiao = criarTabelaStats(
             new String[]{"Região", "Reservas", "Receita (€)"});
-        Button btnRegiao = botao("Atualizar", "#1a237e", "white");
-        btnRegiao.setOnAction(e -> {
-            try { preencherTabelaStats(tblRegiao, dao.estatisticasPorRegiao()); }
-            catch (SQLException ex) { ex.printStackTrace(); }
+        tblRegiao.setPrefHeight(280);
+
+        // Carrega marca + região, com ou sem filtro de datas conforme os DatePickers
+        Runnable carregarMarcaRegiao = () -> {
+            LocalDate inicio = dpInicio.getValue();
+            LocalDate fim    = dpFim.getValue();
+
+            if ((inicio != null) != (fim != null)) {
+                aviso("Selecione as duas datas (início e fim) para filtrar, ou deixe ambas vazias.", lblFiltroFeedback);
+                return;
+            }
+            if (inicio != null && fim != null && inicio.isAfter(fim)) {
+                aviso("A data de início não pode ser posterior à data de fim.", lblFiltroFeedback);
+                return;
+            }
+
+            try {
+                List<Object[]> dadosMarca  = dao.estatisticasPorMarca(inicio, fim);
+                List<Object[]> dadosRegiao = dao.estatisticasPorRegiao(inicio, fim);
+                preencherTabelaStats(tblMarca, dadosMarca);
+                preencherGrafico(grafMarca, dadosMarca);
+                preencherTabelaStats(tblRegiao, dadosRegiao);
+                preencherGrafico(grafRegiao, dadosRegiao);
+
+                if (inicio != null) {
+                    sucesso("Período filtrado: " + inicio + " a " + fim + ".", lblFiltroFeedback);
+                } else {
+                    lblFiltroFeedback.setText("");
+                }
+            } catch (SQLException ex) { erro(ex, lblFiltroFeedback); }
+        };
+
+        btnFiltrarData.setOnAction(e -> carregarMarcaRegiao.run());
+        btnLimparData.setOnAction(e -> {
+            dpInicio.setValue(null);
+            dpFim.setValue(null);
+            carregarMarcaRegiao.run();
         });
-        try { preencherTabelaStats(tblRegiao, dao.estatisticasPorRegiao()); }
-        catch (SQLException ignored) {}
+
+        // Carregar ao abrir (sem filtro)
+        carregarMarcaRegiao.run();
 
         Separator sep1 = new Separator(); Separator sep2 = new Separator(); Separator sep3 = new Separator();
 
@@ -555,9 +666,10 @@ public class AdminView {
             sep1, lblGerais, cardsBox,
             sep2, lblPeriodo, rbBox, btnPeriodo, tblPeriodo,
             sep3,
+            lblFiltroData, filtroDataBox, lblFiltroFeedback,
             new HBox(30,
-                new VBox(8, lblMarca,  btnMarca,  tblMarca),
-                new VBox(8, lblRegiao, btnRegiao, tblRegiao)
+                new VBox(8, lblMarca,  grafMarca,  tblMarca),
+                new VBox(8, lblRegiao, grafRegiao, tblRegiao)
             )
         );
 
@@ -601,6 +713,33 @@ public class AdminView {
                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0, 0, 2);");
         c.setPrefWidth(148);
         return c;
+    }
+
+    /**
+     * Cria um gráfico de barras vazio para mostrar receita por categoria
+     * (marca ou região). Altura aumentada para facilitar a leitura.
+     */
+    private BarChart<String, Number> criarGraficoBarras(String labelEixoY) {
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis   yAxis = new NumberAxis();
+        yAxis.setLabel(labelEixoY);
+
+        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
+        chart.setLegendVisible(false);
+        chart.setAnimated(false);
+        chart.setPrefHeight(300);
+        chart.setCategoryGap(12);
+        return chart;
+    }
+
+    /** Preenche o gráfico de barras com a receita (índice 2 do Object[]) de cada linha. */
+    private void preencherGrafico(BarChart<String, Number> chart, List<Object[]> dados) {
+        XYChart.Series<String, Number> serie = new XYChart.Series<>();
+        for (Object[] row : dados) {
+            serie.getData().add(new XYChart.Data<>(String.valueOf(row[0]), (double) row[2]));
+        }
+        chart.getData().clear();
+        chart.getData().add(serie);
     }
 
     private TableView<ObservableList<String>> criarTabelaStats(String[] colunas) {
