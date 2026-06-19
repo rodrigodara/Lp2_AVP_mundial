@@ -237,6 +237,10 @@ public class SinhoNotificacoesView {
                 // ACEITE -> tab 1, REJEITADO -> tab 2
                 int tab = "ACEITE".equals(n.tipo) ? 1 : 2;
                 NavigationManager.getInstance().navegarParaMinhasReservasEstado(tab);
+            } else if ("PROPOSTA".equals(n.tipo)) {
+                // Novo pedido de reserva recebido -> vai direto para
+                // Pedidos Recebidos, onde o proprietário pode aceitar/rejeitar
+                NavigationManager.getInstance().navegarParaPedidosRecebidos();
             } else {
                 mostrarDetalhe(n);
             }
