@@ -17,6 +17,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
@@ -637,19 +638,44 @@ public class AdminView {
 
         // ---- Por marca ----
         Label lblMarca = label("Análise por Marca", 16, true, "#37474f");
-        BarChart<String, Number> grafMarca = criarGraficoBarras("Receita (€)");
+        ComboBox<String> cbMarca = new ComboBox<>();
+        cbMarca.getItems().add("Todas as Marcas");
+        try { dao.listarMarcas().forEach(m -> cbMarca.getItems().add(m)); } catch (SQLException ignored) {}
+        cbMarca.setValue("Todas as Marcas");
+        cbMarca.setStyle(campoCss() + " -fx-pref-width: 200px;");
+        Button btnLimparMarca = botao("✕ Limpar", "#546e7a", "white");
+        HBox barMarca = new HBox(10, new Label("Filtrar por marca:"), cbMarca, btnLimparMarca);
+        barMarca.setAlignment(Pos.CENTER_LEFT);
+
+        VBox grafMarcaBox = new VBox(); // contentor que vai ter o gráfico (barra ou linha)
+        BarChart<String, Number> grafMarcaBarra = criarGraficoBarras("Receita (€)");
+        grafMarcaBox.getChildren().add(grafMarcaBarra);
+
         TableView<ObservableList<String>> tblMarca = criarTabelaStats(
             new String[]{"Marca", "Reservas", "Receita (€)"});
         tblMarca.setPrefHeight(280);
 
         // ---- Por região ----
         Label lblRegiao = label("Análise por Região", 16, true, "#37474f");
-        BarChart<String, Number> grafRegiao = criarGraficoBarras("Receita (€)");
+        ComboBox<String> cbRegiao = new ComboBox<>();
+        cbRegiao.getItems().add("Todas as Regiões");
+        try { dao.listarRegioes().forEach(r -> cbRegiao.getItems().add(r)); } catch (SQLException ignored) {}
+        cbRegiao.setValue("Todas as Regiões");
+        cbRegiao.setStyle(campoCss() + " -fx-pref-width: 200px;");
+        Button btnLimparRegiao = botao("✕ Limpar", "#546e7a", "white");
+        HBox barRegiao = new HBox(10, new Label("Filtrar por região:"), cbRegiao, btnLimparRegiao);
+        barRegiao.setAlignment(Pos.CENTER_LEFT);
+
+        VBox grafRegiaoBox = new VBox(); // contentor que vai ter o gráfico (barra ou linha)
+        BarChart<String, Number> grafRegiaoBarra = criarGraficoBarras("Receita (€)");
+        grafRegiaoBox.getChildren().add(grafRegiaoBarra);
+
         TableView<ObservableList<String>> tblRegiao = criarTabelaStats(
             new String[]{"Região", "Reservas", "Receita (€)"});
         tblRegiao.setPrefHeight(280);
 
-        // Carrega marca + região, com ou sem filtro de datas conforme os DatePickers
+        // Carrega marca + região.
+        // "Todas" → BarChart comparativo; específica → LineChart de evolução mensal.
         Runnable carregarMarcaRegiao = () -> {
             LocalDate inicio = dpInicio.getValue();
             LocalDate fim    = dpFim.getValue();
@@ -663,13 +689,47 @@ public class AdminView {
                 return;
             }
 
+            String marcaSel  = "Todas as Marcas".equals(cbMarca.getValue())  ? null : cbMarca.getValue();
+            String regiaoSel = "Todas as Regiões".equals(cbRegiao.getValue()) ? null : cbRegiao.getValue();
+
             try {
-                List<Object[]> dadosMarca  = dao.estatisticasPorMarca(inicio, fim);
-                List<Object[]> dadosRegiao = dao.estatisticasPorRegiao(inicio, fim);
-                preencherTabelaStats(tblMarca, dadosMarca);
-                preencherGrafico(grafMarca, dadosMarca);
-                preencherTabelaStats(tblRegiao, dadosRegiao);
-                preencherGrafico(grafRegiao, dadosRegiao);
+                // ---- MARCA ----
+                if (marcaSel != null) {
+                    lblMarca.setText("Faturamento de " + marcaSel + " por Mês");
+                    List<Object[]> dados = dao.faturamentoPorDataMarca(marcaSel, inicio, fim);
+                    atualizarColunaTabela(tblMarca, new String[]{"Mês", "Reservas", "Receita (€)"});
+                    preencherTabelaStats(tblMarca, dados);
+                    LineChart<String, Number> lineMarca = criarGraficoLinha("Receita (€)");
+                    preencherGraficoLinha(lineMarca, marcaSel, dados);
+                    grafMarcaBox.getChildren().setAll(lineMarca);
+                } else {
+                    lblMarca.setText("Análise por Marca");
+                    List<Object[]> dados = dao.estatisticasPorMarca(inicio, fim, null);
+                    atualizarColunaTabela(tblMarca, new String[]{"Marca", "Reservas", "Receita (€)"});
+                    preencherTabelaStats(tblMarca, dados);
+                    BarChart<String, Number> barMarcaNovo = criarGraficoBarras("Receita (€)");
+                    preencherGrafico(barMarcaNovo, dados);
+                    grafMarcaBox.getChildren().setAll(barMarcaNovo);
+                }
+
+                // ---- REGIÃO ----
+                if (regiaoSel != null) {
+                    lblRegiao.setText("Faturamento de " + regiaoSel + " por Mês");
+                    List<Object[]> dados = dao.faturamentoPorDataRegiao(regiaoSel, inicio, fim);
+                    atualizarColunaTabela(tblRegiao, new String[]{"Mês", "Reservas", "Receita (€)"});
+                    preencherTabelaStats(tblRegiao, dados);
+                    LineChart<String, Number> lineRegiao = criarGraficoLinha("Receita (€)");
+                    preencherGraficoLinha(lineRegiao, regiaoSel, dados);
+                    grafRegiaoBox.getChildren().setAll(lineRegiao);
+                } else {
+                    lblRegiao.setText("Análise por Região");
+                    List<Object[]> dados = dao.estatisticasPorRegiao(inicio, fim, null);
+                    atualizarColunaTabela(tblRegiao, new String[]{"Região", "Reservas", "Receita (€)"});
+                    preencherTabelaStats(tblRegiao, dados);
+                    BarChart<String, Number> barRegiaoNovo = criarGraficoBarras("Receita (€)");
+                    preencherGrafico(barRegiaoNovo, dados);
+                    grafRegiaoBox.getChildren().setAll(barRegiaoNovo);
+                }
 
                 if (inicio != null) {
                     sucesso("Período filtrado: " + inicio + " a " + fim + ".", lblFiltroFeedback);
@@ -678,6 +738,11 @@ public class AdminView {
                 }
             } catch (SQLException ex) { erro(ex, lblFiltroFeedback); }
         };
+
+        cbMarca.setOnAction(e -> carregarMarcaRegiao.run());
+        cbRegiao.setOnAction(e -> carregarMarcaRegiao.run());
+        btnLimparMarca.setOnAction(e -> { cbMarca.setValue("Todas as Marcas");   carregarMarcaRegiao.run(); });
+        btnLimparRegiao.setOnAction(e -> { cbRegiao.setValue("Todas as Regiões"); carregarMarcaRegiao.run(); });
 
         btnFiltrarData.setOnAction(e -> carregarMarcaRegiao.run());
         btnLimparData.setOnAction(e -> {
@@ -698,8 +763,8 @@ public class AdminView {
             sep3,
             lblFiltroData, filtroDataBox, lblFiltroFeedback,
             new HBox(30,
-                new VBox(8, lblMarca,  grafMarca,  tblMarca),
-                new VBox(8, lblRegiao, grafRegiao, tblRegiao)
+                new VBox(8, lblMarca,  barMarca,  grafMarcaBox,  tblMarca),
+                new VBox(8, lblRegiao, barRegiao, grafRegiaoBox, tblRegiao)
             )
         );
 
@@ -770,6 +835,39 @@ public class AdminView {
         }
         chart.getData().clear();
         chart.getData().add(serie);
+    }
+
+    /** Cria um LineChart vazio para evolução temporal de uma marca ou região. */
+    private LineChart<String, Number> criarGraficoLinha(String labelEixoY) {
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis   yAxis = new NumberAxis();
+        yAxis.setLabel(labelEixoY);
+        xAxis.setLabel("Mês");
+
+        LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
+        chart.setLegendVisible(true);
+        chart.setAnimated(false);
+        chart.setPrefHeight(300);
+        chart.setCreateSymbols(true);
+        return chart;
+    }
+
+    /** Preenche o LineChart com dados de evolução temporal (índice 0=período, 2=receita). */
+    private void preencherGraficoLinha(LineChart<String, Number> chart, String nomeSerie, List<Object[]> dados) {
+        XYChart.Series<String, Number> serie = new XYChart.Series<>();
+        serie.setName(nomeSerie);
+        for (Object[] row : dados) {
+            serie.getData().add(new XYChart.Data<>(String.valueOf(row[0]), (double) row[2]));
+        }
+        chart.getData().clear();
+        chart.getData().add(serie);
+    }
+
+    /** Substitui os cabeçalhos das colunas de uma tabela de estatísticas sem recriar o objecto. */
+    private void atualizarColunaTabela(TableView<ObservableList<String>> tabela, String[] novosCabecalhos) {
+        for (int i = 0; i < Math.min(tabela.getColumns().size(), novosCabecalhos.length); i++) {
+            tabela.getColumns().get(i).setText(novosCabecalhos[i]);
+        }
     }
 
     private TableView<ObservableList<String>> criarTabelaStats(String[] colunas) {
