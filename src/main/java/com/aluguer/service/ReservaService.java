@@ -73,6 +73,47 @@ public class ReservaService {
                     ex.printStackTrace();
                 }
 
+                // ------------------------------------------------------------------
+                // Rejeitar automaticamente todos os outros pedidos PENDENTES
+                // do mesmo utilizador, em qualquer veículo. Só pode existir
+                // uma reserva ACEITE por utilizador de cada vez, pois ao
+                // aceitar este pedido o utilizador já fica com o carro.
+                // ------------------------------------------------------------------
+                java.util.List<Reserva> outrosPendentes = dao.listarPendentesPorUtilizador(reserva.getUtilizadorId());
+                for (Reserva pendente : outrosPendentes) {
+                    if (pendente.getId() == reservaId) continue;
+
+                    boolean rejOk = dao.atualizarEstado(pendente.getId(), Estado.REJEITADO);
+                    if (!rejOk) {
+                        System.err.println("[ReservaService] Falha ao rejeitar automaticamente a reserva #" + pendente.getId());
+                        continue;
+                    }
+
+                    NotificacaoService.getInstance().criarNotificacao(
+                        pendente.getUtilizadorId(),
+                        "REJEITADO",
+                        null
+                    );
+
+                    try {
+                        Veiculo veiculoPendente = veiculoDAO.buscarPorId(pendente.getVeiculoId());
+                        String nomeVeiculoPendente = veiculoPendente != null
+                            ? veiculoPendente.getMarca() + " " + veiculoPendente.getModelo()
+                            : "veiculo #" + pendente.getVeiculoId();
+                        String dataInicioPendente = String.valueOf(pendente.getDataInicio());
+                        String dataFimPendente = String.valueOf(pendente.getDataFim());
+
+                        new com.aluguer.dao.UserDAO().findById(pendente.getUtilizadorId()).ifPresent(u ->
+                            com.aluguer.util.EmailService.enviarReservaRejeitada(
+                                u.getEmail(), u.getNome(), pendente.getId(), nomeVeiculoPendente,
+                                dataInicioPendente, dataFimPendente)
+                        );
+                    } catch (Exception ex) {
+                        System.err.println("[ReservaService] Falha ao enviar email de rejeicao automatica: " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                }
+
                 return ResultadoOperacao.sucesso("Reserva #" + reservaId + " aceite com sucesso.");
             } else {
                 return ResultadoOperacao.erro("Falha ao aceitar a reserva. Tente novamente.");
