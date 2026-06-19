@@ -49,6 +49,29 @@ public class ReservaService {
                 int kmAtual = veiculoDAO.buscarKmAtual(reserva.getVeiculoId());
                 dao.atualizarKmInicial(reservaId, kmAtual);
 
+                // notificação in-app
+                NotificacaoService.getInstance().criarNotificacao(
+                    reserva.getUtilizadorId(),
+                    "ACEITE",
+                    null
+                );
+
+                // enviar email ao locatario
+                try {
+                    Veiculo veiculo = veiculoDAO.buscarPorId(reserva.getVeiculoId());
+                    String nomeVeiculo = veiculo != null ? veiculo.getMarca() + " " + veiculo.getModelo() : "veiculo #" + reserva.getVeiculoId();
+                    String detalhes = nomeVeiculo + " de " + reserva.getDataInicio() + " a " + reserva.getDataFim();
+
+                    System.out.println("[ReservaService] A tentar enviar email aceite para reserva #" + reservaId);
+                    new com.aluguer.dao.UserDAO().findById(reserva.getUtilizadorId()).ifPresent(u -> {
+                        System.out.println("[ReservaService] Utilizador encontrado: " + u.getEmail());
+                        com.aluguer.util.EmailService.enviarReservaAceite(u.getEmail(), u.getNome(), reservaId, detalhes);
+                    });
+                } catch (Exception ex) {
+                    System.err.println("[ReservaService] Falha ao enviar email aceite: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+
                 return ResultadoOperacao.sucesso("Reserva #" + reservaId + " aceite com sucesso.");
             } else {
                 return ResultadoOperacao.erro("Falha ao aceitar a reserva. Tente novamente.");
@@ -78,6 +101,30 @@ public class ReservaService {
             boolean ok = dao.atualizarEstado(reservaId, Estado.REJEITADO);
 
             if (ok) {
+                // notificação in-app
+                NotificacaoService.getInstance().criarNotificacao(
+                    reserva.getUtilizadorId(),
+                    "REJEITADO",
+                    null
+                );
+
+                // enviar email ao locatario
+                try {
+                    VeiculoDAO veiculoDAO2 = new VeiculoDAO();
+                    Veiculo veiculo = veiculoDAO2.buscarPorId(reserva.getVeiculoId());
+                    String nomeVeiculo = veiculo != null ? veiculo.getMarca() + " " + veiculo.getModelo() : "veiculo #" + reserva.getVeiculoId();
+                    String detalhes = nomeVeiculo + " de " + reserva.getDataInicio() + " a " + reserva.getDataFim();
+
+                    System.out.println("[ReservaService] A tentar enviar email rejeitado para reserva #" + reservaId);
+                    new com.aluguer.dao.UserDAO().findById(reserva.getUtilizadorId()).ifPresent(u -> {
+                        System.out.println("[ReservaService] Utilizador encontrado: " + u.getEmail());
+                        com.aluguer.util.EmailService.enviarReservaRejeitada(u.getEmail(), u.getNome(), reservaId, detalhes);
+                    });
+                } catch (Exception ex) {
+                    System.err.println("[ReservaService] Falha ao enviar email rejeitado: " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+
                 return ResultadoOperacao.sucesso("Reserva #" + reservaId + " rejeitada.");
             } else {
                 return ResultadoOperacao.erro("Falha ao rejeitar a reserva. Tente novamente.");

@@ -122,6 +122,16 @@ public boolean emitirAviso(int userId, String motivo) throws SQLException {
         ps.executeUpdate();
     }
 
+    // enviar email de aviso
+    try {
+        new com.aluguer.dao.UserDAO().findById(userId).ifPresent(u ->
+            com.aluguer.util.EmailService.enviarAvisoAdmin(
+                u.getEmail(), u.getNome(), motivo, 0)
+        );
+    } catch (Exception e) {
+        System.err.println("[AdminDAO] Falha ao enviar email de aviso: " + e.getMessage());
+    }
+
     // ✅ ADICIONA ISTO — criar notificação no sino do utilizador
     NotificacaoService.getInstance().criarNotificacao(
         userId,

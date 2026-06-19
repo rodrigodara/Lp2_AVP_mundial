@@ -157,15 +157,19 @@ public class NavigationManager {
     }
 
     public void navegarParaMinhasReservas() {
-        if (bloquearSeAdmin("ver reservas")) {
-            return;
-        }
-        if (utilizadorLogadoId < 0) {
-            return;
-        }
-
+        if (bloquearSeAdmin("ver reservas")) return;
+        if (utilizadorLogadoId < 0) return;
         garantirNavbar();
         navegarPara(new MinhasReservasView(utilizadorLogadoId).getRoot());
+    }
+
+    /** Navega para Minhas Reservas abrindo diretamente na tab do estado indicado.
+     *  0=Pendentes, 1=Aceites, 2=Rejeitadas, 3=Canceladas, 4=Concluídas */
+    public void navegarParaMinhasReservasEstado(int tab) {
+        if (bloquearSeAdmin("ver reservas")) return;
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+        navegarPara(new MinhasReservasView(utilizadorLogadoId, tab).getRoot());
     }
 
     // =========================
