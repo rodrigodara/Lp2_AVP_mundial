@@ -10,11 +10,12 @@ public class Veiculo {
     private double precoDiario;
     private String localizacao;
     private int proprietarioId;
-    private String estado; // NOVO CAMPO
+    private String estado;
+    private String matricula;
 
-    // Construtor completo
+    // Construtor completo (com ID)
     public Veiculo(int id, String marca, String modelo, int ano, String combustivel,
-                   double precoDiario, String localizacao, int proprietarioId, String estado) {
+                   double precoDiario, String localizacao, int proprietarioId, String estado, String matricula) {
         this.id = id;
         this.marca = marca;
         this.modelo = modelo;
@@ -24,11 +25,12 @@ public class Veiculo {
         this.localizacao = localizacao;
         this.proprietarioId = proprietarioId;
         this.estado = estado;
+        this.matricula = matricula;
     }
 
     // Construtor sem ID (para inserções)
     public Veiculo(String marca, String modelo, int ano, String combustivel,
-                   double precoDiario, String localizacao, int proprietarioId, String estado) {
+                   double precoDiario, String localizacao, int proprietarioId, String estado, String matricula) {
         this.marca = marca;
         this.modelo = modelo;
         this.ano = ano;
@@ -37,6 +39,18 @@ public class Veiculo {
         this.localizacao = localizacao;
         this.proprietarioId = proprietarioId;
         this.estado = estado;
+        this.matricula = matricula;
+    }
+
+    // Construtor legado sem matrícula (para não partir código existente)
+    public Veiculo(String marca, String modelo, int ano, String combustivel,
+                   double precoDiario, String localizacao, int proprietarioId, String estado) {
+        this(marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, estado, null);
+    }
+
+    public Veiculo(int id, String marca, String modelo, int ano, String combustivel,
+                   double precoDiario, String localizacao, int proprietarioId, String estado) {
+        this(id, marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, estado, null);
     }
 
     // Getters e Setters
@@ -66,6 +80,9 @@ public class Veiculo {
 
     public String getEstado() { return estado; }
     public void setEstado(String estado) { this.estado = estado; }
+
+    public String getMatricula() { return matricula; }
+    public void setMatricula(String matricula) { this.matricula = matricula; }
 
     @Override
     public String toString() {

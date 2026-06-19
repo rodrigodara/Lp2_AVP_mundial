@@ -31,9 +31,6 @@ public class AdicionarVeiculoView {
         Label subtitulo = new Label("Preenche os dados do teu veículo");
         subtitulo.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
 
-        // ============================
-        // FORMULÁRIO
-        // ============================
         GridPane form = new GridPane();
         form.setHgap(15);
         form.setVgap(15);
@@ -60,30 +57,30 @@ public class AdicionarVeiculoView {
         TextField tfLocalizacao = new TextField();
         tfLocalizacao.setPromptText("Ex: Lisboa");
 
-        form.add(new Label("Marca:"),        0, 0); form.add(tfMarca,        1, 0);
-        form.add(new Label("Modelo:"),       0, 1); form.add(tfModelo,       1, 1);
-        form.add(new Label("Ano:"),          0, 2); form.add(tfAno,          1, 2);
-        form.add(new Label("Combustível:"),  0, 3); form.add(cbCombustivel,  1, 3);
-        form.add(new Label("Preço/Dia (€):"),0, 4); form.add(tfPreco,        1, 4);
-        form.add(new Label("Localização:"),  0, 5); form.add(tfLocalizacao,  1, 5);
+        TextField tfMatricula = new TextField();
+        tfMatricula.setPromptText("Ex: AA-00-BB");
 
-        // Estilo dos labels
-        form.getChildren().stream()
-            .filter(n -> n instanceof Label)
-            .forEach(n -> n.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;"));
+        form.add(new Label("Marca:"),         0, 0); form.add(tfMarca,        1, 0);
+        form.add(new Label("Modelo:"),        0, 1); form.add(tfModelo,       1, 1);
+        form.add(new Label("Ano:"),           0, 2); form.add(tfAno,          1, 2);
+        form.add(new Label("Combustível:"),   0, 3); form.add(cbCombustivel,  1, 3);
+        form.add(new Label("Preço/Dia (€):"), 0, 4); form.add(tfPreco,        1, 4);
+        form.add(new Label("Localização:"),   0, 5); form.add(tfLocalizacao,  1, 5);
+        form.add(new Label("Matrícula:"),     0, 6); form.add(tfMatricula,    1, 6);
 
-        // Estilo dos campos
         String fieldStyle = "-fx-pref-width: 280px; -fx-font-size: 13px;";
         tfMarca.setStyle(fieldStyle);
         tfModelo.setStyle(fieldStyle);
         tfAno.setStyle(fieldStyle);
         tfPreco.setStyle(fieldStyle);
         tfLocalizacao.setStyle(fieldStyle);
+        tfMatricula.setStyle(fieldStyle);
         cbCombustivel.setStyle(fieldStyle);
 
-        // ============================
-        // BOTÕES
-        // ============================
+        form.getChildren().stream()
+            .filter(n -> n instanceof Label)
+            .forEach(n -> n.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;"));
+
         Button btnGuardar = new Button("Guardar Veículo");
         btnGuardar.getStyleClass().add("btn-primario");
 
@@ -101,10 +98,11 @@ public class AdicionarVeiculoView {
             String combustivel = cbCombustivel.getValue();
             String precoStr    = tfPreco.getText().trim().replace(",", ".");
             String localizacao = tfLocalizacao.getText().trim();
+            String matricula   = tfMatricula.getText().trim().toUpperCase();
 
-            // Validação
             if (marca.isEmpty() || modelo.isEmpty() || anoStr.isEmpty()
-                    || combustivel == null || precoStr.isEmpty() || localizacao.isEmpty()) {
+                    || combustivel == null || precoStr.isEmpty()
+                    || localizacao.isEmpty() || matricula.isEmpty()) {
                 mostrarErro("Preenche todos os campos.");
                 return;
             }
@@ -127,7 +125,7 @@ public class AdicionarVeiculoView {
             }
 
             int proprietarioId = SessionManager.getInstance().getUtilizador().getId();
-            Veiculo v = new Veiculo(marca, modelo, ano, combustivel, preco, localizacao, proprietarioId, "disponivel");
+            Veiculo v = new Veiculo(marca, modelo, ano, combustivel, preco, localizacao, proprietarioId, "disponivel", matricula);
 
             try {
                 VeiculoService service = new VeiculoService();

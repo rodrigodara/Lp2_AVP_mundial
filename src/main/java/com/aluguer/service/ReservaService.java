@@ -60,12 +60,13 @@ public class ReservaService {
                 try {
                     Veiculo veiculo = veiculoDAO.buscarPorId(reserva.getVeiculoId());
                     String nomeVeiculo = veiculo != null ? veiculo.getMarca() + " " + veiculo.getModelo() : "veiculo #" + reserva.getVeiculoId();
-                    String detalhes = nomeVeiculo + " de " + reserva.getDataInicio() + " a " + reserva.getDataFim();
+                    String dataInicio = String.valueOf(reserva.getDataInicio());
+                    String dataFim = String.valueOf(reserva.getDataFim());
 
                     System.out.println("[ReservaService] A tentar enviar email aceite para reserva #" + reservaId);
                     new com.aluguer.dao.UserDAO().findById(reserva.getUtilizadorId()).ifPresent(u -> {
                         System.out.println("[ReservaService] Utilizador encontrado: " + u.getEmail());
-                        com.aluguer.util.EmailService.enviarReservaAceite(u.getEmail(), u.getNome(), reservaId, detalhes);
+                        com.aluguer.util.EmailService.enviarReservaAceite(u.getEmail(), u.getNome(), reservaId, nomeVeiculo, dataInicio, dataFim);
                     });
                 } catch (Exception ex) {
                     System.err.println("[ReservaService] Falha ao enviar email aceite: " + ex.getMessage());
@@ -113,12 +114,13 @@ public class ReservaService {
                     VeiculoDAO veiculoDAO2 = new VeiculoDAO();
                     Veiculo veiculo = veiculoDAO2.buscarPorId(reserva.getVeiculoId());
                     String nomeVeiculo = veiculo != null ? veiculo.getMarca() + " " + veiculo.getModelo() : "veiculo #" + reserva.getVeiculoId();
-                    String detalhes = nomeVeiculo + " de " + reserva.getDataInicio() + " a " + reserva.getDataFim();
+                    String dataInicio = String.valueOf(reserva.getDataInicio());
+                    String dataFim = String.valueOf(reserva.getDataFim());
 
                     System.out.println("[ReservaService] A tentar enviar email rejeitado para reserva #" + reservaId);
                     new com.aluguer.dao.UserDAO().findById(reserva.getUtilizadorId()).ifPresent(u -> {
                         System.out.println("[ReservaService] Utilizador encontrado: " + u.getEmail());
-                        com.aluguer.util.EmailService.enviarReservaRejeitada(u.getEmail(), u.getNome(), reservaId, detalhes);
+                        com.aluguer.util.EmailService.enviarReservaRejeitada(u.getEmail(), u.getNome(), reservaId, nomeVeiculo, dataInicio, dataFim);
                     });
                 } catch (Exception ex) {
                     System.err.println("[ReservaService] Falha ao enviar email rejeitado: " + ex.getMessage());

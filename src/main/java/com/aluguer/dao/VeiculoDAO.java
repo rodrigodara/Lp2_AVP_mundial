@@ -13,8 +13,8 @@ import com.aluguer.util.DatabaseConnection;
 public class VeiculoDAO {
 
     public boolean inserir(Veiculo v) throws SQLException {
-        String sql = "INSERT INTO veiculo (marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, estado) "
-                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO veiculo (marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, estado, matricula) "
+                   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, v.getMarca());
@@ -25,6 +25,7 @@ public class VeiculoDAO {
             stmt.setString(6, v.getLocalizacao());
             stmt.setInt(7, v.getProprietarioId());
             stmt.setString(8, v.getEstado());
+            stmt.setString(9, v.getMatricula());
             return stmt.executeUpdate() > 0;
         }
     }
@@ -53,7 +54,7 @@ public class VeiculoDAO {
     }
 
     public boolean atualizar(Veiculo v) throws SQLException {
-        String sql = "UPDATE veiculo SET marca=?, modelo=?, ano=?, combustivel=?, precoDiario=?, localizacao=?, proprietarioId=?, estado=? WHERE id=?";
+        String sql = "UPDATE veiculo SET marca=?, modelo=?, ano=?, combustivel=?, precoDiario=?, localizacao=?, proprietarioId=?, estado=?, matricula=? WHERE id=?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, v.getMarca());
@@ -64,7 +65,8 @@ public class VeiculoDAO {
             stmt.setString(6, v.getLocalizacao());
             stmt.setInt(7, v.getProprietarioId());
             stmt.setString(8, v.getEstado());
-            stmt.setInt(9, v.getId());
+            stmt.setString(9, v.getMatricula());
+            stmt.setInt(10, v.getId());
             return stmt.executeUpdate() > 0;
         }
     }
@@ -78,7 +80,6 @@ public class VeiculoDAO {
         }
     }
 
-    // ALV-176
     public List<Veiculo> listarPorProprietario(int proprietarioId) throws SQLException {
         List<Veiculo> lista = new ArrayList<>();
         String sql = "SELECT * FROM veiculo WHERE proprietarioId = ?";
@@ -149,42 +150,32 @@ public class VeiculoDAO {
         return lista;
     }
 
-    // ------------------------------------------------------------------
-// ALV-145 — Atualizar quilometragem do veículo
-// ------------------------------------------------------------------
-
-/**
- * Atualiza a quilometragem total do veículo após o aluguer terminar.
- * O valor deve corresponder ao kmFinal registado na reserva.
- */
-public boolean atualizarKm(int veiculoId, int novoKm) {
-    String sql = "UPDATE veiculo SET quilometragem = ? WHERE id = ?";
-
-    try (Connection conn = DatabaseConnection.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
-        stmt.setInt(1, novoKm);
-        stmt.setInt(2, veiculoId);
-        return stmt.executeUpdate() > 0;
-    } catch (SQLException e) {
-        System.err.println("[VeiculoDAO] Erro ao atualizar quilometragem: " + e.getMessage());
-        return false;
-    }
-}
-
-public int buscarKmAtual(int veiculoId) {
-    String sql = "SELECT quilometragem FROM veiculo WHERE id = ?";
-    try (Connection conn = DatabaseConnection.getConnection();
-         PreparedStatement stmt = conn.prepareStatement(sql)) {
-        stmt.setInt(1, veiculoId);
-        try (ResultSet rs = stmt.executeQuery()) {
-            if (rs.next()) return rs.getInt("quilometragem");
+    public boolean atualizarKm(int veiculoId, int novoKm) {
+        String sql = "UPDATE veiculo SET quilometragem = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, novoKm);
+            stmt.setInt(2, veiculoId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[VeiculoDAO] Erro ao atualizar quilometragem: " + e.getMessage());
+            return false;
         }
-    } catch (SQLException e) {
-        System.err.println("[VeiculoDAO] Erro ao buscar quilometragem: " + e.getMessage());
     }
-    return 0;
-}
 
+    public int buscarKmAtual(int veiculoId) {
+        String sql = "SELECT quilometragem FROM veiculo WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, veiculoId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("quilometragem");
+            }
+        } catch (SQLException e) {
+            System.err.println("[VeiculoDAO] Erro ao buscar quilometragem: " + e.getMessage());
+        }
+        return 0;
+    }
 
     private Veiculo mapRow(ResultSet rs) throws SQLException {
         return new Veiculo(
@@ -196,7 +187,8 @@ public int buscarKmAtual(int veiculoId) {
             rs.getDouble("precoDiario"),
             rs.getString("localizacao"),
             rs.getInt("proprietarioId"),
-            rs.getString("estado")
+            rs.getString("estado"),
+            rs.getString("matricula")
         );
     }
 }

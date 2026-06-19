@@ -21,11 +21,6 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
-/**
- * ALV-134 — Listagem dos Meus Veículos.
- * Mostra ao utilizador autenticado todos os seus veículos registados.
- * Permite editar ou remover o veículo selecionado.
- */
 public class MeusVeiculosView {
 
     private final VBox root;
@@ -46,9 +41,9 @@ public class MeusVeiculosView {
         tabela.setPrefHeight(450);
         tabela.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        // ============================
-        // COLUNAS
-        // ============================
+        TableColumn<Veiculo, String> colMatricula = new TableColumn<>("Matrícula");
+        colMatricula.setCellValueFactory(new PropertyValueFactory<>("matricula"));
+
         TableColumn<Veiculo, String> colMarca = new TableColumn<>("Marca");
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
 
@@ -71,12 +66,9 @@ public class MeusVeiculosView {
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
 
         tabela.getColumns().addAll(
-            colMarca, colModelo, colAno, colCombustivel, colPreco, colLocalizacao, colEstado
+            colMatricula, colMarca, colModelo, colAno, colCombustivel, colPreco, colLocalizacao, colEstado
         );
 
-        // ============================
-        // BOTÕES AÇÕES
-        // ============================
         Button btnAdicionar = new Button("+ Adicionar Veículo");
         btnAdicionar.getStyleClass().add("btn-primario");
         btnAdicionar.setOnAction(e ->
@@ -91,14 +83,12 @@ public class MeusVeiculosView {
         btnRemover.getStyleClass().add("btn-perigo");
         btnRemover.setDisable(true);
 
-        // Ativa botões apenas quando há seleção
         tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
             boolean semSelecao = (novo == null);
             btnDetalhes.setDisable(semSelecao);
             btnRemover.setDisable(semSelecao);
         });
 
-        // Duplo clique abre detalhes
         tabela.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
                 abrirDetalhes(tabela.getSelectionModel().getSelectedItem());
@@ -116,9 +106,6 @@ public class MeusVeiculosView {
         HBox acoes = new HBox(15, btnAdicionar, btnDetalhes, btnRemover);
         acoes.setAlignment(Pos.CENTER);
 
-        // ============================
-        // CARREGAR DADOS
-        // ============================
         carregarMeusVeiculos();
 
         root.getChildren().addAll(titulo, tabela, acoes);
