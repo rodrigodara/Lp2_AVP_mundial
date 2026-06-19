@@ -400,26 +400,103 @@ public boolean emitirAviso(int userId, String motivo) throws SQLException {
         return estatisticasPorMarca(null, null);
     }
 
+    /**
+     * Faturamento de uma marca específica ao longo do tempo (por mês).
+     * Se inicio/fim forem null, usa todos os registos.
+     */
+    public List<Object[]> faturamentoPorDataMarca(String marca, LocalDate inicio, LocalDate fim) throws SQLException {
+        List<Object[]> lista = new ArrayList<>();
+        boolean comFiltroData = inicio != null && fim != null;
+
+        String sql = "SELECT DATE_FORMAT(r.dataInicio, '%Y-%m') AS periodo, "
+                   + "       COUNT(r.id)                         AS total, "
+                   + "       COALESCE(SUM(r.precoTotal), 0)      AS receita "
+                   + "FROM reserva r "
+                   + "JOIN veiculo v ON r.veiculoId = v.id "
+                   + "WHERE v.marca = ? "
+                   + (comFiltroData ? "AND r.dataInicio BETWEEN ? AND ? " : "")
+                   + "GROUP BY periodo "
+                   + "ORDER BY periodo ASC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            int idx = 1;
+            ps.setString(idx++, marca);
+            if (comFiltroData) { ps.setDate(idx++, Date.valueOf(inicio)); ps.setDate(idx++, Date.valueOf(fim)); }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new Object[]{
+                        rs.getString("periodo"),
+                        rs.getInt("total"),
+                        rs.getDouble("receita")
+                    });
+                }
+            }
+        }
+        return lista;
+    }
+
+    /**
+     * Faturamento de uma região específica ao longo do tempo (por mês).
+     * Se inicio/fim forem null, usa todos os registos.
+     */
+    public List<Object[]> faturamentoPorDataRegiao(String regiao, LocalDate inicio, LocalDate fim) throws SQLException {
+        List<Object[]> lista = new ArrayList<>();
+        boolean comFiltroData = inicio != null && fim != null;
+
+        String sql = "SELECT DATE_FORMAT(r.dataInicio, '%Y-%m') AS periodo, "
+                   + "       COUNT(r.id)                         AS total, "
+                   + "       COALESCE(SUM(r.precoTotal), 0)      AS receita "
+                   + "FROM reserva r "
+                   + "JOIN veiculo v ON r.veiculoId = v.id "
+                   + "WHERE v.localizacao = ? "
+                   + (comFiltroData ? "AND r.dataInicio BETWEEN ? AND ? " : "")
+                   + "GROUP BY periodo "
+                   + "ORDER BY periodo ASC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            int idx = 1;
+            ps.setString(idx++, regiao);
+            if (comFiltroData) { ps.setDate(idx++, Date.valueOf(inicio)); ps.setDate(idx++, Date.valueOf(fim)); }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new Object[]{
+                        rs.getString("periodo"),
+                        rs.getInt("total"),
+                        rs.getDouble("receita")
+                    });
+                }
+            }
+        }
+        return lista;
+    }
+
 
     public List<Object[]> estatisticasPorMarca(LocalDate inicio, LocalDate fim) throws SQLException {
+        return estatisticasPorMarca(inicio, fim, null);
+    }
+
+    public List<Object[]> estatisticasPorMarca(LocalDate inicio, LocalDate fim, String marcaFiltro) throws SQLException {
         List<Object[]> lista = new ArrayList<>();
-        boolean comFiltro = inicio != null && fim != null;
+        boolean comFiltroData  = inicio != null && fim != null;
+        boolean comFiltroMarca = marcaFiltro != null && !marcaFiltro.isBlank();
 
         String sql = "SELECT v.marca, "
                    + "       COUNT(r.id)                    AS total, "
                    + "       COALESCE(SUM(r.precoTotal), 0) AS receita "
                    + "FROM veiculo v "
                    + "LEFT JOIN reserva r ON r.veiculoId = v.id"
-                   + (comFiltro ? " AND r.dataInicio BETWEEN ? AND ?" : "")
+                   + (comFiltroData  ? " AND r.dataInicio BETWEEN ? AND ?" : "")
+                   + (comFiltroMarca ? " WHERE v.marca = ?" : "")
                    + " GROUP BY v.marca "
                    + "ORDER BY total DESC, v.marca";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            if (comFiltro) {
-                ps.setDate(1, Date.valueOf(inicio));
-                ps.setDate(2, Date.valueOf(fim));
-            }
+            int idx = 1;
+            if (comFiltroData)  { ps.setDate(idx++, Date.valueOf(inicio)); ps.setDate(idx++, Date.valueOf(fim)); }
+            if (comFiltroMarca)   ps.setString(idx, marcaFiltro);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     lista.add(new Object[]{
@@ -437,25 +514,54 @@ public boolean emitirAviso(int userId, String motivo) throws SQLException {
         return estatisticasPorRegiao(null, null);
     }
 
+    /** Retorna a lista de marcas distintas existentes na tabela veiculo. */
+    public List<String> listarMarcas() throws SQLException {
+        List<String> lista = new ArrayList<>();
+        String sql = "SELECT DISTINCT marca FROM veiculo ORDER BY marca";
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement st   = conn.createStatement();
+             ResultSet rs   = st.executeQuery(sql)) {
+            while (rs.next()) lista.add(rs.getString(1));
+        }
+        return lista;
+    }
+
+    /** Retorna a lista de regiões/localizações distintas existentes na tabela veiculo. */
+    public List<String> listarRegioes() throws SQLException {
+        List<String> lista = new ArrayList<>();
+        String sql = "SELECT DISTINCT localizacao FROM veiculo ORDER BY localizacao";
+        try (Connection conn = DatabaseConnection.getConnection();
+             Statement st   = conn.createStatement();
+             ResultSet rs   = st.executeQuery(sql)) {
+            while (rs.next()) lista.add(rs.getString(1));
+        }
+        return lista;
+    }
+
     public List<Object[]> estatisticasPorRegiao(LocalDate inicio, LocalDate fim) throws SQLException {
+        return estatisticasPorRegiao(inicio, fim, null);
+    }
+
+    public List<Object[]> estatisticasPorRegiao(LocalDate inicio, LocalDate fim, String regiaoFiltro) throws SQLException {
         List<Object[]> lista = new ArrayList<>();
-        boolean comFiltro = inicio != null && fim != null;
+        boolean comFiltroData   = inicio != null && fim != null;
+        boolean comFiltroRegiao = regiaoFiltro != null && !regiaoFiltro.isBlank();
 
         String sql = "SELECT v.localizacao               AS regiao, "
                    + "       COUNT(r.id)                    AS total, "
                    + "       COALESCE(SUM(r.precoTotal), 0) AS receita "
                    + "FROM veiculo v "
                    + "LEFT JOIN reserva r ON r.veiculoId = v.id"
-                   + (comFiltro ? " AND r.dataInicio BETWEEN ? AND ?" : "")
+                   + (comFiltroData   ? " AND r.dataInicio BETWEEN ? AND ?" : "")
+                   + (comFiltroRegiao ? " WHERE v.localizacao = ?" : "")
                    + " GROUP BY v.localizacao "
                    + "ORDER BY total DESC, v.localizacao";
 
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            if (comFiltro) {
-                ps.setDate(1, Date.valueOf(inicio));
-                ps.setDate(2, Date.valueOf(fim));
-            }
+            int idx = 1;
+            if (comFiltroData)   { ps.setDate(idx++, Date.valueOf(inicio)); ps.setDate(idx++, Date.valueOf(fim)); }
+            if (comFiltroRegiao)   ps.setString(idx, regiaoFiltro);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     lista.add(new Object[]{
