@@ -166,7 +166,6 @@ public class ReservaService {
             Veiculo veiculo = veiculoDAO.buscarPorId(veiculoId);
             if (veiculo != null) {
                 String nomeVeiculo = veiculo.getMarca() + " " + veiculo.getModelo();
-                String detalhes = nomeVeiculo + " de " + inicio + " a " + fim;
                 NotificacaoService.getInstance().criarNotificacao(
                     veiculo.getProprietarioId(),
                     "PROPOSTA",
@@ -176,7 +175,8 @@ public class ReservaService {
                 // enviar email ao proprietario
                 new com.aluguer.dao.UserDAO().findById(veiculo.getProprietarioId()).ifPresent(u ->
                     com.aluguer.util.EmailService.enviarNovaProposta(
-                        u.getEmail(), u.getNome(), reserva.getId(), detalhes)
+                        u.getEmail(), u.getNome(), reserva.getId(), nomeVeiculo,
+                        String.valueOf(inicio), String.valueOf(fim))
                 );
             }
         } catch (Exception e) {
