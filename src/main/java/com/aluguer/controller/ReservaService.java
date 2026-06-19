@@ -166,15 +166,21 @@ public class ReservaService {
             Veiculo veiculo = veiculoDAO.buscarPorId(veiculoId);
             if (veiculo != null) {
                 String nomeVeiculo = veiculo.getMarca() + " " + veiculo.getModelo();
+                String detalhes = nomeVeiculo + " de " + inicio + " a " + fim;
                 NotificacaoService.getInstance().criarNotificacao(
                     veiculo.getProprietarioId(),
                     "PROPOSTA",
                     "Novo pedido de reserva para o teu " + nomeVeiculo
                         + " de " + inicio + " a " + fim + "."
                 );
+                // enviar email ao proprietario
+                new com.aluguer.dao.UserDAO().findById(veiculo.getProprietarioId()).ifPresent(u ->
+                    com.aluguer.util.EmailService.enviarNovaProposta(
+                        u.getEmail(), u.getNome(), reserva.getId(), detalhes)
+                );
             }
         } catch (Exception e) {
-            System.err.println("[ReservaService] Aviso: falha ao criar notificacao: " + e.getMessage());
+            System.err.println("[ReservaService] Aviso: falha ao notificar proprietario: " + e.getMessage());
         }
 
         return reserva;

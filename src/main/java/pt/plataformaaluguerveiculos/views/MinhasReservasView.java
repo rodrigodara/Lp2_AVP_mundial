@@ -25,9 +25,15 @@ public class MinhasReservasView {
 
     private VBox root;
     private final int utilizadorId;
+    private int tabInicial = 0; // 0=Pendentes, 1=Aceites, 2=Rejeitadas, 3=Canceladas, 4=Concluídas
 
     public MinhasReservasView(int utilizadorId) {
+        this(utilizadorId, 0);
+    }
+
+    public MinhasReservasView(int utilizadorId, int tabInicial) {
         this.utilizadorId = utilizadorId;
+        this.tabInicial   = tabInicial;
 
         root = new VBox(16);
         root.setPadding(new Insets(30));
@@ -74,6 +80,8 @@ public class MinhasReservasView {
             criarTab("Canceladas (" + canceladas.size() + ")", canceladas, "#c62828",  "#ffebee"),
             criarTab("Concluídas (" + concluidas.size() + ")", concluidas, "#1a237e",  "#e8eaf6")
         );
+
+        tabs.getSelectionModel().select(tabInicial);
 
         root.getChildren().add(tabs);
     }

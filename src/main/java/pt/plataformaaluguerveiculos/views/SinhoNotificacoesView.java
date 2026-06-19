@@ -5,6 +5,7 @@ import java.util.List;
 import com.aluguer.service.NotificacaoService;
 import com.aluguer.service.NotificacaoService.Notificacao;
 import com.aluguer.util.SessionManager;
+import pt.plataformaaluguerveiculos.views.NavigationManager;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -233,7 +234,13 @@ public class SinhoNotificacoesView {
             NotificacaoService.getInstance().marcarComoLida(n.id, n.isReserva);
             atualizarBadge();
             popup.hide();
-            mostrarDetalhe(n);
+            if (n.isReserva) {
+                // ACEITE -> tab 1, REJEITADO -> tab 2
+                int tab = "ACEITE".equals(n.tipo) ? 1 : 2;
+                NavigationManager.getInstance().navegarParaMinhasReservasEstado(tab);
+            } else {
+                mostrarDetalhe(n);
+            }
         });
 
         return row;
