@@ -5,7 +5,6 @@ import java.util.List;
 import com.aluguer.service.NotificacaoService;
 import com.aluguer.service.NotificacaoService.Notificacao;
 import com.aluguer.util.SessionManager;
-import pt.plataformaaluguerveiculos.views.NavigationManager;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -39,7 +38,7 @@ public class SinhoNotificacoesView {
     public SinhoNotificacoesView() {
 
         Label icone = new Label("\uD83D\uDD14");
-        icone.setStyle("-fx-font-size: 20px; -fx-cursor: hand;");
+        icone.setStyle("-fx-font-size: 20px; -fx-cursor: hand; -fx-text-fill: white;");
 
         badge = new Label("0");
         badge.setStyle(
