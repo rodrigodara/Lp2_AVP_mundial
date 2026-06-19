@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 com\aluguer\service\ReservaService$1.class
 com\aluguer\util\DatabaseConnection.class
 pt\plataformaaluguerveiculos\views\FeedbackView.class
@@ -30,4 +28,3 @@ pt\plataformaaluguerveiculos\views\HistoricoVeiculosView.class
 com\aluguer\service\PrecoDinamicoService.class
 com\aluguer\controller\VeiculosController.class
 com\aluguer\dao\ReservaDAO.class
->>>>>>> 3e6a0c0341b684352791c45db434783dcc286c79

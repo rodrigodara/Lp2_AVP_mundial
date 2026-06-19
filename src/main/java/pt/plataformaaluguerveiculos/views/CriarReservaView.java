@@ -241,16 +241,17 @@ public class CriarReservaView {
         double total  = renda + caucao;
 
         lblRenda.setText(String.format("Renda (%d dia%s): %.2f€", dias, dias > 1 ? "s" : "", renda));
-        if (kmDiaMedia <= 0 || consumo <= 0 || precoCombustivel <= 0) {
+        if (consumo <= 0 || precoCombustivel <= 0) {
             lblCombustivel.setText("Combustível estimado: não disponível (sem dados do veículo)");
         } else {
-            lblCombustivel.setText(String.format("Combustível estimado: %.2f€", comb));
+            double kmDia = kmDiaMedia > 0 ? kmDiaMedia : 200.0;
+            lblCombustivel.setText(String.format("Combustível estimado: %.2f€  (≈%.0f km/dia)", comb, kmDia));
         }
         lblCaucao.setText(String.format("Caução: 20%% = %.2f€", caucao));
         lblTotal.setText(String.format("Total a bloquear: %.2f€", total));
         lblNota.setText(dias >= 7
-            ? "✔ Desconto de longa duração (-10%) aplicado"
-            : "A caução é devolvida no final sem incidentes.");
+            ? "✔ Desconto de longa duração (-10%) aplicado. Combustível é estimativa."
+            : "Combustível é estimativa com base em médias típicas. Caução devolvida sem incidentes.");
 
         if (saldo < total) {
             lblErro.setText(String.format("Saldo insuficiente. Necessário %.2f€, disponível %.2f€.", total, saldo));

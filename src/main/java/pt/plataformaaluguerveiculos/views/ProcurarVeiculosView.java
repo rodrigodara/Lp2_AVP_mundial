@@ -229,14 +229,16 @@ public class ProcurarVeiculosView {
             Connection conn = DatabaseConnection.getConnection();
             ReservaService service = new ReservaService(conn);
 
+            double[] combInfo = estimarDadosCombustivel(veiculo.getCombustivel());
+
             CriarReservaView view = new CriarReservaView(
                 service,
                 user.getId(),
                 veiculo.getId(),
                 veiculo.getPrecoDiario(),
-                0,
-                0,
-                0,
+                combInfo[0],   // consumo estimado (L/100km ou kWh/100km)
+                combInfo[1],   // preço do combustível (€/L ou €/kWh)
+                0,             // kmDiaMedia=0 → usa DEFAULT_KM_DIA (200 km/dia)
                 user.getSaldo().doubleValue(),
                 veiculo.getMarca() + " " + veiculo.getModelo() + " (" + veiculo.getAno() + ")"
             );
@@ -245,6 +247,24 @@ public class ProcurarVeiculosView {
 
         } catch (Exception ex) {
             ex.printStackTrace();
+        }
+    }
+
+    /**
+     * Devolve [consumo, precoCombustivel] com base no tipo de combustível.
+     * Valores típicos médios para estimativa de custo na preview de reserva.
+     */
+    private double[] estimarDadosCombustivel(String tipo) {
+        if (tipo == null) return new double[]{7.0, 1.75};
+        switch (tipo.toLowerCase().trim()) {
+            case "diesel":            return new double[]{6.0, 1.60};
+            case "elétrico":
+            case "eletrico":          return new double[]{18.0, 0.25};
+            case "híbrido":
+            case "hibrido":
+            case "híbrido plug-in":
+            case "hibrido plug-in":   return new double[]{4.5, 1.75};
+            default:                  return new double[]{7.0, 1.75}; // gasolina
         }
     }
 
