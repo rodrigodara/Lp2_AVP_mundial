@@ -103,6 +103,13 @@ public class LoginView {
                     layout.getRoot().setTop(layout.getNavbarView().getNavbar());
                 }
 
+                // Atualiza já o badge do sino com o nº de notificações do utilizador
+                // que acabou de iniciar sessão (sem isto só aparecia ao clicar no sino
+                // ou passados até 30s, por causa do timer de auto-refresh).
+                if (nav.getSinoView() != null) {
+                    nav.getSinoView().atualizarBadge();
+                }
+
                 if (user.isAdministrador()) {
                     // O administrador não faz parte do "mercado": vai direto para o Painel de Administração
                     nav.navegarParaAdmin();

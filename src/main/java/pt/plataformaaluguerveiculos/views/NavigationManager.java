@@ -69,14 +69,10 @@ public class NavigationManager {
 
         garantirNavbar();
 
-        SinhoNotificacoesView view
-                = new SinhoNotificacoesView();
-
-        navegarPara(sinoView.getSino());
-
         if (sinoView == null) {
             sinoView = new SinhoNotificacoesView();
         }
+        sinoView.atualizarBadge();
         navegarPara(sinoView.getSino());
     }
     
