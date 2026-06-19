@@ -1,11 +1,16 @@
 package com.aluguer.dao;
 
-import com.aluguer.model.Reserva;
-
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.aluguer.model.Reserva;
 
 public class ReservaDAO {
 
@@ -270,6 +275,81 @@ public class ReservaDAO {
             return false;
         }
     }
+    // ------------------------------------------------------------------
+    // Bloquear reserva dupla — verificar se o utilizador já tem
+    // alguma reserva ACEITE, independentemente do veículo. O utilizador
+    // pode ter vários pedidos PENDENTES em simultâneo (em carros
+    // diferentes ou no mesmo), mas só pode ter UMA reserva ACEITE de
+    // cada vez, pois ao aceitar fica com o carro e só pode devolvê-lo
+    // depois de o período terminar.
+    // ------------------------------------------------------------------
+
+    /**
+     * Verifica se o utilizador já tem alguma reserva no estado ACEITE,
+     * em qualquer veículo, excluindo opcionalmente uma reserva específica
+     * (útil em atualizações).
+     *
+     * @param utilizadorId id do utilizador
+     * @param excluirId    id de reserva a ignorar na verificação (-1 para nenhuma)
+     */
+    public boolean existeReservaAceitePorUtilizador(int utilizadorId, int excluirId) {
+        String sql = """
+                SELECT 1 FROM reserva
+                WHERE utilizadorId = ?
+                  AND estado = 'ACEITE'
+                  AND id != ?
+                """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, utilizadorId);
+            stmt.setInt(2, excluirId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao verificar reserva aceite do utilizador: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Rejeição automática — listar todos os pedidos PENDENTES de um
+    // utilizador (em qualquer veículo), usado quando um dos seus
+    // pedidos é aceite para rejeitar automaticamente os restantes.
+    // ------------------------------------------------------------------
+
+    /**
+     * Devolve todos os pedidos PENDENTES de um utilizador, em qualquer
+     * veículo. Usado para rejeitar automaticamente os restantes pedidos
+     * pendentes do utilizador quando um deles é aceite.
+     */
+    public List<Reserva> listarPendentesPorUtilizador(int utilizadorId) {
+        List<Reserva> reservas = new ArrayList<>();
+
+        String sql = """
+                SELECT * FROM reserva
+                WHERE utilizadorId = ?
+                  AND estado = 'PENDENTE'
+                """;
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, utilizadorId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    reservas.add(mapRow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao listar pendentes do utilizador: " + e.getMessage());
+        }
+
+        return reservas;
+    }
+
     // ------------------------------------------------------------------
     // ALV-143 — Registar km inicial
     // ------------------------------------------------------------------

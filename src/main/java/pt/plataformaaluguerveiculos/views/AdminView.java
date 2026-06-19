@@ -23,6 +23,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
@@ -122,13 +123,18 @@ public class AdminView {
         // ---- Barra de pesquisa ----
         TextField tfSearch = new TextField();
         tfSearch.setPromptText("Pesquisar por nome ou email…");
-        tfSearch.setPrefWidth(340);
+        tfSearch.setPrefWidth(300);
         tfSearch.setStyle(campoCss());
+
+        ComboBox<String> cbTipo = new ComboBox<>();
+        cbTipo.getItems().addAll("Todos", "admin", "proprietario", "locatario");
+        cbTipo.setValue("Todos");
+        cbTipo.setStyle(campoCss() + " -fx-pref-width: 150px;");
 
         Button btnSearch = botao("Pesquisar", "#1a237e", "white");
         Button btnTodos  = botao("Ver Todos", "#546e7a", "white");
 
-        HBox barSearch = new HBox(10, tfSearch, btnSearch, btnTodos);
+        HBox barSearch = new HBox(10, tfSearch, cbTipo, btnSearch, btnTodos);
         barSearch.setAlignment(Pos.CENTER_LEFT);
 
         // ---- Tabela ----
@@ -145,11 +151,25 @@ public class AdminView {
             colStr("Ativo",  u -> u.isAtivo() ? "✅ Sim" : "❌ Não", 80)
         );
 
-        carregarUtilizadores(tabela, null);
+        carregarUtilizadores(tabela, null, null);
 
-        btnSearch.setOnAction(e -> carregarUtilizadores(tabela, tfSearch.getText().trim()));
-        btnTodos .setOnAction(e -> { tfSearch.clear(); carregarUtilizadores(tabela, null); });
-        tfSearch.setOnAction(e -> carregarUtilizadores(tabela, tfSearch.getText().trim()));
+        btnSearch.setOnAction(e -> {
+            String tipo = "Todos".equals(cbTipo.getValue()) ? null : cbTipo.getValue();
+            carregarUtilizadores(tabela, tfSearch.getText().trim(), tipo);
+        });
+        btnTodos.setOnAction(e -> {
+            tfSearch.clear();
+            cbTipo.setValue("Todos");
+            carregarUtilizadores(tabela, null, null);
+        });
+        tfSearch.setOnAction(e -> {
+            String tipo = "Todos".equals(cbTipo.getValue()) ? null : cbTipo.getValue();
+            carregarUtilizadores(tabela, tfSearch.getText().trim(), tipo);
+        });
+        cbTipo.setOnAction(e -> {
+            String tipo = "Todos".equals(cbTipo.getValue()) ? null : cbTipo.getValue();
+            carregarUtilizadores(tabela, tfSearch.getText().trim(), tipo);
+        });
 
         // ---- Duplo-clique numa linha → ver ficha completa do utilizador ----
         tabela.setRowFactory(tv -> {
@@ -214,7 +234,8 @@ public class AdminView {
                         sucesso("Tipo atualizado para '" + novoTipo + "'"
                             + ("admin".equals(novoTipo) ? " — perfil definido como ADMINISTRADOR." : " — perfil definido como UTILIZADOR.")
                             , lblFeedback);
-                        carregarUtilizadores(tabela, null);
+                        String tipoFiltro = "Todos".equals(cbTipo.getValue()) ? null : cbTipo.getValue();
+                        carregarUtilizadores(tabela, tfSearch.getText().trim(), tipoFiltro);
                     } catch (SQLException ex) { erro(ex, lblFeedback); }
                 });
             });
@@ -227,7 +248,8 @@ public class AdminView {
                 try {
                     dao.setAtivo(sel.getId(), false);
                     sucesso("Conta bloqueada.", lblFeedback);
-                    carregarUtilizadores(tabela, null);
+                    String tipoFiltro = "Todos".equals(cbTipo.getValue()) ? null : cbTipo.getValue();
+                    carregarUtilizadores(tabela, tfSearch.getText().trim(), tipoFiltro);
                 } catch (SQLException ex) { erro(ex, lblFeedback); }
             });
         });
@@ -239,7 +261,8 @@ public class AdminView {
                 try {
                     dao.setAtivo(sel.getId(), true);
                     sucesso("Conta desbloqueada.", lblFeedback);
-                    carregarUtilizadores(tabela, null);
+                    String tipoFiltro = "Todos".equals(cbTipo.getValue()) ? null : cbTipo.getValue();
+                    carregarUtilizadores(tabela, tfSearch.getText().trim(), tipoFiltro);
                 } catch (SQLException ex) { erro(ex, lblFeedback); }
             });
         });
@@ -256,7 +279,8 @@ public class AdminView {
                     } else {
                         sucesso("Aviso " + totalAvisos + "/3 emitido com sucesso.", lblFeedback);
                     }
-                    carregarUtilizadores(tabela, null);
+                    String tipoFiltro = "Todos".equals(cbTipo.getValue()) ? null : cbTipo.getValue();
+                    carregarUtilizadores(tabela, tfSearch.getText().trim(), tipoFiltro);
                 } catch (SQLException ex) { erro(ex, lblFeedback); }
             });
         });
@@ -303,11 +327,17 @@ public class AdminView {
         return sp;
     }
 
-    private void carregarUtilizadores(TableView<User> tabela, String termo) {
+    private void carregarUtilizadores(TableView<User> tabela, String termo, String tipo) {
         try {
             List<User> lista = (termo == null || termo.isEmpty())
                 ? dao.listarUtilizadores(adminId)
                 : dao.pesquisarUtilizadores(termo, adminId);
+            // filtro de tipo local (simples, sem nova query)
+            if (tipo != null && !tipo.isBlank()) {
+                lista = lista.stream()
+                    .filter(u -> tipo.equalsIgnoreCase(u.getTipo()))
+                    .collect(java.util.stream.Collectors.toList());
+            }
             tabela.setItems(FXCollections.observableArrayList(lista));
         } catch (SQLException e) {
             e.printStackTrace();
