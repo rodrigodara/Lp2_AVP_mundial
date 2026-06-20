@@ -90,7 +90,7 @@ public class PedidosRecebidosView {
 
         if (pendentes.isEmpty()) {
             Label vazio = new Label("Não tem pedidos pendentes de momento.");
-            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
             VBox wrapper = new VBox(vazio);
             wrapper.setPadding(new Insets(30));
             tab.setContent(wrapper);
@@ -113,7 +113,7 @@ public class PedidosRecebidosView {
 
         if (aceites.isEmpty()) {
             Label vazio = new Label("Não tem reservas em curso de momento.");
-            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
             VBox wrapper = new VBox(vazio);
             wrapper.setPadding(new Insets(30));
             tab.setContent(wrapper);
@@ -217,8 +217,8 @@ public class PedidosRecebidosView {
 
         Label badge = new Label("ACEITE");
         badge.setStyle(
-            "-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #2e7d32;" +
-            "-fx-background-color: #e8f5e9; -fx-background-radius: 4; -fx-padding: 2 8 2 8;"
+            "-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #22C55E;" +
+            "-fx-background-color: #DCFCE7; -fx-background-radius: 4; -fx-padding: 2 8 2 8;"
         );
 
         linhaId.getChildren().addAll(lblId, badge);

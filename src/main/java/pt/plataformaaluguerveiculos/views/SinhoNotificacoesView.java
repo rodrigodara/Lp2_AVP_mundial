@@ -43,7 +43,7 @@ public class SinhoNotificacoesView {
         badge = new Label("0");
         badge.setStyle(
             "-fx-font-size: 10px; -fx-font-weight: bold; -fx-text-fill: white;" +
-            "-fx-background-color: #e53935; -fx-background-radius: 10;" +
+            "-fx-background-color: #EF4444; -fx-background-radius: 10;" +
             "-fx-padding: 1 5 1 5; -fx-min-width: 18; -fx-alignment: center;"
         );
         badge.setVisible(false);
@@ -58,7 +58,7 @@ public class SinhoNotificacoesView {
         listaPopup = new VBox(0);
         listaPopup.setStyle(
             "-fx-background-color: #ffffff;" +
-            "-fx-border-color: #d0d0d0;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-radius: 10;" +
             "-fx-background-radius: 10;" +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.22), 18, 0, 0, 6);"
@@ -118,13 +118,13 @@ public class SinhoNotificacoesView {
         // cabeçalho
         Label titulo = new Label("Notificações");
         titulo.setStyle(
-            "-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1a237e;"
+            "-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2563EB;"
         );
 
         Button btnMarcar = new Button("Marcar como lidas");
         btnMarcar.setStyle(
             "-fx-font-size: 11px; -fx-background-color: transparent;" +
-            "-fx-text-fill: #546e7a; -fx-cursor: hand; -fx-underline: true; -fx-padding: 0;"
+            "-fx-text-fill: #64748B; -fx-cursor: hand; -fx-underline: true; -fx-padding: 0;"
         );
         btnMarcar.setOnAction(e -> { marcarTodasComoLidas(); atualizarPopup(); });
 
@@ -135,7 +135,7 @@ public class SinhoNotificacoesView {
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(14, 16, 12, 16));
         header.setStyle(
-            "-fx-border-color: transparent transparent #e8e8e8 transparent;" +
+            "-fx-border-color: transparent transparent #E2E8F0 transparent;" +
             "-fx-border-width: 0 0 1 0;"
         );
         listaPopup.getChildren().add(header);
@@ -149,7 +149,7 @@ public class SinhoNotificacoesView {
 
             // sem emojis — usa texto simples
             Label iconVazio = new Label("( sem notificacoes )");
-            iconVazio.setStyle("-fx-font-size: 12px; -fx-text-fill: #bdbdbd;");
+            iconVazio.setStyle("-fx-font-size: 12px; -fx-text-fill: #CBD5E1;");
 
             vazio.getChildren().add(iconVazio);
             listaPopup.getChildren().add(vazio);
@@ -160,7 +160,7 @@ public class SinhoNotificacoesView {
         for (Notificacao n : lista) {
             itens.getChildren().add(criarItem(n));
             Separator sep = new Separator();
-            sep.setStyle("-fx-background-color: #f0f0f0;");
+            sep.setStyle("-fx-background-color: #EAF2FF;");
             itens.getChildren().add(sep);
         }
 
@@ -197,13 +197,13 @@ public class SinhoNotificacoesView {
         msg.setMaxWidth(220);
         msg.setStyle(
             "-fx-font-size: 12px;" +
-            "-fx-text-fill: " + (n.lida ? "#9e9e9e" : "#212121") + ";" +
+            "-fx-text-fill: " + (n.lida ? "#94A3B8" : "#1F2937") + ";" +
             (n.lida ? "" : "-fx-font-weight: bold;")
         );
 
         Label data = new Label(n.dataCriacao != null && n.dataCriacao.length() > 16
                 ? n.dataCriacao.substring(0, 16) : "");
-        data.setStyle("-fx-font-size: 10px; -fx-text-fill: #bdbdbd;");
+        data.setStyle("-fx-font-size: 10px; -fx-text-fill: #CBD5E1;");
 
         VBox centro = new VBox(3, msg, data);
         centro.setAlignment(Pos.CENTER_LEFT);
@@ -213,7 +213,7 @@ public class SinhoNotificacoesView {
         Region dot = new Region();
         dot.setMinSize(8, 8);
         dot.setMaxSize(8, 8);
-        dot.setStyle("-fx-background-color: #1a237e; -fx-background-radius: 4;");
+        dot.setStyle("-fx-background-color: #2563EB; -fx-background-radius: 4;");
         dot.setVisible(!n.lida);
 
         HBox row = new HBox(0);
@@ -223,11 +223,11 @@ public class SinhoNotificacoesView {
         HBox.setMargin(dot, new Insets(0, 12, 0, 4));
         row.setPadding(new Insets(12, 10, 12, 0));
         row.setStyle("-fx-cursor: hand; -fx-background-color: " +
-            (n.lida ? "transparent" : "#f8f9ff") + ";");
+            (n.lida ? "transparent" : "#EAF2FF") + ";");
 
-        row.setOnMouseEntered(e -> row.setStyle("-fx-cursor: hand; -fx-background-color: #eef0fb;"));
+        row.setOnMouseEntered(e -> row.setStyle("-fx-cursor: hand; -fx-background-color: #EAF2FF;"));
         row.setOnMouseExited(e -> row.setStyle("-fx-cursor: hand; -fx-background-color: " +
-            (n.lida ? "transparent" : "#f8f9ff") + ";"));
+            (n.lida ? "transparent" : "#EAF2FF") + ";"));
 
         row.setOnMouseClicked(e -> {
             NotificacaoService.getInstance().marcarComoLida(n.id, n.isReserva);
@@ -289,7 +289,7 @@ public class SinhoNotificacoesView {
 
         Label lblMotivoTitulo = new Label("Mensagem:");
         lblMotivoTitulo.setStyle(
-            "-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #9e9e9e;" +
+            "-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #94A3B8;" +
             "-fx-padding: 0 0 4 0;"
         );
 
@@ -297,8 +297,8 @@ public class SinhoNotificacoesView {
         lblMotivo.setWrapText(true);
         lblMotivo.setMaxWidth(320);
         lblMotivo.setStyle(
-            "-fx-font-size: 13px; -fx-text-fill: #212121; -fx-line-spacing: 3;" +
-            "-fx-background-color: #f5f5f5; -fx-background-radius: 6; -fx-padding: 10 12 10 12;"
+            "-fx-font-size: 13px; -fx-text-fill: #1F2937; -fx-line-spacing: 3;" +
+            "-fx-background-color: #F8FAFC; -fx-background-radius: 6; -fx-padding: 10 12 10 12;"
         );
 
         // data formatada
@@ -306,7 +306,7 @@ public class SinhoNotificacoesView {
                 ? n.dataCriacao.substring(0, 16) : n.dataCriacao;
         Label lblData = new Label("Recebido em:  " + dataStr);
         lblData.setStyle(
-            "-fx-font-size: 11px; -fx-text-fill: #9e9e9e; -fx-padding: 8 0 0 0;"
+            "-fx-font-size: 11px; -fx-text-fill: #94A3B8; -fx-padding: 8 0 0 0;"
         );
 
         VBox corpo = new VBox(6, lblMotivoTitulo, lblMotivo, lblData);
@@ -351,11 +351,11 @@ public class SinhoNotificacoesView {
 
     private String corPorTipo(String tipo) {
         return switch (tipo) {
-            case "AVISO"     -> "#e53935";
-            case "PROPOSTA"  -> "#1565c0";
-            case "ACEITE"    -> "#2e7d32";
-            case "REJEITADO" -> "#b71c1c";
-            default          -> "#37474f";
+            case "AVISO"     -> "#EF4444";
+            case "PROPOSTA"  -> "#2563EB";
+            case "ACEITE"    -> "#22C55E";
+            case "REJEITADO" -> "#EF4444";
+            default          -> "#1F2937";
         };
     }
 

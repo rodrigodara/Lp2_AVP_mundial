@@ -238,16 +238,16 @@ public class DetalheVeiculoView {
         palco.setPrefSize(600, 340);
         palco.setMaxWidth(600);
         palco.setStyle(
-            "-fx-background-color: #f0f0f0;" +
+            "-fx-background-color: #EAF2FF;" +
             "-fx-background-radius: 10;" +
-            "-fx-border-color: #e0e0e0;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-radius: 10;" +
             "-fx-border-width: 1;"
         );
 
         if (fotos.isEmpty()) {
             Label semFoto = new Label("Sem fotos disponíveis");
-            semFoto.setStyle("-fx-font-size: 14px; -fx-text-fill: #999999;");
+            semFoto.setStyle("-fx-font-size: 14px; -fx-text-fill: #94A3B8;");
             palco.getChildren().add(semFoto);
 
             VBox container = new VBox(palco);
@@ -270,7 +270,7 @@ public class DetalheVeiculoView {
         if (fotos.size() > 1) {
             for (int i = 0; i < fotos.size(); i++) {
                 Label ponto = new Label("●");
-                ponto.setStyle("-fx-font-size: 12px; -fx-text-fill: #cccccc;");
+                ponto.setStyle("-fx-font-size: 12px; -fx-text-fill: #CBD5E1;");
                 pontos.add(ponto);
                 pontosBox.getChildren().add(ponto);
             }
@@ -282,7 +282,7 @@ public class DetalheVeiculoView {
             for (int i = 0; i < pontos.size(); i++) {
                 pontos.get(i).setStyle(
                     "-fx-font-size: 12px; -fx-text-fill: "
-                    + (i == indiceAtual[0] ? "#1a237e" : "#cccccc") + ";"
+                    + (i == indiceAtual[0] ? "#2563EB" : "#CBD5E1") + ";"
                 );
             }
         };
@@ -295,7 +295,7 @@ public class DetalheVeiculoView {
             Button btnAnterior = new Button("‹");
             btnAnterior.setStyle(
                 "-fx-font-size: 22px; -fx-background-color: rgba(255,255,255,0.85);" +
-                "-fx-text-fill: #1a237e; -fx-background-radius: 50%; -fx-min-width: 38px;" +
+                "-fx-text-fill: #2563EB; -fx-background-radius: 50%; -fx-min-width: 38px;" +
                 "-fx-min-height: 38px; -fx-cursor: hand;"
             );
             btnAnterior.setOnAction(e -> {
@@ -306,7 +306,7 @@ public class DetalheVeiculoView {
             Button btnSeguinte = new Button("›");
             btnSeguinte.setStyle(
                 "-fx-font-size: 22px; -fx-background-color: rgba(255,255,255,0.85);" +
-                "-fx-text-fill: #1a237e; -fx-background-radius: 50%; -fx-min-width: 38px;" +
+                "-fx-text-fill: #2563EB; -fx-background-radius: 50%; -fx-min-width: 38px;" +
                 "-fx-min-height: 38px; -fx-cursor: hand;"
             );
             btnSeguinte.setOnAction(e -> {
@@ -384,35 +384,35 @@ public class DetalheVeiculoView {
         card.setPadding(new Insets(16));
         card.setPrefWidth(260);
         card.setStyle(
-            "-fx-background-color: #f8f9fb;" +
+            "-fx-background-color: #F8FAFC;" +
             "-fx-background-radius: 10;" +
-            "-fx-border-color: #e0e0e0;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-radius: 10;" +
             "-fx-border-width: 1;"
         );
 
         Label lblTitulo = new Label(titulo);
-        lblTitulo.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+        lblTitulo.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1F2937;");
         lblTitulo.setWrapText(true);
 
         if (media < 0) {
             Label lblSemNota = new Label("Ainda sem avaliações");
-            lblSemNota.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+            lblSemNota.setStyle("-fx-font-size: 13px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
             card.getChildren().addAll(lblTitulo, lblSemNota);
             return card;
         }
 
         Label lblMedia = new Label(String.format("%.1f / 5.0", media));
-        lblMedia.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        lblMedia.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2563EB;");
 
         int cheias = (int) Math.round(media);
         StringBuilder estrelas = new StringBuilder();
         for (int i = 0; i < 5; i++) estrelas.append(i < cheias ? "★" : "☆");
         Label lblEstrelas = new Label(estrelas.toString());
-        lblEstrelas.setStyle("-fx-font-size: 18px; -fx-text-fill: #f4c542;");
+        lblEstrelas.setStyle("-fx-font-size: 18px; -fx-text-fill: #F59E0B;");
 
         Label lblTotal = new Label(total + " avaliação" + (total != 1 ? "ões" : ""));
-        lblTotal.setStyle("-fx-font-size: 11px; -fx-text-fill: #777777;");
+        lblTotal.setStyle("-fx-font-size: 11px; -fx-text-fill: #64748B;");
 
         card.getChildren().addAll(lblTitulo, lblMedia, lblEstrelas, lblTotal);
         return card;

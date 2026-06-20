@@ -49,9 +49,9 @@ public class DashboardView {
         int[] stats = carregarStats(user);
 
         HBox statsBox = new HBox(20,
-            criarStatCard("Reservas Pendentes", stats[0], "#ffebee", "#e60000"),
-            criarStatCard("Reservas Aceites",   stats[1], "#e8f5e9", "#2e7d32"),
-            criarStatCard("Pedidos Recebidos",  stats[2], "#e8eaf6", "#1a237e")
+            criarStatCard("Reservas Pendentes", stats[0], "#FEE2E2", "#EF4444"),
+            criarStatCard("Reservas Aceites",   stats[1], "#DCFCE7", "#22C55E"),
+            criarStatCard("Pedidos Recebidos",  stats[2], "#EAF2FF", "#2563EB")
         );
         statsBox.setAlignment(Pos.CENTER_LEFT); 
 
@@ -59,7 +59,7 @@ public class DashboardView {
         // ACESSO RÁPIDO
         // ============================
         Label labelAcoes = new Label("Acesso Rápido");
-        labelAcoes.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+        labelAcoes.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #1F2937;");
 
         HBox acoesBox = new HBox(20,
             criarAcaoCard(
@@ -108,7 +108,7 @@ public class DashboardView {
         );
 
         Label lblTitulo = new Label(titulo);
-        lblTitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #555555;");
+        lblTitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #1F2937;");
 
         VBox card = new VBox(4, lblValor, lblTitulo);
         card.setAlignment(Pos.CENTER_LEFT);
@@ -116,7 +116,7 @@ public class DashboardView {
         card.setStyle(
             "-fx-background-color: " + bgColor + ";" +
             "-fx-background-radius: 10;" +
-            "-fx-border-color: #e0e0e0;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-radius: 10;" +
             "-fx-border-width: 1;" +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4, 0, 0, 2);"
@@ -128,10 +128,10 @@ public class DashboardView {
 
     private VBox criarAcaoCard(String titulo, String descricao, Runnable acao) {
         Label lblTitulo = new Label(titulo);
-        lblTitulo.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        lblTitulo.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #2563EB;");
 
         Label lblDesc = new Label(descricao);
-        lblDesc.setStyle("-fx-font-size: 12px; -fx-text-fill: #777777; -fx-wrap-text: true;");
+        lblDesc.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B; -fx-wrap-text: true;");
         lblDesc.setMaxWidth(210);
 
         Button btn = new Button("Ir");
@@ -145,7 +145,7 @@ public class DashboardView {
         card.setStyle(
             "-fx-background-color: white;" +
             "-fx-background-radius: 10;" +
-            "-fx-border-color: #e0e0e0;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-radius: 10;" +
             "-fx-border-width: 1;" +
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 6, 0, 0, 3);"

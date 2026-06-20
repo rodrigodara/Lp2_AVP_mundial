@@ -90,7 +90,7 @@ public class CriarReservaView {
         root.setMaxWidth(560);
         root.setAlignment(Pos.TOP_CENTER);
         root.getStyleClass().add("reserva-container");
-        root.setStyle("-fx-background-color: white;");
+        root.setStyle("-fx-background-color: #F8FAFC;");
 
         construirFormulario();
         atualizarSimulacao();
@@ -220,7 +220,7 @@ public class CriarReservaView {
         if (!disp.isDisponivel()) {
             // ALV-130 — Mostrar erro de disponibilidade na UI
             lblAviso.setText("⛔ " + disp.getMensagem());
-            lblAviso.setStyle("-fx-text-fill: #c0392b;");
+            lblAviso.setStyle("-fx-text-fill: #EF4444;");
             lblAviso.setVisible(true);
             btnReservar.setDisable(true);
             lblErro.setVisible(false);
@@ -228,7 +228,7 @@ public class CriarReservaView {
         } else if (!disp.getMensagem().startsWith("Veículo disponível")) {
             // aviso de reserva pendente sobreposta — deixa reservar mas avisa
             lblAviso.setText("⚠ " + disp.getMensagem());
-            lblAviso.setStyle("-fx-text-fill: #e67e22;");
+            lblAviso.setStyle("-fx-text-fill: #B45309;");
             lblAviso.setVisible(true);
         } else {
             lblAviso.setVisible(false);

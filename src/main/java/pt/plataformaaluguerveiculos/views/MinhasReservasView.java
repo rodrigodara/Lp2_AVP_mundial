@@ -40,7 +40,7 @@ public class MinhasReservasView {
 
         root = new VBox(16);
         root.setPadding(new Insets(30));
-        root.setStyle("-fx-background-color: white;");
+        root.setStyle("-fx-background-color: #F8FAFC;");
 
         construirPagina();
     }
@@ -49,10 +49,10 @@ public class MinhasReservasView {
         root.getChildren().clear();
 
         Label titulo = new Label("As Minhas Reservas");
-        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2563EB;");
 
         Label subtitulo = new Label("Histórico e estado das suas reservas");
-        subtitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #777777;");
+        subtitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748B;");
 
         root.getChildren().addAll(titulo, subtitulo);
 
@@ -60,7 +60,7 @@ public class MinhasReservasView {
 
         if (todas.isEmpty()) {
             Label vazio = new Label("Ainda não tem reservas registadas.");
-            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
             vazio.setPadding(new Insets(40, 0, 0, 0));
             root.getChildren().add(vazio);
             return;
@@ -77,14 +77,14 @@ public class MinhasReservasView {
 
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        tabs.setStyle("-fx-background-color: white;");
+        tabs.setStyle("-fx-background-color: #F8FAFC;");
 
         tabs.getTabs().addAll(
-            criarTab("Pendentes ("  + pendentes.size()  + ")", pendentes,  "#e65100", "#fff3e0", nomesVeiculos),
-            criarTab("Aceites ("    + aceites.size()    + ")", aceites,    "#2e7d32", "#e8f5e9", nomesVeiculos),
-            criarTab("Rejeitadas (" + rejeitadas.size() + ")", rejeitadas, "#c62828", "#ffebee", nomesVeiculos),
-            criarTab("Canceladas (" + canceladas.size() + ")", canceladas, "#c62828", "#ffebee", nomesVeiculos),
-            criarTab("Concluídas (" + concluidas.size() + ")", concluidas, "#1a237e", "#e8eaf6", nomesVeiculos)
+            criarTab("Pendentes ("  + pendentes.size()  + ")", pendentes,  "#B45309", "#FEF3C7", nomesVeiculos),
+            criarTab("Aceites ("    + aceites.size()    + ")", aceites,    "#22C55E", "#DCFCE7", nomesVeiculos),
+            criarTab("Rejeitadas (" + rejeitadas.size() + ")", rejeitadas, "#EF4444", "#FEE2E2", nomesVeiculos),
+            criarTab("Canceladas (" + canceladas.size() + ")", canceladas, "#EF4444", "#FEE2E2", nomesVeiculos),
+            criarTab("Concluídas (" + concluidas.size() + ")", concluidas, "#2563EB", "#EAF2FF", nomesVeiculos)
         );
 
         tabs.getSelectionModel().select(tabInicial);
@@ -120,17 +120,17 @@ public class MinhasReservasView {
 
         if (reservas.isEmpty()) {
             Label vazio = new Label("Sem reservas neste estado.");
-            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
             vazio.setPadding(new Insets(30));
             VBox wrapper = new VBox(vazio);
-            wrapper.setStyle("-fx-background-color: white;");
+            wrapper.setStyle("-fx-background-color: #F8FAFC;");
             tab.setContent(wrapper);
             return tab;
         }
 
         VBox lista = new VBox(12);
         lista.setPadding(new Insets(16));
-        lista.setStyle("-fx-background-color: white;");
+        lista.setStyle("-fx-background-color: #F8FAFC;");
 
         for (Reserva r : reservas) {
             lista.getChildren().add(criarCard(r, corTexto, corFundo, nomesVeiculos));
@@ -138,7 +138,7 @@ public class MinhasReservasView {
 
         ScrollPane scroll = new ScrollPane(lista);
         scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: white; -fx-background: white;");
+        scroll.setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
 
         tab.setContent(scroll);
         return tab;
@@ -148,8 +148,8 @@ public class MinhasReservasView {
         VBox card = new VBox(8);
         card.setPadding(new Insets(16));
         card.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #e0e0e0;" +
+            "-fx-background-color: #F8FAFC;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-radius: 8;" +
             "-fx-background-radius: 8;" +
             "-fx-border-width: 1;" +
@@ -161,7 +161,7 @@ public class MinhasReservasView {
         topo.setAlignment(Pos.CENTER_LEFT);
 
         Label lblId = new Label("Reserva #" + r.getId());
-        lblId.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        lblId.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2563EB;");
 
         Label badge = new Label(r.getEstado().name());
         badge.setStyle(
@@ -177,28 +177,28 @@ public class MinhasReservasView {
         // Veículo — mostra o nome em vez do ID
         String nomeVeiculo = nomesVeiculos.getOrDefault(r.getVeiculoId(), "Veículo #" + r.getVeiculoId());
         Label lblVeiculo = new Label("Veículo: " + nomeVeiculo);
-        lblVeiculo.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
+        lblVeiculo.setStyle("-fx-font-size: 13px; -fx-text-fill: #1F2937;");
 
         // Datas
         Label lblDatas = new Label(
             "Período: " + r.getDataInicio() + " → " + r.getDataFim()
             + "  (" + r.getNumeroDias() + " dias)"
         );
-        lblDatas.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
+        lblDatas.setStyle("-fx-font-size: 13px; -fx-text-fill: #1F2937;");
 
         // Preço
         Label lblPreco = new Label(
             "Total: " + String.format("%.2f€", r.getPrecoTotal())
             + "  |  Caução: " + String.format("%.2f€", r.getCaucao())
         );
-        lblPreco.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
+        lblPreco.setStyle("-fx-font-size: 13px; -fx-text-fill: #1F2937;");
 
         card.getChildren().addAll(topo, lblVeiculo, lblDatas, lblPreco);
 
         // Botão Cancelar
         javafx.scene.control.Button btnCancelar = new javafx.scene.control.Button("Cancelar");
         btnCancelar.setStyle(
-            "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold; " +
+            "-fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-weight: bold; " +
             "-fx-background-radius: 6; -fx-padding: 6 12;"
         );
 

@@ -25,10 +25,10 @@ public class AvaliacoesView {
         root = new VBox(20);
         root.setPadding(new Insets(40));
         root.setAlignment(Pos.TOP_LEFT);
-        root.setStyle("-fx-background-color: white;");
+        root.setStyle("-fx-background-color: #F8FAFC;");
 
         Label titulo = new Label("Avaliações de " + nomeVeiculo);
-        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2563EB;");
 
         Button btnVoltar = new Button("← Voltar");
         btnVoltar.getStyleClass().add("btn-secundario");
@@ -47,13 +47,13 @@ public class AvaliacoesView {
 
             if (lista.isEmpty()) {
                 Label vazio = new Label("Ainda não tem avaliações.");
-                vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+                vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
                 root.getChildren().add(vazio);
                 return;
             }
 
             Label labelLista = new Label("Todas as avaliações");
-            labelLista.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+            labelLista.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1F2937;");
 
             VBox listaCards = new VBox(12);
             for (Avaliacao a : lista) {
@@ -62,14 +62,14 @@ public class AvaliacoesView {
 
             ScrollPane scroll = new ScrollPane(listaCards);
             scroll.setFitToWidth(true);
-            scroll.setStyle("-fx-background-color: white; -fx-background: white;");
+            scroll.setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
 
             root.getChildren().addAll(labelLista, scroll);
 
         } catch (Exception e) {
             e.printStackTrace();
             Label erro = new Label("Erro ao carregar avaliações.");
-            erro.setStyle("-fx-text-fill: #c62828;");
+            erro.setStyle("-fx-text-fill: #EF4444;");
             root.getChildren().add(erro);
         }
     }
@@ -79,28 +79,28 @@ public class AvaliacoesView {
         painel.setPadding(new Insets(20));
         painel.setMaxWidth(340);
         painel.setStyle(
-            "-fx-background-color: #e8eaf6;" +
+            "-fx-background-color: #EAF2FF;" +
             "-fx-background-radius: 10;" +
-            "-fx-border-color: #c5cae9;" +
+            "-fx-border-color: #93C5FD;" +
             "-fx-border-radius: 10;" +
             "-fx-border-width: 1;"
         );
 
         if (media < 0) {
             Label semNota = new Label("Sem avaliações ainda");
-            semNota.setStyle("-fx-font-size: 14px; -fx-text-fill: #777777;");
+            semNota.setStyle("-fx-font-size: 14px; -fx-text-fill: #64748B;");
             painel.getChildren().add(semNota);
             return painel;
         }
 
         Label lblMedia = new Label(String.format("%.1f / 5.0", media));
-        lblMedia.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        lblMedia.setStyle("-fx-font-size: 32px; -fx-font-weight: bold; -fx-text-fill: #2563EB;");
 
         Label lblEstrelas = new Label(estrelasTexto(media));
-        lblEstrelas.setStyle("-fx-font-size: 22px; -fx-text-fill: #f4c542;");
+        lblEstrelas.setStyle("-fx-font-size: 22px; -fx-text-fill: #F59E0B;");
 
         Label lblTotal = new Label("Baseado em " + total + " avaliação" + (total != 1 ? "ões" : ""));
-        lblTotal.setStyle("-fx-font-size: 12px; -fx-text-fill: #777777;");
+        lblTotal.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B;");
 
         painel.getChildren().addAll(lblMedia, lblEstrelas, lblTotal);
         return painel;
@@ -110,8 +110,8 @@ public class AvaliacoesView {
         VBox card = new VBox(6);
         card.setPadding(new Insets(14));
         card.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #e0e0e0;" +
+            "-fx-background-color: #F8FAFC;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-radius: 8;" +
             "-fx-background-radius: 8;" +
             "-fx-border-width: 1;" +
@@ -122,10 +122,10 @@ public class AvaliacoesView {
         topo.setAlignment(Pos.CENTER_LEFT);
 
         Label lblEstrelas = new Label(estrelasTexto(a.getClassificacao()));
-        lblEstrelas.setStyle("-fx-font-size: 18px; -fx-text-fill: #f4c542;");
+        lblEstrelas.setStyle("-fx-font-size: 18px; -fx-text-fill: #F59E0B;");
 
         Label lblNota = new Label(a.getClassificacao() + "/5");
-        lblNota.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+        lblNota.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1F2937;");
 
         topo.getChildren().addAll(lblEstrelas, lblNota);
 
@@ -133,14 +133,14 @@ public class AvaliacoesView {
 
         if (a.getComentario() != null && !a.getComentario().isBlank()) {
             Label lblComentario = new Label("\"" + a.getComentario() + "\"");
-            lblComentario.setStyle("-fx-font-size: 13px; -fx-text-fill: #555555; -fx-font-style: italic;");
+            lblComentario.setStyle("-fx-font-size: 13px; -fx-text-fill: #1F2937; -fx-font-style: italic;");
             lblComentario.setWrapText(true);
             card.getChildren().add(lblComentario);
         }
 
         if (a.getDataAvaliacao() != null) {
             Label lblData = new Label(a.getDataAvaliacao().toLocalDate().toString());
-            lblData.setStyle("-fx-font-size: 11px; -fx-text-fill: #aaaaaa;");
+            lblData.setStyle("-fx-font-size: 11px; -fx-text-fill: #94A3B8;");
             card.getChildren().add(lblData);
         }
 

@@ -1,5 +1,6 @@
 package pt.plataformaaluguerveiculos.views;
 
+import java.io.ByteArrayInputStream;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,19 +14,25 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
 public class ProcurarVeiculosView {
 
     private VBox root;
-    private TableView<Veiculo> tabela;
+
+    /** ALV-XX (redesign): grelha de cards que substitui a antiga TableView. */
+    private FlowPane grelhaResultados;
+    private Label labelSemResultados;
 
     // Filtros
     private ComboBox<String> comboMarca;
@@ -106,9 +113,9 @@ public class ProcurarVeiculosView {
         VBox filtrosBox = new VBox(10, grelhaFiltros, botoesFiltro);
         filtrosBox.setPadding(new Insets(14));
         filtrosBox.setStyle(
-            "-fx-background-color: #f8f9fb;" +
+            "-fx-background-color: #EAF2FF;" +
             "-fx-background-radius: 10;" +
-            "-fx-border-color: #e0e0e0;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-radius: 10;" +
             "-fx-border-width: 1;"
         );
@@ -120,75 +127,25 @@ public class ProcurarVeiculosView {
         });
 
         // ============================
-        // TABELA
+        // GRELHA DE CARDS (ALV-XX redesign — substitui a TableView)
         // ============================
-        tabela = new TableView<>();
-        tabela.setPrefHeight(550);
-        VBox.setVgrow(tabela, Priority.ALWAYS);
+        // NOTA: sem ScrollPane aqui — o BaseLayoutView já envolve toda a
+        // página num ScrollPane; aninhar outro por dentro causava o
+        // colapso de layout (cards sem altura, texto a fugir da caixa).
+        grelhaResultados = new FlowPane();
+        grelhaResultados.setHgap(24);
+        grelhaResultados.setVgap(24);
+        grelhaResultados.setPadding(new Insets(4));
+        grelhaResultados.setPrefWrapLength(1100);
 
-        TableColumn<Veiculo, String> colMarca = new TableColumn<>("Marca");
-        colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
-
-        TableColumn<Veiculo, String> colModelo = new TableColumn<>("Modelo");
-        colModelo.setCellValueFactory(new PropertyValueFactory<>("modelo"));
-
-        TableColumn<Veiculo, Integer> colAno = new TableColumn<>("Ano");
-        colAno.setCellValueFactory(new PropertyValueFactory<>("ano"));
-
-        TableColumn<Veiculo, String> colCombustivel = new TableColumn<>("Combustível");
-        colCombustivel.setCellValueFactory(new PropertyValueFactory<>("combustivel"));
-
-        TableColumn<Veiculo, Double> colPreco = new TableColumn<>("Preço Diário (€)");
-        colPreco.setCellValueFactory(new PropertyValueFactory<>("precoDiario"));
-
-        TableColumn<Veiculo, String> colLocalizacao = new TableColumn<>("Localização");
-        colLocalizacao.setCellValueFactory(new PropertyValueFactory<>("localizacao"));
-
-        TableColumn<Veiculo, Integer> colLugares = new TableColumn<>("Lugares");
-        colLugares.setCellValueFactory(new PropertyValueFactory<>("lugares"));
-
-        TableColumn<Veiculo, String> colTransmissao = new TableColumn<>("Transmissão");
-        colTransmissao.setCellValueFactory(new PropertyValueFactory<>("transmissao"));
-
-        TableColumn<Veiculo, String> colAvaliacao = new TableColumn<>("Avaliação");
-        colAvaliacao.setCellValueFactory(data -> {
-            double media = data.getValue().getAvaliacaoMedia();
-            String texto = media < 0 ? "Sem avaliações" : String.format("%.1f ★", media);
-            return new javafx.beans.property.SimpleStringProperty(texto);
-        });
-
-        tabela.getColumns().addAll(
-            colMarca, colModelo, colAno, colCombustivel, colPreco,
-            colLocalizacao, colLugares, colTransmissao, colAvaliacao
-        );
-
-        // ============================
-        // BOTÃO DE AÇÃO — Ver Detalhes
-        // ============================
-        Button btnVerDetalhes = new Button("Ver Detalhes");
-        btnVerDetalhes.getStyleClass().add("btn-primario");
-        btnVerDetalhes.setDisable(true);
-
-        tabela.getSelectionModel().selectedItemProperty().addListener(
-            (obs, antigo, novo) -> btnVerDetalhes.setDisable(novo == null)
-        );
-
-        tabela.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2) {
-                abrirDetalhe(tabela.getSelectionModel().getSelectedItem());
-            }
-        });
-
-        btnVerDetalhes.setOnAction(e ->
-            abrirDetalhe(tabela.getSelectionModel().getSelectedItem())
-        );
+        labelSemResultados = new Label("Nenhum veículo encontrado com os critérios escolhidos.");
+        labelSemResultados.getStyleClass().add("veiculo-grid-vazio");
+        labelSemResultados.setVisible(false);
+        labelSemResultados.setManaged(false);
 
         carregarVeiculos();
 
-        HBox acoesBox = new HBox(10, btnVerDetalhes);
-        acoesBox.setAlignment(Pos.CENTER_LEFT);
-
-        root.getChildren().addAll(titulo, pesquisaBox, filtrosBox, tabela, acoesBox);
+        root.getChildren().addAll(titulo, pesquisaBox, filtrosBox, labelSemResultados, grelhaResultados);
     }
 
     // ============================
@@ -311,7 +268,7 @@ public class ProcurarVeiculosView {
 
     private VBox criarCampoComLabel(String texto, javafx.scene.Node campo) {
         Label lbl = new Label(texto);
-        lbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666; -fx-font-weight: bold;");
+        lbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #64748B; -fx-font-weight: bold;");
         VBox box = new VBox(4, lbl, campo);
         return box;
     }
@@ -350,7 +307,7 @@ public class ProcurarVeiculosView {
                 avalMin != null ? avalMin.doubleValue() : null,
                 avalMax != null ? avalMax.doubleValue() : null
             );
-            tabela.setItems(FXCollections.observableArrayList(lista));
+            popularGrelha(lista);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -404,7 +361,7 @@ public class ProcurarVeiculosView {
         try {
             VeiculoService service = new VeiculoService();
             List<Veiculo> lista = service.pesquisar(termo);
-            tabela.setItems(FXCollections.observableArrayList(lista));
+            popularGrelha(lista);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -414,10 +371,109 @@ public class ProcurarVeiculosView {
         try {
             VeiculoService service = new VeiculoService();
             List<Veiculo> lista = service.getAllVehicles();
-            tabela.setItems(FXCollections.observableArrayList(lista));
+            popularGrelha(lista);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    // ============================
+    // GRELHA DE CARDS (ALV-XX redesign)
+    // ============================
+
+    /** Substitui o conteúdo da grelha de resultados pelos cards da lista dada. */
+    private void popularGrelha(List<Veiculo> veiculos) {
+        grelhaResultados.getChildren().clear();
+
+        boolean vazio = veiculos == null || veiculos.isEmpty();
+        labelSemResultados.setVisible(vazio);
+        labelSemResultados.setManaged(vazio);
+
+        if (vazio) return;
+
+        for (Veiculo veiculo : veiculos) {
+            grelhaResultados.getChildren().add(criarCardVeiculo(veiculo));
+        }
+    }
+
+
+    private static final double CARD_LARGURA = 300;
+    private static final double CARD_FOTO_ALTURA = 190;
+
+    private VBox criarCardVeiculo(Veiculo veiculo) {
+        VBox card = new VBox();
+        card.getStyleClass().add("veiculo-card");
+        card.setPrefWidth(CARD_LARGURA);
+        card.setMaxWidth(CARD_LARGURA);
+
+        // ---- Foto (primeira foto disponível, ou placeholder) ----
+        StackPane fotoWrapper = new StackPane();
+        fotoWrapper.getStyleClass().add("veiculo-card-foto-wrapper");
+        fotoWrapper.setPrefSize(CARD_LARGURA, CARD_FOTO_ALTURA);
+        fotoWrapper.setMinSize(CARD_LARGURA, CARD_FOTO_ALTURA);
+        fotoWrapper.setMaxSize(CARD_LARGURA, CARD_FOTO_ALTURA);
+
+        // Cantos arredondados no topo da foto (clip do mesmo tamanho exato do
+        // wrapper — um clip maior do que o nó faz o StackPane recalcular bounds
+        // de forma imprevisível e desalinha todo o card).
+        Rectangle clip = new Rectangle(CARD_LARGURA, CARD_FOTO_ALTURA);
+        clip.setArcWidth(32);
+        clip.setArcHeight(32);
+        fotoWrapper.setClip(clip);
+
+        List<byte[]> fotos = veiculo.getFotos();
+        if (fotos != null && !fotos.isEmpty() && fotos.get(0) != null) {
+            ImageView imageView = new ImageView(new Image(new ByteArrayInputStream(fotos.get(0))));
+            imageView.setFitWidth(CARD_LARGURA);
+            imageView.setFitHeight(CARD_FOTO_ALTURA);
+            imageView.setPreserveRatio(false);
+            imageView.setSmooth(true);
+            fotoWrapper.getChildren().add(imageView);
+        } else {
+            Label semFoto = new Label("Sem fotografia");
+            semFoto.getStyleClass().add("veiculo-card-sem-foto");
+            fotoWrapper.getChildren().add(semFoto);
+        }
+
+        // ---- Badge de preço sobreposto no canto superior direito da foto ----
+        HBox badgePreco = new HBox();
+        badgePreco.getStyleClass().add("veiculo-card-badge-preco");
+        Label precoTexto = new Label(String.format("%.0f €/dia", veiculo.getPrecoDiario()));
+        precoTexto.getStyleClass().add("veiculo-card-badge-preco-texto");
+        badgePreco.getChildren().add(precoTexto);
+        StackPane.setAlignment(badgePreco, Pos.TOP_RIGHT);
+        StackPane.setMargin(badgePreco, new Insets(12, 12, 0, 0));
+        fotoWrapper.getChildren().add(badgePreco);
+
+        // ---- Marca + Modelo (título editorial) ----
+        Label marcaModelo = new Label(veiculo.getMarca() + " " + veiculo.getModelo());
+        marcaModelo.getStyleClass().add("veiculo-card-marca-modelo");
+        marcaModelo.setWrapText(true);
+
+        // ---- Linha de info: ano · transmissão ----
+        Label info = new Label(veiculo.getAno() + " · " + veiculo.getTransmissao());
+        info.getStyleClass().add("veiculo-card-info");
+
+        // ---- Localização + avaliação, na mesma linha ----
+        Label localizacao = new Label("📍 " + veiculo.getLocalizacao());
+        localizacao.getStyleClass().add("veiculo-card-localizacao");
+
+        double media = veiculo.getAvaliacaoMedia();
+        Label avaliacao = new Label(media < 0 ? "Sem avaliações" : String.format("★ %.1f", media));
+        avaliacao.getStyleClass().add("veiculo-card-avaliacao");
+
+        Region espacador = new Region();
+        HBox.setHgrow(espacador, Priority.ALWAYS);
+        HBox linhaInferior = new HBox(localizacao, espacador, avaliacao);
+        linhaInferior.setAlignment(Pos.CENTER_LEFT);
+
+        VBox textoBox = new VBox(6, marcaModelo, info, linhaInferior);
+        textoBox.setPadding(new Insets(14, 16, 16, 16));
+
+        card.getChildren().addAll(fotoWrapper, textoBox);
+        card.setOnMouseClicked(e -> abrirDetalhe(veiculo));
+
+        return card;
     }
 
     private void carregarMarcas(ComboBox<String> combo) {

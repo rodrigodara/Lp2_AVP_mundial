@@ -1,228 +1,378 @@
-/* === NAVBAR (ALV-56 - rfernandesit07) === */
+/* ================================================================
+   DRIVESHARE — DESIGN SYSTEM (redesign 2026)
+   Estilo: moderno tech/SaaS (Airbnb/Booking) — cards com sombra,
+   muito espaço em branco, navbar escura, tipografia editorial nos
+   títulos (Flamenco) e neutra no corpo (Federo).
+   ================================================================
+   Azul primário:    #2563EB   (ações, links, preço)
+   Azul primário hv: #1E5EFF
+   Azul escuro:      #0F172A   (navbar)
+   Azul claro:       #EAF2FF   (fundos suaves, hover)
+   Fundo geral:      #F8FAFC
+   Superfície branca:#FFFFFF
+   Bordas:           #E2E8F0
+   Texto escuro:     #1F2937
+   Texto secundário: #64748B
+   Texto terciário:  #94A3B8
+   Sucesso:          #22C55E
+   Erro/cancelar:    #EF4444
+   Aviso:            #B45309 / fundo #FEF3C7
+   ================================================================ */
+
+* { -fx-font-family: "Federo"; }
+
+.root {
+    -fx-font-family: "Federo";
+    -fx-text-fill: #1F2937;
+    -fx-background-color: #F8FAFC;
+}
+
+/* ================================================================
+   TÍTULOS (Flamenco)
+   ================================================================ */
+.h1-flamenco {
+    -fx-font-family: "Flamenco";
+    -fx-font-size: 30px;
+    -fx-text-fill: #0F172A;
+}
+.h2-flamenco {
+    -fx-font-family: "Flamenco";
+    -fx-font-size: 22px;
+    -fx-text-fill: #0F172A;
+}
+.h3-flamenco {
+    -fx-font-family: "Flamenco";
+    -fx-font-size: 17px;
+    -fx-text-fill: #0F172A;
+}
+.subtitulo {
+    -fx-font-family: "Federo";
+    -fx-font-size: 14px;
+    -fx-text-fill: #64748B;
+}
+
+/* ================================================================
+   NAVBAR — barra escura no topo, estilo SaaS
+   ================================================================ */
 .navbar {
-    -fx-background-color: #1a237e;
-    -fx-padding: 10 20 10 20;
-    -fx-spacing: 10;
+    -fx-background-color: #0F172A;
+    -fx-padding: 14 28 14 28;
+    -fx-spacing: 28;
+}
+
+.navbar-logo {
+    -fx-font-family: "Flamenco";
+    -fx-font-size: 20px;
+    -fx-text-fill: #EAF2FF;
 }
 
 .navbar-button {
     -fx-background-color: transparent;
-    -fx-text-fill: white;
+    -fx-text-fill: #CBD5E1;
+    -fx-font-family: "Federo";
     -fx-font-size: 14px;
     -fx-cursor: hand;
+    -fx-padding: 8 4 8 4;
+    -fx-border-width: 0 0 2 0;
+    -fx-border-color: transparent;
 }
 
 .navbar-button:hover {
-    -fx-background-color: #3949ab;
-    -fx-background-radius: 5;
-}
-
-/* === LOGIN (ALV-53 / ALV-59) === */
-.login-container {
-    -fx-background-color: #f5f5f5;
-}
-
-.login-titulo {
-    -fx-font-size: 22px;
-    -fx-font-weight: bold;
-    -fx-fill: #1a237e;
-}
-
-.login-subtitulo {
-    -fx-font-size: 14px;
-    -fx-fill: #555555;
-}
-
-.campo-texto {
-    -fx-font-size: 14px;
-    -fx-padding: 10;
-    -fx-border-color: #cccccc;
-    -fx-border-radius: 5;
-    -fx-background-radius: 5;
-}
-
-.campo-texto:focused {
-    -fx-border-color: #1a237e;
-}
-
-.btn-primario {
-    -fx-background-color: #1a237e;
     -fx-text-fill: white;
+}
+
+.navbar-button-ativo {
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+    -fx-font-family: "Federo";
     -fx-font-size: 14px;
-    -fx-padding: 10 20 10 20;
-    -fx-background-radius: 5;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 8 4 8 4;
+    -fx-border-width: 0 0 2 0;
+    -fx-border-color: #2563EB;
+}
+
+.navbar-avatar {
+    -fx-background-color: #2563EB;
+    -fx-background-radius: 50%;
+    -fx-min-width: 34px;
+    -fx-min-height: 34px;
+    -fx-max-width: 34px;
+    -fx-max-height: 34px;
+    -fx-alignment: center;
+}
+
+.navbar-avatar-icone {
+    -fx-font-size: 15px;
+    -fx-text-fill: white;
+}
+
+/* ================================================================
+   SUPERFÍCIES / CARDS GERAIS
+   ================================================================ */
+.surface-card {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.07), 14, 0, 0, 4);
+}
+
+.surface-card-flat {
+    -fx-background-color: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+}
+
+.painel-suave {
+    -fx-background-color: #EAF2FF;
+    -fx-background-radius: 12;
+    -fx-border-color: #DBEAFE;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+/* ================================================================
+   BOTÕES
+   ================================================================ */
+.btn-primario {
+    -fx-background-color: #2563EB;
+    -fx-text-fill: white;
+    -fx-font-family: "Federo";
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 11 24 11 24;
+    -fx-background-radius: 8;
     -fx-cursor: hand;
 }
+.btn-primario:hover { -fx-background-color: #1E5EFF; }
 
-.btn-primario:hover {
-    -fx-background-color: #3949ab;
-}
-
-/* === FEEDBACK (ALV-60) === */
-.mensagem-erro {
-    -fx-text-fill: #c62828;
-    -fx-font-size: 13px;
-}
-
-.feedback-error .dialog-pane {
-    -fx-border-color: #c62828;
-}
-
-.feedback-sucesso .dialog-pane {
-    -fx-border-color: #2e7d32;
-}
-
-/* === DASHBOARD (ALV-55 stub) === */
-.dashboard-container {
-    -fx-background-color: #ffffff;
-}
-
-.dashboard-titulo {
-    -fx-font-size: 26px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #1a237e;
-}
-
-.dashboard-subtitulo {
-    -fx-font-size: 15px;
-    -fx-text-fill: #555555;
-}
-
-/* ================================================================
-   ALV-64 / 65 / 66 — Reservas (MM)
-   ================================================================ */
-.reserva-container { -fx-background-color: #ffffff; }
-.reserva-titulo { -fx-font-size: 22px; -fx-font-weight: bold; -fx-fill: #1a237e; }
-.reserva-subtitulo { -fx-font-size: 14px; -fx-fill: #555555; }
-.reserva-campo-label { -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333333; }
-.reserva-painel-preco {
-    -fx-background-color: #f0f4ff; -fx-background-radius: 8;
-    -fx-border-color: #c5cae9; -fx-border-radius: 8; -fx-border-width: 1;
-}
-.reserva-preco-titulo { -fx-font-size: 14px; -fx-font-weight: bold; -fx-fill: #1a237e; }
-.reserva-preco-linha  { -fx-font-size: 13px; -fx-text-fill: #333333; }
-.reserva-preco-total  { -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1a237e; }
-.reserva-preco-nota   { -fx-font-size: 11px; -fx-text-fill: #2e7d32; -fx-font-style: italic; }
-.reserva-saldo        { -fx-font-size: 13px; -fx-text-fill: #555555; }
-.reserva-icone-sucesso { -fx-font-size: 56px; -fx-fill: #2e7d32; }
-.reserva-card {
-    -fx-background-color: #ffffff; -fx-border-color: #c5cae9;
-    -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 1;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 4, 0, 0, 2);
-}
-.reserva-card-titulo { -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1a237e; }
-.reserva-scroll { -fx-background-color: transparent; -fx-background: transparent; }
-.btn-aceitar {
-    -fx-background-color: #2e7d32; -fx-text-fill: white; -fx-font-size: 13px;
-    -fx-font-weight: bold; -fx-background-radius: 5; -fx-pref-width: 110; -fx-cursor: hand;
-}
-.btn-aceitar:hover { -fx-background-color: #1b5e20; }
-.btn-rejeitar {
-    -fx-background-color: #c62828; -fx-text-fill: white; -fx-font-size: 13px;
-    -fx-font-weight: bold; -fx-background-radius: 5; -fx-pref-width: 110; -fx-cursor: hand;
-}
-.btn-rejeitar:hover { -fx-background-color: #7f0000; }
 .btn-secundario {
-    -fx-background-color: transparent; -fx-border-color: #1a237e;
-    -fx-border-radius: 5; -fx-border-width: 1; -fx-text-fill: #1a237e;
-    -fx-font-size: 14px; -fx-padding: 10 20 10 20; -fx-cursor: hand;
+    -fx-background-color: white;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-text-fill: #1F2937;
+    -fx-font-family: "Federo";
+    -fx-font-size: 14px;
+    -fx-padding: 11 24 11 24;
+    -fx-cursor: hand;
 }
-.btn-secundario:hover { -fx-background-color: #e8eaf6; }
-.reserva-tabs { -fx-tab-min-height: 36px; }
-.reserva-badge-pendente {
-    -fx-background-color: #fff3e0; -fx-text-fill: #e60000;
-    -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
+.btn-secundario:hover { -fx-background-color: #F8FAFC; -fx-border-color: #2563EB; }
+
+.btn-aceitar {
+    -fx-background-color: #22C55E; -fx-text-fill: white; -fx-font-family: "Federo"; -fx-font-size: 13px;
+    -fx-font-weight: bold; -fx-background-radius: 8; -fx-pref-width: 110; -fx-cursor: hand;
 }
-.reserva-badge-aceite {
-    -fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32;
-    -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
+.btn-aceitar:hover { -fx-background-color: #16A34A; }
+
+.btn-rejeitar {
+    -fx-background-color: white; -fx-border-color: #EF4444; -fx-border-width: 1; -fx-text-fill: #EF4444;
+    -fx-font-family: "Federo"; -fx-font-size: 13px; -fx-font-weight: bold;
+    -fx-background-radius: 8; -fx-border-radius: 8; -fx-pref-width: 110; -fx-cursor: hand;
 }
-.reserva-badge-rejeitado, .reserva-badge-cancelado {
-    -fx-background-color: #ffebee; -fx-text-fill: #c62828;
-    -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
+.btn-rejeitar:hover { -fx-background-color: #FEE2E2; }
+
+/* ================================================================
+   CAMPOS DE FORMULÁRIO
+   ================================================================ */
+.campo-texto {
+    -fx-font-family: "Federo";
+    -fx-font-size: 14px;
+    -fx-padding: 11;
+    -fx-background-color: white;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
 }
-.reserva-badge-concluido {
-    -fx-background-color: #e8eaf6; -fx-text-fill: #1a237e;
-    -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
+.campo-texto:focused { -fx-border-color: #2563EB; }
+
+.combo-box, .choice-box {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 8;
+    -fx-font-family: "Federo";
 }
 
 /* ================================================================
-   ALV-100 — As Minhas Reservas
+   BADGES / ESTADOS
    ================================================================ */
-.reservas-container {
-    -fx-background-color: white;
-    -fx-max-width: 860px;
-}
-.reservas-titulo {
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #1a237e;
-}
-.reservas-subtitulo {
-    -fx-font-size: 13px;
-    -fx-text-fill: #777777;
-}
-.reservas-vazio {
-    -fx-font-size: 13px;
-    -fx-text-fill: #999999;
-    -fx-font-style: italic;
-}
-.reservas-tabs .tab-header-area .tab-header-background {
-    -fx-background-color: #f5f5f5;
-}
-.reservas-tabs .tab {
-    -fx-background-color: #eeeeee;
-    -fx-padding: 6 14 6 14;
-}
-.reservas-tabs .tab:selected {
-    -fx-background-color: white;
-    -fx-border-color: #1a237e;
-    -fx-border-width: 0 0 2 0;
-}
-.reservas-tabs .tab .tab-label {
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #555;
-}
-.reservas-tabs .tab:selected .tab-label {
-    -fx-text-fill: #1a237e;
-}
-.reservas-scroll {
-    -fx-background-color: transparent;
-    -fx-background: transparent;
-}
-.reserva-card-id {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #1a237e;
-}
-.reserva-card-detalhe {
-    -fx-font-size: 13px;
-    -fx-text-fill: #444444;
-}
-.reserva-estado {
+.badge {
+    -fx-font-family: "Federo";
     -fx-font-size: 11px;
     -fx-font-weight: bold;
-    -fx-background-radius: 4;
-    -fx-padding: 2 8 2 8;
+    -fx-background-radius: 999;
+    -fx-padding: 3 10 3 10;
 }
-.estado-pendente   { -fx-background-color: #fff3e0; -fx-text-fill: #e65100; }
-.estado-aceite     { -fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32; }
-.estado-rejeitado  { -fx-background-color: #ffebee; -fx-text-fill: #c62828; }
-.estado-cancelado  { -fx-background-color: #ffebee; -fx-text-fill: #c62828; }
-.estado-concluido  { -fx-background-color: #e8eaf6; -fx-text-fill: #1a237e; }
+.badge-pendente   { -fx-background-color: #FEF3C7; -fx-text-fill: #B45309; }
+.badge-aceite     { -fx-background-color: #DCFCE7; -fx-text-fill: #16A34A; }
+.badge-rejeitado, .badge-cancelado { -fx-background-color: #FEE2E2; -fx-text-fill: #EF4444; }
+.badge-concluido  { -fx-background-color: #EAF2FF; -fx-text-fill: #2563EB; }
 
-/* ScrollPane — fundo sempre branco */
-.scroll-pane {
+.mensagem-erro {
+    -fx-text-fill: #EF4444;
+    -fx-font-family: "Federo";
+    -fx-font-size: 13px;
+}
+.mensagem-sucesso {
+    -fx-text-fill: #16A34A;
+    -fx-font-family: "Federo";
+    -fx-font-size: 13px;
+}
+.feedback-error .dialog-pane { -fx-border-color: #EF4444; }
+.feedback-sucesso .dialog-pane { -fx-border-color: #22C55E; }
+
+/* ================================================================
+   LOGIN / REGISTO / RECUPERAR PASSWORD
+   ================================================================ */
+.login-container { -fx-background-color: #F8FAFC; }
+.login-titulo { -fx-font-family: "Flamenco"; -fx-font-size: 28px; -fx-fill: #0F172A; }
+.login-subtitulo { -fx-font-family: "Federo"; -fx-font-size: 14px; -fx-fill: #64748B; }
+
+/* ================================================================
+   DASHBOARD
+   ================================================================ */
+.dashboard-container { -fx-background-color: #F8FAFC; }
+.dashboard-titulo { -fx-font-family: "Flamenco"; -fx-font-size: 30px; -fx-text-fill: #0F172A; }
+.dashboard-subtitulo { -fx-font-family: "Federo"; -fx-font-size: 15px; -fx-text-fill: #64748B; }
+
+.stat-card {
     -fx-background-color: white;
-    -fx-background: white;
+    -fx-background-radius: 14;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 10, 0, 0, 3);
+}
+.stat-card-valor { -fx-font-family: "Flamenco"; -fx-font-size: 26px; -fx-text-fill: #0F172A; }
+.stat-card-label { -fx-font-family: "Federo"; -fx-font-size: 13px; -fx-text-fill: #64748B; }
+
+/* ================================================================
+   RESERVAS
+   ================================================================ */
+.reserva-titulo { -fx-font-family: "Flamenco"; -fx-font-size: 24px; -fx-fill: #0F172A; }
+.reserva-subtitulo { -fx-font-family: "Federo"; -fx-font-size: 14px; -fx-fill: #64748B; }
+.reserva-campo-label { -fx-font-family: "Federo"; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1F2937; }
+.reserva-painel-preco {
+    -fx-background-color: #EAF2FF; -fx-background-radius: 12;
+    -fx-border-color: #DBEAFE; -fx-border-radius: 12; -fx-border-width: 1;
+}
+.reserva-preco-titulo { -fx-font-family: "Federo"; -fx-font-size: 14px; -fx-font-weight: bold; -fx-fill: #0F172A; }
+.reserva-preco-linha  { -fx-font-family: "Federo"; -fx-font-size: 13px; -fx-text-fill: #1F2937; }
+.reserva-preco-total  { -fx-font-family: "Federo"; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.reserva-preco-nota   { -fx-font-family: "Federo"; -fx-font-size: 11px; -fx-text-fill: #22C55E; -fx-font-style: italic; }
+.reserva-saldo        { -fx-font-family: "Federo"; -fx-font-size: 13px; -fx-text-fill: #64748B; }
+.reserva-icone-sucesso { -fx-font-size: 56px; -fx-fill: #22C55E; }
+.reserva-card { -fx-background-color: white; -fx-border-color: #E2E8F0; -fx-border-radius: 12; -fx-background-radius: 12; -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.06), 10, 0, 0, 3); }
+.reserva-card-titulo { -fx-font-family: "Federo"; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.reserva-scroll { -fx-background-color: transparent; -fx-background: transparent; }
+.reserva-tabs { -fx-tab-min-height: 38px; }
+.reserva-badge-pendente   { -fx-background-color: #FEF3C7; -fx-text-fill: #B45309; -fx-font-family: "Federo"; -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 3 10 3 10; }
+.reserva-badge-aceite     { -fx-background-color: #DCFCE7; -fx-text-fill: #16A34A; -fx-font-family: "Federo"; -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 3 10 3 10; }
+.reserva-badge-rejeitado, .reserva-badge-cancelado { -fx-background-color: #FEE2E2; -fx-text-fill: #EF4444; -fx-font-family: "Federo"; -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 3 10 3 10; }
+.reserva-badge-concluido { -fx-background-color: #EAF2FF; -fx-text-fill: #2563EB; -fx-font-family: "Federo"; -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 3 10 3 10; }
+
+.reservas-container { -fx-background-color: #F8FAFC; -fx-max-width: 900px; }
+.reservas-titulo { -fx-font-family: "Flamenco"; -fx-font-size: 26px; -fx-text-fill: #0F172A; }
+.reservas-subtitulo { -fx-font-family: "Federo"; -fx-font-size: 13px; -fx-text-fill: #64748B; }
+.reservas-vazio { -fx-font-family: "Federo"; -fx-font-size: 13px; -fx-text-fill: #94A3B8; -fx-font-style: italic; }
+.reservas-tabs .tab-header-area .tab-header-background { -fx-background-color: #F8FAFC; }
+.reservas-tabs .tab { -fx-background-color: #EAF2FF; -fx-background-radius: 8 8 0 0; -fx-padding: 8 16 8 16; }
+.reservas-tabs .tab:selected { -fx-background-color: white; -fx-border-color: #2563EB; -fx-border-width: 0 0 2 0; }
+.reservas-tabs .tab .tab-label { -fx-font-family: "Federo"; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #64748B; }
+.reservas-tabs .tab:selected .tab-label { -fx-text-fill: #2563EB; }
+.reservas-scroll { -fx-background-color: transparent; -fx-background: transparent; }
+.reserva-card-id { -fx-font-family: "Federo"; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #0F172A; }
+.reserva-card-detalhe { -fx-font-family: "Federo"; -fx-font-size: 13px; -fx-text-fill: #1F2937; }
+.reserva-estado { -fx-font-family: "Federo"; -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 3 10 3 10; }
+.estado-pendente   { -fx-background-color: #FEF3C7; -fx-text-fill: #B45309; }
+.estado-aceite     { -fx-background-color: #DCFCE7; -fx-text-fill: #16A34A; }
+.estado-rejeitado  { -fx-background-color: #FEE2E2; -fx-text-fill: #EF4444; }
+.estado-cancelado  { -fx-background-color: #FEE2E2; -fx-text-fill: #EF4444; }
+.estado-concluido  { -fx-background-color: #EAF2FF; -fx-text-fill: #2563EB; }
+
+/* ================================================================
+   CARDS DE VEÍCULO — estilo Airbnb (foto grande + badge sobreposto)
+   ================================================================ */
+.veiculo-card {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-border-color: #E2E8F0;
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.08), 16, 0, 0, 6);
+}
+.veiculo-card:hover {
+    -fx-border-color: #93C5FD;
+    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.22), 18, 0, 0, 8);
+}
+.veiculo-card-foto-wrapper {
+    -fx-background-color: #EAF2FF;
+}
+.veiculo-card-sem-foto {
+    -fx-font-family: "Federo";
+    -fx-font-size: 13px;
+    -fx-text-fill: #94A3B8;
+}
+.veiculo-card-badge-preco {
+    -fx-background-color: rgba(255,255,255,0.95);
+    -fx-background-radius: 999;
+    -fx-padding: 5 14 5 14;
+}
+.veiculo-card-badge-preco-texto {
+    -fx-font-family: "Federo";
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0F172A;
+}
+.veiculo-card-marca-modelo {
+    -fx-font-family: "Flamenco";
+    -fx-font-size: 19px;
+    -fx-text-fill: #0F172A;
+}
+.veiculo-card-info {
+    -fx-font-family: "Federo";
+    -fx-font-size: 13px;
+    -fx-text-fill: #64748B;
+}
+.veiculo-card-localizacao {
+    -fx-font-family: "Federo";
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748B;
+}
+.veiculo-card-avaliacao {
+    -fx-font-family: "Federo";
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #B45309;
+}
+.veiculo-grid-vazio {
+    -fx-font-family: "Federo";
+    -fx-font-size: 14px;
+    -fx-text-fill: #94A3B8;
+    -fx-font-style: italic;
+}
+
+/* ================================================================
+   SCROLLPANE — fundo sempre alinhado com o resto da app
+   ================================================================ */
+.scroll-pane {
+    -fx-background-color: #F8FAFC;
+    -fx-background: #F8FAFC;
     -fx-border-color: transparent;
 }
 .scroll-pane > .viewport {
-    -fx-background-color: white;
-    -fx-background: white;
+    -fx-background-color: #F8FAFC;
+    -fx-background: #F8FAFC;
 }
 .scroll-pane .scroll-bar:vertical,
 .scroll-pane .scroll-bar:horizontal {
-    -fx-background-color: #f5f5f5;
+    -fx-background-color: #F8FAFC;
 }

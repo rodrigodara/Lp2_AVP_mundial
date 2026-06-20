@@ -201,13 +201,13 @@ public class AdicionarVeiculoView {
         // FOTOS (até 4, pelo menos 1 obrigatória no total)
         // ============================
         Label lblFotos = new Label("Fotos do veículo");
-        lblFotos.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #1a237e;");
+        lblFotos.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #2563EB;");
 
         Label lblFotosAjuda = new Label(
             "Adiciona até 4 fotos. É obrigatório manter pelo menos 1 foto. (máx. "
             + TAMANHO_MAX_FOTO_MB + "MB por foto)"
         );
-        lblFotosAjuda.setStyle("-fx-font-size: 12px; -fx-text-fill: #777777;");
+        lblFotosAjuda.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B;");
         lblFotosAjuda.setWrapText(true);
 
         HBox fotosBox = new HBox(14);
@@ -361,15 +361,15 @@ public class AdicionarVeiculoView {
         imagemBox.setAlignment(Pos.CENTER);
         imagemBox.setPrefSize(112, 82);
         imagemBox.setStyle(
-            "-fx-background-color: #f0f0f0;" +
-            "-fx-border-color: #cccccc;" +
+            "-fx-background-color: #EAF2FF;" +
+            "-fx-border-color: #CBD5E1;" +
             "-fx-border-style: dashed;" +
             "-fx-border-radius: 6;" +
             "-fx-background-radius: 6;"
         );
 
         Label lblLegenda = new Label(legenda);
-        lblLegenda.setStyle("-fx-font-size: 11px; -fx-text-fill: #555555;");
+        lblLegenda.setStyle("-fx-font-size: 11px; -fx-text-fill: #1F2937;");
         lblLegenda.setWrapText(true);
         lblLegenda.setMaxWidth(112);
         lblLegenda.setAlignment(Pos.CENTER);

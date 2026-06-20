@@ -25,7 +25,6 @@ public class LoginView {
         root.setAlignment(Pos.CENTER);
         root.setPadding(new Insets(60));
         root.setMaxWidth(500);
-        root.setStyle("-fx-background-color: white;");
         root.getStyleClass().add("login-container");
 
         Text titulo = new Text("Plataforma de Aluguer de Veículos");

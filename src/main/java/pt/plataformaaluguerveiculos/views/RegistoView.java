@@ -64,7 +64,7 @@ public class RegistoView {
         // ----------------------------
 
         Label lblErro = new Label();
-        lblErro.setStyle("-fx-text-fill: #e53935;");
+        lblErro.setStyle("-fx-text-fill: #EF4444;");
         lblErro.setVisible(false);
 
         Button btnRegistar = new Button("Registar");

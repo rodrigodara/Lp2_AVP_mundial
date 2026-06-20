@@ -14,7 +14,7 @@ public class BaseLayoutView {
 
     public BaseLayoutView() {
         root = new BorderPane();
-        root.setStyle("-fx-background-color: white;");
+        root.getStyleClass().add("root");
 
         navbarView = new NavbarView();
         root.setTop(navbarView.getNavbar());
@@ -22,18 +22,14 @@ public class BaseLayoutView {
         scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
         scrollPane.setFitToHeight(true);   // preenche altura toda
-        scrollPane.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-background: white;" +
-            "-fx-border-color: transparent;"
-        );
+        scrollPane.getStyleClass().add("scroll-pane");
         root.setCenter(scrollPane);
     }
 
     public void setContent(Node content) {
         StackPane wrapper = new StackPane(content);
         wrapper.setAlignment(Pos.CENTER);
-        wrapper.setStyle("-fx-background-color: white;");
+        wrapper.getStyleClass().add("root");
         // Garante que o wrapper cresce com o ScrollPane
         wrapper.setMinHeight(ScrollPane.USE_COMPUTED_SIZE);
         scrollPane.setContent(wrapper);

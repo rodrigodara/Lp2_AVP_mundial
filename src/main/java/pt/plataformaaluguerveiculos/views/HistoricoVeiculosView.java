@@ -50,7 +50,7 @@ public class HistoricoVeiculosView {
 
         root = new VBox(16);
         root.setPadding(new Insets(30));
-        root.setStyle("-fx-background-color: white;");
+        root.setStyle("-fx-background-color: #F8FAFC;");
 
         construirPagina();
     }
@@ -64,10 +64,10 @@ public class HistoricoVeiculosView {
 
         // Cabeçalho
         Label titulo = new Label("Histórico de Alugueres dos Veículos");
-        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2563EB;");
 
         Label subtitulo = new Label("Histórico de reservas e receita gerada por veículo");
-        subtitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #777777;");
+        subtitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748B;");
 
         root.getChildren().addAll(titulo, subtitulo);
 
@@ -76,7 +76,7 @@ public class HistoricoVeiculosView {
 
         if (veiculos.isEmpty()) {
             Label vazio = new Label("Ainda não tem veículos registados.");
-            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
             vazio.setPadding(new Insets(40, 0, 0, 0));
             root.getChildren().add(vazio);
             return;
@@ -85,7 +85,7 @@ public class HistoricoVeiculosView {
         // Uma tab por veículo
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        tabs.setStyle("-fx-background-color: white;");
+        tabs.setStyle("-fx-background-color: #F8FAFC;");
 
         for (Veiculo v : veiculos) {
             tabs.getTabs().add(criarTabVeiculo(v));
@@ -111,7 +111,7 @@ public class HistoricoVeiculosView {
 
         VBox conteudo = new VBox(12);
         conteudo.setPadding(new Insets(16));
-        conteudo.setStyle("-fx-background-color: white;");
+        conteudo.setStyle("-fx-background-color: #F8FAFC;");
 
         // Card resumo do veículo
         HBox resumo = criarResumoVeiculo(v, reservas.size(), receitaTotal);
@@ -119,7 +119,7 @@ public class HistoricoVeiculosView {
 
         if (reservas.isEmpty()) {
             Label vazio = new Label("Ainda não existem reservas para este veículo.");
-            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
             vazio.setPadding(new Insets(20, 0, 0, 0));
             conteudo.getChildren().add(vazio);
         } else {
@@ -130,7 +130,7 @@ public class HistoricoVeiculosView {
 
         ScrollPane scroll = new ScrollPane(conteudo);
         scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: white; -fx-background: white;");
+        scroll.setStyle("-fx-background-color: #F8FAFC; -fx-background: #F8FAFC;");
         scroll.setPrefHeight(500);
 
         tab.setContent(scroll);
@@ -146,13 +146,13 @@ public class HistoricoVeiculosView {
         hbox.setAlignment(Pos.CENTER_LEFT);
 
         VBox cardInfo = criarCardResumo("Veículo", v.getMarca() + " " + v.getModelo()
-            + " (" + v.getAno() + ")", "#1a237e", "#e8eaf6");
+            + " (" + v.getAno() + ")", "#2563EB", "#EAF2FF");
 
         VBox cardReservas = criarCardResumo("Total Reservas",
-            totalReservas + " reserva" + (totalReservas != 1 ? "s" : ""), "#e65100", "#fff3e0");
+            totalReservas + " reserva" + (totalReservas != 1 ? "s" : ""), "#B45309", "#FEF3C7");
 
         VBox cardReceita = criarCardResumo("Receita Total",
-            String.format("%.2f€", receitaTotal), "#2e7d32", "#e8f5e9");
+            String.format("%.2f€", receitaTotal), "#22C55E", "#DCFCE7");
 
         hbox.getChildren().addAll(cardInfo, cardReservas, cardReceita);
         return hbox;
@@ -168,7 +168,7 @@ public class HistoricoVeiculosView {
         card.setMinWidth(160);
 
         Label lblTitulo = new Label(titulo);
-        lblTitulo.setStyle("-fx-font-size: 11px; -fx-text-fill: #777777;");
+        lblTitulo.setStyle("-fx-font-size: 11px; -fx-text-fill: #64748B;");
 
         Label lblValor = new Label(valor);
         lblValor.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: " + corTexto + ";");
@@ -185,8 +185,8 @@ public class HistoricoVeiculosView {
         VBox card = new VBox(8);
         card.setPadding(new Insets(14));
         card.setStyle(
-            "-fx-background-color: white;" +
-            "-fx-border-color: #e0e0e0;" +
+            "-fx-background-color: #F8FAFC;" +
+            "-fx-border-color: #E2E8F0;" +
             "-fx-border-radius: 8;" +
             "-fx-background-radius: 8;" +
             "-fx-border-width: 1;" +
@@ -198,7 +198,7 @@ public class HistoricoVeiculosView {
         topo.setAlignment(Pos.CENTER_LEFT);
 
         Label lblId = new Label("Reserva #" + r.getId());
-        lblId.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        lblId.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2563EB;");
 
         String corEstado = corPorEstado(r.getEstado());
         String fundoEstado = fundoPorEstado(r.getEstado());
@@ -215,7 +215,7 @@ public class HistoricoVeiculosView {
 
         // ALV-185 — receita desta reserva
         Label lblReceita = new Label(String.format("%.2f€", r.getPrecoTotal()));
-        lblReceita.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #2e7d32;");
+        lblReceita.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #22C55E;");
 
         topo.getChildren().addAll(lblId, badge, spacer, lblReceita);
 
@@ -224,12 +224,12 @@ public class HistoricoVeiculosView {
             "Período: " + r.getDataInicio() + " → " + r.getDataFim()
             + "  (" + r.getNumeroDias() + " dias)"
         );
-        lblDatas.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
+        lblDatas.setStyle("-fx-font-size: 13px; -fx-text-fill: #1F2937;");
 
         // ALV-184 — nome do locatário
         String nomeLocatario = obterNomeLocatario(r.getUtilizadorId());
         Label lblLocatario = new Label("Locatário: " + nomeLocatario);
-        lblLocatario.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
+        lblLocatario.setStyle("-fx-font-size: 13px; -fx-text-fill: #1F2937;");
 
         card.getChildren().addAll(topo, lblDatas, lblLocatario);
         return card;
@@ -282,19 +282,19 @@ public class HistoricoVeiculosView {
 
     private String corPorEstado(Reserva.Estado estado) {
         switch (estado) {
-            case ACEITE:    return "#2e7d32";
-            case PENDENTE:  return "#e65100";
-            case CONCLUIDO: return "#1a237e";
-            default:        return "#c62828";
+            case ACEITE:    return "#22C55E";
+            case PENDENTE:  return "#B45309";
+            case CONCLUIDO: return "#2563EB";
+            default:        return "#EF4444";
         }
     }
 
     private String fundoPorEstado(Reserva.Estado estado) {
         switch (estado) {
-            case ACEITE:    return "#e8f5e9";
-            case PENDENTE:  return "#fff3e0";
-            case CONCLUIDO: return "#e8eaf6";
-            default:        return "#ffebee";
+            case ACEITE:    return "#DCFCE7";
+            case PENDENTE:  return "#FEF3C7";
+            case CONCLUIDO: return "#EAF2FF";
+            default:        return "#FEE2E2";
         }
     }
 

@@ -20,46 +20,46 @@ public class AvaliarView {
         root = new VBox(20);
         root.setPadding(new Insets(40));
         root.setAlignment(Pos.TOP_LEFT);
-        root.setStyle("-fx-background-color: white;");
+        root.setStyle("-fx-background-color: #F8FAFC;");
 
         // Título
         Label titulo = new Label("Avaliar Veículo");
-        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #2563EB;");
 
         Label subtitulo = new Label("A avaliar: " + nomeVeiculo + " | Reserva #" + reservaId);
-        subtitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #777777;");
+        subtitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #64748B;");
 
         // Estrelas
         Label labelNota = new Label("Nota:");
-        labelNota.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+        labelNota.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1F2937;");
 
         Button[] estrelas = new Button[5];
         HBox estrelasBox = new HBox(6);
         estrelasBox.setAlignment(Pos.CENTER_LEFT);
 
         Label lblNotaTexto = new Label("Selecione uma nota");
-        lblNotaTexto.setStyle("-fx-font-size: 12px; -fx-text-fill: #999999; -fx-font-style: italic;");
+        lblNotaTexto.setStyle("-fx-font-size: 12px; -fx-text-fill: #94A3B8; -fx-font-style: italic;");
 
         for (int i = 0; i < 5; i++) {
             final int valor = i + 1;
             estrelas[i] = new Button("★");
             estrelas[i].setStyle(
                 "-fx-font-size: 28px; -fx-background-color: transparent;" +
-                "-fx-text-fill: #cccccc; -fx-cursor: hand; -fx-padding: 2;"
+                "-fx-text-fill: #CBD5E1; -fx-cursor: hand; -fx-padding: 2;"
             );
             estrelas[i].setOnAction(e -> {
                 notaSelecionada = valor;
                 atualizarEstrelas(estrelas, valor);
                 String[] textos = {"Muito mau", "Mau", "Razoável", "Bom", "Excelente"};
                 lblNotaTexto.setText(valor + "/5 — " + textos[valor - 1]);
-                lblNotaTexto.setStyle("-fx-font-size: 12px; -fx-text-fill: #1a237e; -fx-font-weight: bold;");
+                lblNotaTexto.setStyle("-fx-font-size: 12px; -fx-text-fill: #2563EB; -fx-font-weight: bold;");
             });
             estrelasBox.getChildren().add(estrelas[i]);
         }
 
         // Comentário
         Label labelComentario = new Label("Comentário (opcional):");
-        labelComentario.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+        labelComentario.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1F2937;");
 
         TextArea campoComentario = new TextArea();
         campoComentario.setPromptText("Escreva a sua opinião sobre este veículo...");
@@ -82,7 +82,7 @@ public class AvaliarView {
         btnSubmeter.setOnAction(e -> {
             if (notaSelecionada == 0) {
                 lblFeedback.setText("Por favor selecione uma nota.");
-                lblFeedback.setStyle("-fx-text-fill: #c62828; -fx-font-size: 13px;");
+                lblFeedback.setStyle("-fx-text-fill: #EF4444; -fx-font-size: 13px;");
                 lblFeedback.setVisible(true);
                 return;
             }
@@ -96,18 +96,18 @@ public class AvaliarView {
 
                 if (ok) {
                     lblFeedback.setText("Avaliação submetida com sucesso!");
-                    lblFeedback.setStyle("-fx-text-fill: #2e7d32; -fx-font-size: 13px;");
+                    lblFeedback.setStyle("-fx-text-fill: #22C55E; -fx-font-size: 13px;");
                     btnSubmeter.setDisable(true);
                 } else {
                     lblFeedback.setText("Já avaliou esta reserva.");
-                    lblFeedback.setStyle("-fx-text-fill: #c62828; -fx-font-size: 13px;");
+                    lblFeedback.setStyle("-fx-text-fill: #EF4444; -fx-font-size: 13px;");
                 }
                 lblFeedback.setVisible(true);
 
             } catch (Exception ex) {
                 ex.printStackTrace();
                 lblFeedback.setText("Erro ao submeter avaliação.");
-                lblFeedback.setStyle("-fx-text-fill: #c62828; -fx-font-size: 13px;");
+                lblFeedback.setStyle("-fx-text-fill: #EF4444; -fx-font-size: 13px;");
                 lblFeedback.setVisible(true);
             }
         });
@@ -125,7 +125,7 @@ public class AvaliarView {
 
     private void atualizarEstrelas(Button[] estrelas, int nota) {
         for (int i = 0; i < 5; i++) {
-            String cor = i < nota ? "#f4c542" : "#cccccc";
+            String cor = i < nota ? "#F59E0B" : "#CBD5E1";
             estrelas[i].setStyle(
                 "-fx-font-size: 28px; -fx-background-color: transparent;" +
                 "-fx-text-fill: " + cor + "; -fx-cursor: hand; -fx-padding: 2;"

@@ -68,7 +68,7 @@ public class AdminView {
         this.adminId = admin != null ? admin.getId() : -1;
 
         root = new VBox(0);
-        root.setStyle("-fx-background-color: #f4f6fa;");
+        root.setStyle("-fx-background-color: #F8FAFC;");
 
         // Cabeçalho
         HBox header = criarHeader();
@@ -76,7 +76,7 @@ public class AdminView {
         // TabPane principal
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
-        tabs.setStyle("-fx-background-color: #f4f6fa;");
+        tabs.setStyle("-fx-background-color: #F8FAFC;");
 
         Tab tabUtilizadores  = new Tab("👤 Utilizadores",  buildUtilizadoresPane());
         Tab tabVeiculos      = new Tab("🚗 Veículos",      buildVeiculosPane());
@@ -101,7 +101,7 @@ public class AdminView {
 
         User admin = SessionManager.getInstance().getUtilizador();
         Label sub = new Label(admin != null ? "Sessão: " + admin.getNome() : "");
-        sub.setStyle("-fx-font-size: 13px; -fx-text-fill: #c5cae9;");
+        sub.setStyle("-fx-font-size: 13px; -fx-text-fill: #93C5FD;");
 
         VBox left = new VBox(2, titulo, sub);
         left.setAlignment(Pos.CENTER_LEFT);
@@ -109,7 +109,7 @@ public class AdminView {
         HBox header = new HBox(left);
         header.setAlignment(Pos.CENTER_LEFT);
         header.setPadding(new Insets(20, 30, 20, 30));
-        header.setStyle("-fx-background-color: #1a237e;");
+        header.setStyle("-fx-background-color: #2563EB;");
         return header;
     }
 
@@ -119,7 +119,7 @@ public class AdminView {
     private ScrollPane buildUtilizadoresPane() {
         VBox pane = new VBox(18);
         pane.setPadding(new Insets(24));
-        pane.setStyle("-fx-background-color: #f4f6fa;");
+        pane.setStyle("-fx-background-color: #F8FAFC;");
 
         // ---- Barra de pesquisa ----
         TextField tfSearch = new TextField();
@@ -132,8 +132,8 @@ public class AdminView {
         cbTipo.setValue("Todos");
         cbTipo.setStyle(campoCss() + " -fx-pref-width: 150px;");
 
-        Button btnSearch = botao("Pesquisar", "#1a237e", "white");
-        Button btnTodos  = botao("Ver Todos", "#546e7a", "white");
+        Button btnSearch = botao("Pesquisar", "#2563EB", "white");
+        Button btnTodos  = botao("Ver Todos", "#64748B", "white");
 
         HBox barSearch = new HBox(10, tfSearch, cbTipo, btnSearch, btnTodos);
         barSearch.setAlignment(Pos.CENTER_LEFT);
@@ -184,17 +184,17 @@ public class AdminView {
         });
 
         Label lblDica = new Label("💡 Duplo-clique numa linha (ou \"Ver Detalhes\") para consultar a ficha completa.");
-        lblDica.setStyle("-fx-font-size: 12px; -fx-text-fill: #78909c; -fx-font-style: italic;");
+        lblDica.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B; -fx-font-style: italic;");
 
         // ---- Painel de ações ----
-        Label lblAcoes = label("Ações sobre utilizador selecionado", 15, true, "#1a237e");
+        Label lblAcoes = label("Ações sobre utilizador selecionado", 15, true, "#2563EB");
 
-        Button btnDetalhes    = botao("🔍 Ver Detalhes",      "#1a237e", "white");
+        Button btnDetalhes    = botao("🔍 Ver Detalhes",      "#2563EB", "white");
         Button btnTipo        = botao("🛠 Alterar Tipo",      "#6a1b9a", "white");
-        Button btnBloquear    = botao("🔒 Bloquear",          "#c62828", "white");
-        Button btnDesbloquear = botao("🔓 Desbloquear",       "#2e7d32", "white");
-        Button btnAviso       = botao("⚠ Emitir Aviso",      "#e65100", "white");
-        Button btnVerAvisos   = botao("📋 Ver Avisos",        "#37474f", "white");
+        Button btnBloquear    = botao("🔒 Bloquear",          "#EF4444", "white");
+        Button btnDesbloquear = botao("🔓 Desbloquear",       "#22C55E", "white");
+        Button btnAviso       = botao("⚠ Emitir Aviso",      "#B45309", "white");
+        Button btnVerAvisos   = botao("📋 Ver Avisos",        "#1F2937", "white");
 
         HBox acoes = new HBox(10, btnDetalhes, btnTipo, btnBloquear, btnDesbloquear, btnAviso, btnVerAvisos);
         acoes.setAlignment(Pos.CENTER_LEFT);
@@ -317,14 +317,14 @@ public class AdminView {
         });
 
         pane.getChildren().addAll(
-            label("Gestão de Utilizadores", 18, true, "#1a237e"),
+            label("Gestão de Utilizadores", 18, true, "#2563EB"),
             barSearch, tabela, lblDica,
             lblAcoes, acoes, lblFeedback
         );
 
         ScrollPane sp = new ScrollPane(pane);
         sp.setFitToWidth(true);
-        sp.setStyle("-fx-background: #f4f6fa; -fx-background-color: #f4f6fa;");
+        sp.setStyle("-fx-background: #F8FAFC; -fx-background-color: #F8FAFC;");
         return sp;
     }
 
@@ -351,15 +351,15 @@ public class AdminView {
     private ScrollPane buildVeiculosPane() {
         VBox pane = new VBox(18);
         pane.setPadding(new Insets(24));
-        pane.setStyle("-fx-background-color: #f4f6fa;");
+        pane.setStyle("-fx-background-color: #F8FAFC;");
 
         TextField tfSearch = new TextField();
         tfSearch.setPromptText("Pesquisar por marca, modelo, localização ou proprietário…");
         tfSearch.setPrefWidth(400);
         tfSearch.setStyle(campoCss());
 
-        Button btnSearch = botao("Pesquisar", "#1a237e", "white");
-        Button btnTodos  = botao("Ver Todos", "#546e7a", "white");
+        Button btnSearch = botao("Pesquisar", "#2563EB", "white");
+        Button btnTodos  = botao("Ver Todos", "#64748B", "white");
         HBox barSearch   = new HBox(10, tfSearch, btnSearch, btnTodos);
         barSearch.setAlignment(Pos.CENTER_LEFT);
 
@@ -395,11 +395,11 @@ public class AdminView {
         });
 
         Label lblDica = new Label("💡 Duplo-clique numa linha (ou \"Ver Detalhes\") para analisar o veículo — apenas consulta, sem edição.");
-        lblDica.setStyle("-fx-font-size: 12px; -fx-text-fill: #78909c; -fx-font-style: italic;");
+        lblDica.setStyle("-fx-font-size: 12px; -fx-text-fill: #64748B; -fx-font-style: italic;");
 
-        Label lblAcoes    = label("Ações sobre veículo selecionado", 15, true, "#1a237e");
-        Button btnDetalhes = botao("🔍 Ver Detalhes", "#1a237e", "white");
-        Button btnRemove   = botao("🗑 Remover Veículo (violação de regras)", "#c62828", "white");
+        Label lblAcoes    = label("Ações sobre veículo selecionado", 15, true, "#2563EB");
+        Button btnDetalhes = botao("🔍 Ver Detalhes", "#2563EB", "white");
+        Button btnRemove   = botao("🗑 Remover Veículo (violação de regras)", "#EF4444", "white");
         Label  lblFb       = new Label();
         lblFb.setFont(Font.font(13));
 
@@ -427,14 +427,14 @@ public class AdminView {
         acoesVeiculo.setAlignment(Pos.CENTER_LEFT);
 
         pane.getChildren().addAll(
-            label("Gestão de Veículos", 18, true, "#1a237e"),
+            label("Gestão de Veículos", 18, true, "#2563EB"),
             barSearch, tabela, lblDica,
             lblAcoes, acoesVeiculo, lblFb
         );
 
         ScrollPane sp = new ScrollPane(pane);
         sp.setFitToWidth(true);
-        sp.setStyle("-fx-background: #f4f6fa; -fx-background-color: #f4f6fa;");
+        sp.setStyle("-fx-background: #F8FAFC; -fx-background-color: #F8FAFC;");
         return sp;
     }
 
@@ -553,11 +553,11 @@ public class AdminView {
 
     private int addLinhaDetalhe(GridPane grid, int row, String chave, String valor) {
         Label lblChave = new Label(chave);
-        lblChave.setStyle("-fx-font-weight: bold; -fx-text-fill: #37474f; -fx-font-size: 13px;");
+        lblChave.setStyle("-fx-font-weight: bold; -fx-text-fill: #1F2937; -fx-font-size: 13px;");
         lblChave.setMinWidth(170);
 
         Label lblValor = new Label(valor == null || valor.isBlank() ? "—" : valor);
-        lblValor.setStyle("-fx-text-fill: #212121; -fx-font-size: 13px;");
+        lblValor.setStyle("-fx-text-fill: #1F2937; -fx-font-size: 13px;");
         lblValor.setWrapText(true);
         lblValor.setMaxWidth(320);
 
@@ -582,14 +582,14 @@ public class AdminView {
     private ScrollPane buildEstatisticasPane() {
         VBox pane = new VBox(22);
         pane.setPadding(new Insets(24));
-        pane.setStyle("-fx-background-color: #f4f6fa;");
+        pane.setStyle("-fx-background-color: #F8FAFC;");
 
         // ---- Cards gerais ----
-        Label lblGerais = label("Resumo Geral", 17, true, "#1a237e");
+        Label lblGerais = label("Resumo Geral", 17, true, "#2563EB");
         HBox cardsBox   = criarCardsGerais();
 
         // ---- Filtro por período ----
-        Label lblPeriodo = label("Análise por Período", 16, true, "#37474f");
+        Label lblPeriodo = label("Análise por Período", 16, true, "#1F2937");
 
         ToggleGroup tg = new ToggleGroup();
         RadioButton rbDia  = new RadioButton("Dia");   rbDia .setToggleGroup(tg); rbDia .setSelected(true);
@@ -601,7 +601,7 @@ public class AdminView {
         TableView<ObservableList<String>> tblPeriodo = criarTabelaStats(
             new String[]{"Período", "Reservas", "Receita (€)"});
 
-        Button btnPeriodo = botao("Atualizar", "#1a237e", "white");
+        Button btnPeriodo = botao("Atualizar", "#2563EB", "white");
         btnPeriodo.setOnAction(e -> {
             String agrup = rbDia.isSelected() ? "DAY" : rbMes.isSelected() ? "MONTH" : "YEAR";
             try {
@@ -613,7 +613,7 @@ public class AdminView {
         catch (SQLException ignored) {}
 
         // ---- Filtro por intervalo de datas (aplica-se a Marca + Região) ----
-        Label lblFiltroData = label("Filtrar Marca / Região por Período", 16, true, "#37474f");
+        Label lblFiltroData = label("Filtrar Marca / Região por Período", 16, true, "#1F2937");
 
         DatePicker dpInicio = new DatePicker();
         dpInicio.setPromptText("Data início");
@@ -623,8 +623,8 @@ public class AdminView {
         dpFim.setPromptText("Data fim");
         dpFim.setPrefWidth(150);
 
-        Button btnFiltrarData = botao("Filtrar Período", "#1a237e", "white");
-        Button btnLimparData  = botao("Limpar Filtro",   "#546e7a", "white");
+        Button btnFiltrarData = botao("Filtrar Período", "#2563EB", "white");
+        Button btnLimparData  = botao("Limpar Filtro",   "#64748B", "white");
 
         Label lblFiltroFeedback = new Label();
         lblFiltroFeedback.setFont(Font.font(13));
@@ -637,13 +637,13 @@ public class AdminView {
         filtroDataBox.setAlignment(Pos.CENTER_LEFT);
 
         // ---- Por marca ----
-        Label lblMarca = label("Análise por Marca", 16, true, "#37474f");
+        Label lblMarca = label("Análise por Marca", 16, true, "#1F2937");
         ComboBox<String> cbMarca = new ComboBox<>();
         cbMarca.getItems().add("Todas as Marcas");
         try { dao.listarMarcas().forEach(m -> cbMarca.getItems().add(m)); } catch (SQLException ignored) {}
         cbMarca.setValue("Todas as Marcas");
         cbMarca.setStyle(campoCss() + " -fx-pref-width: 200px;");
-        Button btnLimparMarca = botao("✕ Limpar", "#546e7a", "white");
+        Button btnLimparMarca = botao("✕ Limpar", "#64748B", "white");
         HBox barMarca = new HBox(10, new Label("Filtrar por marca:"), cbMarca, btnLimparMarca);
         barMarca.setAlignment(Pos.CENTER_LEFT);
 
@@ -656,13 +656,13 @@ public class AdminView {
         tblMarca.setPrefHeight(280);
 
         // ---- Por região ----
-        Label lblRegiao = label("Análise por Região", 16, true, "#37474f");
+        Label lblRegiao = label("Análise por Região", 16, true, "#1F2937");
         ComboBox<String> cbRegiao = new ComboBox<>();
         cbRegiao.getItems().add("Todas as Regiões");
         try { dao.listarRegioes().forEach(r -> cbRegiao.getItems().add(r)); } catch (SQLException ignored) {}
         cbRegiao.setValue("Todas as Regiões");
         cbRegiao.setStyle(campoCss() + " -fx-pref-width: 200px;");
-        Button btnLimparRegiao = botao("✕ Limpar", "#546e7a", "white");
+        Button btnLimparRegiao = botao("✕ Limpar", "#64748B", "white");
         HBox barRegiao = new HBox(10, new Label("Filtrar por região:"), cbRegiao, btnLimparRegiao);
         barRegiao.setAlignment(Pos.CENTER_LEFT);
 
@@ -757,7 +757,7 @@ public class AdminView {
         Separator sep1 = new Separator(); Separator sep2 = new Separator(); Separator sep3 = new Separator();
 
         pane.getChildren().addAll(
-            label("Estatísticas", 18, true, "#1a237e"),
+            label("Estatísticas", 18, true, "#2563EB"),
             sep1, lblGerais, cardsBox,
             sep2, lblPeriodo, rbBox, btnPeriodo, tblPeriodo,
             sep3,
@@ -770,7 +770,7 @@ public class AdminView {
 
         ScrollPane sp = new ScrollPane(pane);
         sp.setFitToWidth(true);
-        sp.setStyle("-fx-background: #f4f6fa; -fx-background-color: #f4f6fa;");
+        sp.setStyle("-fx-background: #F8FAFC; -fx-background-color: #F8FAFC;");
         return sp;
     }
 
@@ -780,11 +780,11 @@ public class AdminView {
         try {
             int[] s = dao.estatisticasGerais();
             box.getChildren().addAll(
-                card("👥 Utilizadores",   String.valueOf(s[0]), "#e8eaf6", "#1a237e"),
-                card("✅ Contas Ativas",  String.valueOf(s[1]), "#e8f5e9", "#2e7d32"),
-                card("🔒 Bloqueados",     String.valueOf(s[2]), "#ffebee", "#c62828"),
-                card("🚗 Veículos",       String.valueOf(s[3]), "#e3f2fd", "#1565c0"),
-                card("📋 Reservas",       String.valueOf(s[4]), "#fff8e1", "#f57f17"),
+                card("👥 Utilizadores",   String.valueOf(s[0]), "#EAF2FF", "#2563EB"),
+                card("✅ Contas Ativas",  String.valueOf(s[1]), "#DCFCE7", "#22C55E"),
+                card("🔒 Bloqueados",     String.valueOf(s[2]), "#FEE2E2", "#EF4444"),
+                card("🚗 Veículos",       String.valueOf(s[3]), "#EAF2FF", "#2563EB"),
+                card("📋 Reservas",       String.valueOf(s[4]), "#FEF3C7", "#B45309"),
                 card("💰 Receita Total",  s[5] + " €",          "#f3e5f5", "#6a1b9a")
             );
         } catch (SQLException e) {
@@ -798,13 +798,13 @@ public class AdminView {
         lv.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: " + cor + ";");
 
         Label lt = new Label(titulo);
-        lt.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555;");
+        lt.setStyle("-fx-font-size: 12px; -fx-text-fill: #1F2937;");
 
         VBox c = new VBox(4, lv, lt);
         c.setAlignment(Pos.CENTER_LEFT);
         c.setPadding(new Insets(16, 22, 16, 22));
         c.setStyle("-fx-background-color: " + bg + "; -fx-background-radius: 10;" +
-                   "-fx-border-color: #e0e0e0; -fx-border-radius: 10; -fx-border-width: 1;" +
+                   "-fx-border-color: #E2E8F0; -fx-border-radius: 10; -fx-border-width: 1;" +
                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0, 0, 2);");
         c.setPrefWidth(148);
         return c;
@@ -948,16 +948,16 @@ public class AdminView {
 
     private void sucesso(String msg, Label lbl) {
         lbl.setText("✅ " + msg);
-        lbl.setStyle("-fx-text-fill: #2e7d32;");
+        lbl.setStyle("-fx-text-fill: #22C55E;");
     }
 
     private void aviso(String msg, Label lbl) {
         lbl.setText("⚠️ " + msg);
-        lbl.setStyle("-fx-text-fill: #e65100;");
+        lbl.setStyle("-fx-text-fill: #B45309;");
     }
 
     private void erro(Exception e, Label lbl) {
         lbl.setText("❌ Erro: " + e.getMessage());
-        lbl.setStyle("-fx-text-fill: #c62828;");
+        lbl.setStyle("-fx-text-fill: #EF4444;");
     }
 }

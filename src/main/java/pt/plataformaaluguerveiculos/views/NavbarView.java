@@ -6,9 +6,11 @@ import com.aluguer.util.SessionManager;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 
 public class NavbarView {
 
@@ -16,8 +18,7 @@ public class NavbarView {
 
     public NavbarView() {
         navbar.getStyleClass().add("navbar");
-        navbar.setSpacing(10);
-        navbar.setPadding(new Insets(10, 20, 10, 20));
+        navbar.setAlignment(Pos.CENTER_LEFT);
         construir();
     }
 
@@ -30,22 +31,47 @@ public class NavbarView {
 
         User user = SessionManager.getInstance().getUtilizador();
 
+        Label logo = criarLogo();
+
         if (user == null) {
-            construirNavbarAnonimo();
+            construirNavbarAnonimo(logo);
             return;
         }
 
         if (user.isAdministrador()) {
-            construirNavbarAdmin();
+            construirNavbarAdmin(logo);
         } else {
-            construirNavbarUtilizador();
+            construirNavbarUtilizador(logo);
         }
+    }
+
+    /** Logótipo "AVL Mundial", sempre à esquerda da navbar. */
+    private Label criarLogo() {
+        Label logo = new Label("AVL Mundial");
+        logo.getStyleClass().add("navbar-logo");
+        return logo;
+    }
+
+    /** Pequeno círculo com ícone de utilizador — substitui o antigo botão de texto solto. */
+    private StackPane criarAvatar() {
+        StackPane avatar = new StackPane();
+        avatar.getStyleClass().add("navbar-avatar");
+        Label icone = new Label("\u25CF");
+        icone.getStyleClass().add("navbar-avatar-icone");
+        avatar.getChildren().add(icone);
+        return avatar;
+    }
+
+    private Region criarSpacer() {
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        return spacer;
     }
 
     // =====================================================
     // NAVBAR ANÓNIMO
     // =====================================================
-    private void construirNavbarAnonimo() {
+    private void construirNavbarAnonimo(Label logo) {
         Button btnLogin = new Button("Login");
         Button btnRegisto = new Button("Registo");
 
@@ -55,13 +81,13 @@ public class NavbarView {
         btnLogin.setOnAction(e -> NavigationManager.getInstance().navegarParaLogin());
         btnRegisto.setOnAction(e -> NavigationManager.getInstance().navegarParaRegisto());
 
-        navbar.getChildren().addAll(btnLogin, btnRegisto);
+        navbar.getChildren().addAll(logo, criarSpacer(), btnLogin, btnRegisto);
     }
 
     // =====================================================
     // NAVBAR ADMIN
     // =====================================================
-    private void construirNavbarAdmin() {
+    private void construirNavbarAdmin(Label logo) {
         Button btnPainel = new Button("Painel de Administração");
         Button btnSair = new Button("Sair");
 
@@ -71,13 +97,15 @@ public class NavbarView {
         btnPainel.setOnAction(e -> NavigationManager.getInstance().navegarParaAdmin());
         btnSair.setOnAction(e -> NavigationManager.getInstance().sair());
 
-        navbar.getChildren().addAll(btnPainel, btnSair);
+        navbar.getChildren().addAll(
+            logo, criarSpacer(), btnPainel, criarAvatar(), btnSair
+        );
     }
 
     // =====================================================
     // NAVBAR UTILIZADOR
     // =====================================================
-    private void construirNavbarUtilizador() {
+    private void construirNavbarUtilizador(Label logo) {
         User user = SessionManager.getInstance().getUtilizador();
         if (user == null) return;
 
@@ -107,34 +135,30 @@ public class NavbarView {
         btnHistorico.setOnAction(e    -> NavigationManager.getInstance().navegarParaHistoricoVeiculos());
         btnSair.setOnAction(e         -> NavigationManager.getInstance().sair());
 
-        // Espaçador para empurrar o sino para a direita
-        Region spacer = new Region();
-        HBox.setHgrow(spacer, Priority.ALWAYS);
-
         // Sino com badge — usa o StackPane do SinhoNotificacoesView
         SinhoNotificacoesView sinoView = NavigationManager.getInstance().getSinoView();
         javafx.scene.layout.StackPane sino = sinoView != null ? sinoView.getSino() : null;
 
         if (sino != null) {
-            // Centra verticalmente o sino na navbar
             HBox.setMargin(sino, new Insets(0, 4, 0, 4));
         }
 
-        navbar.setAlignment(Pos.CENTER_LEFT);
+        navbar.getChildren().add(logo);
+
+        HBox linksBox = new HBox(22,
+            btnDashboard, btnProcurar, btnReservas,
+            btnMeusVeiculos, btnPedidos, btnConta, btnHistorico
+        );
+        linksBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setMargin(linksBox, new Insets(0, 0, 0, 36));
+        navbar.getChildren().add(linksBox);
+
+        navbar.getChildren().add(criarSpacer());
 
         if (sino != null) {
-            navbar.getChildren().addAll(
-                btnDashboard, btnProcurar, btnReservas,
-                btnMeusVeiculos, btnPedidos, btnConta,
-                btnHistorico, spacer, sino, btnSair
-            );
-        } else {
-            navbar.getChildren().addAll(
-                btnDashboard, btnProcurar, btnReservas,
-                btnMeusVeiculos, btnPedidos, btnConta,
-                btnHistorico, spacer, btnSair
-            );
+            navbar.getChildren().add(sino);
         }
+        navbar.getChildren().addAll(criarAvatar(), btnSair);
     }
 
     public HBox getNavbar() {

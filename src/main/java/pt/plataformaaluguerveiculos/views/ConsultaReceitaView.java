@@ -170,13 +170,13 @@ public class ConsultaReceitaView {
         double percentagem = totalGeral > 0 ? rv.getReceitaTotal() / totalGeral : 0;
         HBox barraFundo = new HBox();
         barraFundo.setStyle(
-            "-fx-background-color: #e0e0e0; -fx-background-radius: 4; -fx-pref-height: 8;"
+            "-fx-background-color: #E2E8F0; -fx-background-radius: 4; -fx-pref-height: 8;"
         );
         HBox.setHgrow(barraFundo, Priority.ALWAYS);
 
         Region barraPreenchida = new Region();
         barraPreenchida.setStyle(
-            "-fx-background-color: #2e7d32; -fx-background-radius: 4;"
+            "-fx-background-color: #22C55E; -fx-background-radius: 4;"
         );
         barraPreenchida.setPrefWidth(0); // será definido após layout
 

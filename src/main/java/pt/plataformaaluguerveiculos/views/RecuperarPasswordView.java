@@ -22,7 +22,7 @@ public class RecuperarPasswordView {
         root.setAlignment(Pos.CENTER);
         root.setPadding(new Insets(60));
         root.setMaxWidth(500);
-        root.setStyle("-fx-background-color: white;");
+        root.setStyle("-fx-background-color: #F8FAFC;");
 
         Text titulo = new Text("Recuperar Password");
         titulo.getStyleClass().add("login-titulo");
