@@ -167,7 +167,12 @@ public class ReservaService {
         // NOVA VALIDAÇÃO - IMPEDIR RESERVAR O PRÓPRIO VEÍCULO
         // ==========================================================
         VeiculoDAO veiculoDAO = new VeiculoDAO();
-        Veiculo veiculo = veiculoDAO.buscarPorId(veiculoId);
+        Veiculo veiculo;
+        try {
+            veiculo = veiculoDAO.buscarPorId(veiculoId);
+        } catch (java.sql.SQLException e) {
+            throw new ReservaException("Erro ao consultar o veículo: " + e.getMessage());
+        }
 
         if (veiculo == null) {
             throw new ReservaException("Veículo não encontrado.");
