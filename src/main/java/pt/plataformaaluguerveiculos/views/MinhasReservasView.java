@@ -2,11 +2,15 @@ package pt.plataformaaluguerveiculos.views;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.aluguer.dao.ReservaDAO;
+import com.aluguer.dao.VeiculoDAO;
 import com.aluguer.model.Reserva;
+import com.aluguer.model.Veiculo;
 import com.aluguer.service.AvaliacaoService;
 import com.aluguer.util.DatabaseConnection;
 
@@ -24,7 +28,7 @@ public class MinhasReservasView {
 
     private VBox root;
     private final int utilizadorId;
-    private int tabInicial = 0; // 0=Pendentes, 1=Aceites, 2=Rejeitadas, 3=Canceladas, 4=Concluídas
+    private int tabInicial = 0;
 
     public MinhasReservasView(int utilizadorId) {
         this(utilizadorId, 0);
@@ -62,6 +66,9 @@ public class MinhasReservasView {
             return;
         }
 
+        // Pré-carrega os nomes dos veículos de uma só vez (evita N queries dentro do loop)
+        Map<Integer, String> nomesVeiculos = carregarNomesVeiculos(todas);
+
         List<Reserva> pendentes  = filtrar(todas, Reserva.Estado.PENDENTE);
         List<Reserva> aceites    = filtrar(todas, Reserva.Estado.ACEITE);
         List<Reserva> rejeitadas = filtrar(todas, Reserva.Estado.REJEITADO);
@@ -73,11 +80,11 @@ public class MinhasReservasView {
         tabs.setStyle("-fx-background-color: white;");
 
         tabs.getTabs().addAll(
-            criarTab("Pendentes ("  + pendentes.size()  + ")", pendentes,  "#e65100",  "#fff3e0"),
-            criarTab("Aceites ("    + aceites.size()    + ")", aceites,    "#2e7d32",  "#e8f5e9"),
-            criarTab("Rejeitadas (" + rejeitadas.size() + ")", rejeitadas, "#c62828",  "#ffebee"),
-            criarTab("Canceladas (" + canceladas.size() + ")", canceladas, "#c62828",  "#ffebee"),
-            criarTab("Concluídas (" + concluidas.size() + ")", concluidas, "#1a237e",  "#e8eaf6")
+            criarTab("Pendentes ("  + pendentes.size()  + ")", pendentes,  "#e65100", "#fff3e0", nomesVeiculos),
+            criarTab("Aceites ("    + aceites.size()    + ")", aceites,    "#2e7d32", "#e8f5e9", nomesVeiculos),
+            criarTab("Rejeitadas (" + rejeitadas.size() + ")", rejeitadas, "#c62828", "#ffebee", nomesVeiculos),
+            criarTab("Canceladas (" + canceladas.size() + ")", canceladas, "#c62828", "#ffebee", nomesVeiculos),
+            criarTab("Concluídas (" + concluidas.size() + ")", concluidas, "#1a237e", "#e8eaf6", nomesVeiculos)
         );
 
         tabs.getSelectionModel().select(tabInicial);
@@ -85,7 +92,30 @@ public class MinhasReservasView {
         root.getChildren().add(tabs);
     }
 
-    private Tab criarTab(String titulo, List<Reserva> reservas, String corTexto, String corFundo) {
+    /** Carrega os nomes (Marca Modelo Ano) de todos os veículos distintos referenciados nas reservas. */
+    private Map<Integer, String> carregarNomesVeiculos(List<Reserva> reservas) {
+        Map<Integer, String> nomes = new HashMap<>();
+        VeiculoDAO dao = new VeiculoDAO();
+        reservas.stream()
+            .map(Reserva::getVeiculoId)
+            .distinct()
+            .forEach(id -> {
+                try {
+                    Veiculo v = dao.buscarPorId(id);
+                    if (v != null) {
+                        nomes.put(id, v.getMarca() + " " + v.getModelo() + " (" + v.getAno() + ")");
+                    } else {
+                        nomes.put(id, "Veículo #" + id);
+                    }
+                } catch (SQLException e) {
+                    nomes.put(id, "Veículo #" + id);
+                }
+            });
+        return nomes;
+    }
+
+    private Tab criarTab(String titulo, List<Reserva> reservas, String corTexto, String corFundo,
+                         Map<Integer, String> nomesVeiculos) {
         Tab tab = new Tab(titulo);
 
         if (reservas.isEmpty()) {
@@ -103,7 +133,7 @@ public class MinhasReservasView {
         lista.setStyle("-fx-background-color: white;");
 
         for (Reserva r : reservas) {
-            lista.getChildren().add(criarCard(r, corTexto, corFundo));
+            lista.getChildren().add(criarCard(r, corTexto, corFundo, nomesVeiculos));
         }
 
         ScrollPane scroll = new ScrollPane(lista);
@@ -114,7 +144,7 @@ public class MinhasReservasView {
         return tab;
     }
 
-    private VBox criarCard(Reserva r, String corTexto, String corFundo) {
+    private VBox criarCard(Reserva r, String corTexto, String corFundo, Map<Integer, String> nomesVeiculos) {
         VBox card = new VBox(8);
         card.setPadding(new Insets(16));
         card.setStyle(
@@ -144,8 +174,9 @@ public class MinhasReservasView {
 
         topo.getChildren().addAll(lblId, badge);
 
-        // Veículo
-        Label lblVeiculo = new Label("Veículo ID: " + r.getVeiculoId());
+        // Veículo — mostra o nome em vez do ID
+        String nomeVeiculo = nomesVeiculos.getOrDefault(r.getVeiculoId(), "Veículo #" + r.getVeiculoId());
+        Label lblVeiculo = new Label("Veículo: " + nomeVeiculo);
         lblVeiculo.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444;");
 
         // Datas
@@ -164,14 +195,13 @@ public class MinhasReservasView {
 
         card.getChildren().addAll(topo, lblVeiculo, lblDatas, lblPreco);
 
-        // Botão Cancelar (só aparece se puder cancelar)
+        // Botão Cancelar
         javafx.scene.control.Button btnCancelar = new javafx.scene.control.Button("Cancelar");
         btnCancelar.setStyle(
             "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold; " +
             "-fx-background-radius: 6; -fx-padding: 6 12;"
         );
 
-        // Verificar se pode cancelar
         if (podeCancelar(r)) {
             btnCancelar.setOnAction(e -> cancelarReserva(r));
             card.getChildren().add(btnCancelar);
@@ -190,7 +220,7 @@ public class MinhasReservasView {
                     r.getId(),
                     utilizadorId,
                     r.getVeiculoId(),
-                    "Veículo #" + r.getVeiculoId()
+                    nomeVeiculo
                 ));
 
                 HBox acoes = new HBox(btnAvaliar);
@@ -205,39 +235,32 @@ public class MinhasReservasView {
         return card;
     }
 
-    //METODOS CACELAMENTO RESERVAS
     private boolean podeCancelar(Reserva r) {
-
-    // 1. Só reservas ACEITES podem ser canceladas
-    if (r.getEstado() != Reserva.Estado.ACEITE)
-        return false;
-
-    // 2. Regra das 48 horas
-    long horas = java.time.Duration.between(
-            java.time.LocalDateTime.now(),
-            r.getDataInicio().atStartOfDay()
-    ).toHours();
-
-    return horas >= 48;
+        if (r.getEstado() != Reserva.Estado.ACEITE)
+            return false;
+        long horas = java.time.Duration.between(
+                java.time.LocalDateTime.now(),
+                r.getDataInicio().atStartOfDay()
+        ).toHours();
+        return horas >= 48;
     }
 
     private void cancelarReserva(Reserva r) {
-    com.aluguer.service.ReservaService service = new com.aluguer.service.ReservaService();
-    var resultado = service.cancelarReserva(r.getId(), utilizadorId);
+        com.aluguer.service.ReservaService service = new com.aluguer.service.ReservaService();
+        var resultado = service.cancelarReserva(r.getId(), utilizadorId);
 
-    javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-        resultado.isSucesso() ? javafx.scene.control.Alert.AlertType.INFORMATION
-                              : javafx.scene.control.Alert.AlertType.ERROR
-    );
-    alert.setHeaderText(null);
-    alert.setContentText(resultado.getMensagem());
-    alert.showAndWait();
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+            resultado.isSucesso() ? javafx.scene.control.Alert.AlertType.INFORMATION
+                                  : javafx.scene.control.Alert.AlertType.ERROR
+        );
+        alert.setHeaderText(null);
+        alert.setContentText(resultado.getMensagem());
+        alert.showAndWait();
 
-    if (resultado.isSucesso()) {
-        construirPagina(); // refresca a página
+        if (resultado.isSucesso()) {
+            construirPagina();
+        }
     }
-    }
-    //FIM METODOS CANCELAR VIAGENS
 
     private List<Reserva> carregarReservas() {
         try (Connection conn = DatabaseConnection.getConnection()) {
