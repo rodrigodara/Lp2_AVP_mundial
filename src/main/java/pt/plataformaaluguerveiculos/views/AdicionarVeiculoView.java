@@ -1,5 +1,6 @@
 package pt.plataformaaluguerveiculos.views;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,25 +24,52 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 
+/**
+ * Formulário de veículo, usado tanto para ADICIONAR (sem veículo prévio)
+ * como para EDITAR (recebe um Veiculo existente — só o dono pode chegar aqui).
+ */
 public class AdicionarVeiculoView {
 
     private final VBox root;
 
-    // Bytes das fotos selecionadas (índice 0 = foto1/capa, obrigatória)
+    // Veículo em edição (null quando é um veículo novo)
+    private final Veiculo veiculoExistente;
+    private final boolean modoEdicao;
+
+    // Bytes das fotos atualmente selecionadas (índice 0 = foto1/capa).
+    // Em modo edição começam pré-preenchidas com as fotos já existentes.
     private final byte[][] fotosSelecionadas = new byte[4][];
     private final ImageView[] previews = new ImageView[4];
 
     private static final int TAMANHO_MAX_FOTO_MB = 5;
 
+    /** Construtor para ADICIONAR um veículo novo. */
     public AdicionarVeiculoView() {
+        this(null);
+    }
+
+    /** Construtor para EDITAR um veículo existente (pré-preenche tudo, incluindo fotos). */
+    public AdicionarVeiculoView(Veiculo veiculoExistente) {
+        this.veiculoExistente = veiculoExistente;
+        this.modoEdicao = veiculoExistente != null;
+
+        if (modoEdicao) {
+            fotosSelecionadas[0] = veiculoExistente.getFoto1();
+            fotosSelecionadas[1] = veiculoExistente.getFoto2();
+            fotosSelecionadas[2] = veiculoExistente.getFoto3();
+            fotosSelecionadas[3] = veiculoExistente.getFoto4();
+        }
+
         root = new VBox(20);
         root.setAlignment(Pos.TOP_CENTER);
         root.setPadding(new Insets(30));
 
-        Label titulo = new Label("Adicionar Veículo");
+        Label titulo = new Label(modoEdicao ? "Editar Veículo" : "Adicionar Veículo");
         titulo.getStyleClass().add("dashboard-titulo");
 
-        Label subtitulo = new Label("Preenche os dados do teu veículo");
+        Label subtitulo = new Label(
+            modoEdicao ? "Atualiza os dados do teu veículo" : "Preenche os dados do teu veículo"
+        );
         subtitulo.setStyle("-fx-font-size: 14px; -fx-text-fill: #666;");
 
         GridPane form = new GridPane();
@@ -96,6 +124,27 @@ public class AdicionarVeiculoView {
         TextField tfQuilometragem = new TextField();
         tfQuilometragem.setPromptText("Ex: 25000");
 
+        // Pré-preencher campos em modo edição
+        if (modoEdicao) {
+            tfMarca.setText(veiculoExistente.getMarca());
+            tfModelo.setText(veiculoExistente.getModelo());
+            tfAno.setText(String.valueOf(veiculoExistente.getAno()));
+            cbCombustivel.setValue(veiculoExistente.getCombustivel());
+            cbTipoVeiculo.setValue(veiculoExistente.getTipoVeiculo());
+            cbLugares.setValue(veiculoExistente.getLugares() > 0 ? veiculoExistente.getLugares() : 5);
+            cbTransmissao.setValue(
+                veiculoExistente.getTransmissao() != null ? veiculoExistente.getTransmissao() : "Manual"
+            );
+            tfPreco.setText(String.valueOf(veiculoExistente.getPrecoDiario()));
+            tfLocalizacao.setText(veiculoExistente.getLocalizacao());
+            tfMatricula.setText(veiculoExistente.getMatricula());
+            tfConsumo.setText(String.valueOf(veiculoExistente.getConsumo()));
+            tfQuilometragem.setText(String.valueOf(veiculoExistente.getQuilometragem()));
+
+            // Matrícula não é editável — identifica o veículo de forma legal/única
+            tfMatricula.setDisable(true);
+        }
+
         int row = 0;
         form.add(new Label("Marca:"),         0, row); form.add(tfMarca,        1, row++);
         form.add(new Label("Modelo:"),        0, row); form.add(tfModelo,       1, row++);
@@ -129,13 +178,13 @@ public class AdicionarVeiculoView {
             .forEach(n -> n.setStyle("-fx-font-weight: bold; -fx-font-size: 13px;"));
 
         // ============================
-        // FOTOS (até 4, a 1.ª obrigatória)
+        // FOTOS (até 4, pelo menos 1 obrigatória no total)
         // ============================
         Label lblFotos = new Label("Fotos do veículo");
         lblFotos.setStyle("-fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #1a237e;");
 
         Label lblFotosAjuda = new Label(
-            "Adiciona até 4 fotos. A primeira foto é obrigatória e será usada como capa. (máx. "
+            "Adiciona até 4 fotos. É obrigatório manter pelo menos 1 foto. (máx. "
             + TAMANHO_MAX_FOTO_MB + "MB por foto)"
         );
         lblFotosAjuda.setStyle("-fx-font-size: 12px; -fx-text-fill: #777777;");
@@ -144,7 +193,7 @@ public class AdicionarVeiculoView {
         HBox fotosBox = new HBox(14);
         fotosBox.setAlignment(Pos.CENTER_LEFT);
 
-        String[] legendas = {"Foto 1 (obrigatória)", "Foto 2", "Foto 3", "Foto 4"};
+        String[] legendas = {"Foto 1 (capa)", "Foto 2", "Foto 3", "Foto 4"};
         for (int i = 0; i < 4; i++) {
             VBox slot = criarSlotFoto(legendas[i], i);
             fotosBox.getChildren().add(slot);
@@ -153,15 +202,13 @@ public class AdicionarVeiculoView {
         // ============================
         // BOTÕES
         // ============================
-        Button btnGuardar = new Button("Guardar Veículo");
+        Button btnGuardar = new Button(modoEdicao ? "Guardar Alterações" : "Guardar Veículo");
         btnGuardar.getStyleClass().add("btn-primario");
 
         Button btnCancelar = new Button("Cancelar");
         btnCancelar.getStyleClass().add("btn-secundario");
 
-        btnCancelar.setOnAction(e ->
-            NavigationManager.getInstance().navegarParaMeusVeiculos()
-        );
+        btnCancelar.setOnAction(e -> voltarAposGuardar());
 
         btnGuardar.setOnAction(e -> {
             String marca       = tfMarca.getText().trim();
@@ -185,8 +232,10 @@ public class AdicionarVeiculoView {
                 return;
             }
 
-            if (fotosSelecionadas[0] == null) {
-                mostrarErro("A primeira foto é obrigatória.");
+            boolean temAlgumaFoto = fotosSelecionadas[0] != null || fotosSelecionadas[1] != null
+                    || fotosSelecionadas[2] != null || fotosSelecionadas[3] != null;
+            if (!temAlgumaFoto) {
+                mostrarErro("É necessário manter pelo menos 1 foto.");
                 return;
             }
 
@@ -224,9 +273,11 @@ public class AdicionarVeiculoView {
             }
 
             int proprietarioId = SessionManager.getInstance().getUtilizador().getId();
+            String estado = modoEdicao ? veiculoExistente.getEstado() : "disponivel";
+
             Veiculo v = new Veiculo(
                 marca, modelo, ano, combustivel, preco, localizacao, proprietarioId,
-                "disponivel", matricula, tipoVeiculo, lugares, transmissao, consumo
+                estado, matricula, tipoVeiculo, lugares, transmissao, consumo
             );
             v.setQuilometragem(quilometragem);
             v.setFoto1(fotosSelecionadas[0]);
@@ -236,16 +287,26 @@ public class AdicionarVeiculoView {
 
             try {
                 VeiculoService service = new VeiculoService();
-                boolean ok = service.inserir(v);
+                boolean ok;
+                if (modoEdicao) {
+                    v.setId(veiculoExistente.getId());
+                    ok = service.atualizar(v);
+                } else {
+                    ok = service.inserir(v);
+                }
+
                 if (ok) {
                     Alert alert = new Alert(Alert.AlertType.INFORMATION,
-                        "Veículo adicionado com sucesso!", ButtonType.OK);
+                        modoEdicao ? "Veículo atualizado com sucesso!" : "Veículo adicionado com sucesso!",
+                        ButtonType.OK);
                     alert.setTitle("Sucesso");
                     alert.setHeaderText(null);
                     alert.showAndWait();
-                    NavigationManager.getInstance().navegarParaMeusVeiculos();
+                    voltarAposGuardar();
                 } else {
-                    mostrarErro("Não foi possível adicionar o veículo. Tenta novamente.");
+                    mostrarErro(modoEdicao
+                        ? "Não foi possível atualizar o veículo. Tenta novamente."
+                        : "Não foi possível adicionar o veículo. Tenta novamente.");
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -271,6 +332,11 @@ public class AdicionarVeiculoView {
         preview.setPreserveRatio(false);
         previews[indice] = preview;
 
+        // Em modo edição, pré-carregar o preview com a foto existente, se houver
+        if (fotosSelecionadas[indice] != null) {
+            preview.setImage(new Image(new ByteArrayInputStream(fotosSelecionadas[indice])));
+        }
+
         VBox imagemBox = new VBox(preview);
         imagemBox.setAlignment(Pos.CENTER);
         imagemBox.setPrefSize(112, 82);
@@ -288,15 +354,16 @@ public class AdicionarVeiculoView {
         lblLegenda.setMaxWidth(112);
         lblLegenda.setAlignment(Pos.CENTER);
 
-        Button btnEscolher = new Button(indice == 0 ? "Escolher" : "Adicionar");
+        boolean jaTemFoto = fotosSelecionadas[indice] != null;
+        Button btnEscolher = new Button(jaTemFoto ? "Trocar" : (indice == 0 ? "Escolher" : "Adicionar"));
         btnEscolher.setStyle("-fx-font-size: 11px; -fx-padding: 4 10 4 10;");
         btnEscolher.getStyleClass().add("btn-secundario");
 
         Button btnRemover = new Button("Remover");
         btnRemover.setStyle("-fx-font-size: 11px; -fx-padding: 4 10 4 10;");
         btnRemover.getStyleClass().add("btn-secundario");
-        btnRemover.setVisible(false);
-        btnRemover.setManaged(false);
+        btnRemover.setVisible(jaTemFoto);
+        btnRemover.setManaged(jaTemFoto);
 
         btnEscolher.setOnAction(e -> {
             FileChooser chooser = new FileChooser();
@@ -345,6 +412,15 @@ public class AdicionarVeiculoView {
     /** Lê um ficheiro de imagem do disco e devolve os bytes originais (sem reencode). */
     private byte[] carregarImagemComoBytes(File ficheiro) throws IOException {
         return Files.readAllBytes(ficheiro.toPath());
+    }
+
+    /** Após guardar/cancelar: volta aos Meus Veículos (criar) ou ao detalhe do veículo (editar). */
+    private void voltarAposGuardar() {
+        if (modoEdicao) {
+            NavigationManager.getInstance().navegarParaDetalheVeiculo(veiculoExistente);
+        } else {
+            NavigationManager.getInstance().navegarParaMeusVeiculos();
+        }
     }
 
     private void mostrarErro(String msg) {

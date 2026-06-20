@@ -18,6 +18,10 @@ public class VeiculoService {
         return dao.inserir(v);
     }
 
+    public boolean atualizar(Veiculo v) throws SQLException {
+        return dao.atualizar(v);
+    }
+
     // ALV-176 — endpoint GET myVehicles
     public List<Veiculo> listarPorProprietario(int proprietarioId) throws SQLException {
         return dao.listarPorProprietario(proprietarioId);
@@ -53,17 +57,16 @@ public class VeiculoService {
     }
 
     /**
-     * Mantido para compatibilidade com chamadas existentes (ex:
-     * ProcurarVeiculosView). Equivale a chamar a versão completa com os
-     * restantes filtros a null.
+     * Mantido para compatibilidade com chamadas existentes (ex: ProcurarVeiculosView).
+     * Equivale a chamar a versão completa com os restantes filtros a null.
      */
     public List<Veiculo> getVehiclesComFiltros(String marca, Double precoMax, String localizacao) throws Exception {
         return dao.listarComFiltros(marca, null, null, precoMax, localizacao, null, null, null, null, null, null);
     }
 
     /**
-     * Pesquisa completa de veículos com todos os filtros disponíveis. Qualquer
-     * parâmetro a null é ignorado na pesquisa.
+     * Pesquisa completa de veículos com todos os filtros disponíveis.
+     * Qualquer parâmetro a null é ignorado na pesquisa.
      */
     public List<Veiculo> getVehiclesComFiltros(String marca, String modelo, Double precoMin, Double precoMax,
             String localizacao, String tipoVeiculo, String combustivel,

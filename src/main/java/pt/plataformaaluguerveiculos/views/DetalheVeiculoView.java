@@ -152,6 +152,15 @@ public class DetalheVeiculoView {
             rodape.getChildren().add(btnReservar);
         }
 
+        if (ehProprioVeiculo) {
+            Button btnEditar = new Button("✎ Editar Veículo");
+            btnEditar.getStyleClass().add("btn-primario");
+            btnEditar.setOnAction(e ->
+                NavigationManager.getInstance().navegarParaEditarVeiculo(veiculo)
+            );
+            rodape.getChildren().add(btnEditar);
+        }
+
         root.getChildren().addAll(
             titulo, subtitulo,
             carrossel,

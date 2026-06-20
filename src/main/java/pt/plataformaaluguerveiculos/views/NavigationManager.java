@@ -213,6 +213,21 @@ public class NavigationManager {
         navegarPara(new DetalheVeiculoView(carregarComFotos(veiculo), origem).getRoot());
     }
 
+    public void navegarParaEditarVeiculo(Veiculo veiculo) {
+        if (bloquearSeAdmin("editar veículo")) {
+            return;
+        }
+
+        Veiculo completo = carregarComFotos(veiculo);
+        User user = SessionManager.getInstance().getUtilizador();
+        if (user == null || completo == null || user.getId() != completo.getProprietarioId()) {
+            return; // só o dono pode editar
+        }
+
+        garantirNavbar();
+        navegarPara(new AdicionarVeiculoView(completo).getRoot());
+    }
+
     /**
      * Garante que o veículo a mostrar no detalhe tem as fotos carregadas.
      * Listagens (ex: "Os Meus Veículos") usam uma query leve sem fotos por
