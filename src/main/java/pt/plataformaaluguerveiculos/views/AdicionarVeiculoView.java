@@ -116,7 +116,27 @@ public class AdicionarVeiculoView {
         tfLocalizacao.setPromptText("Ex: Lisboa");
 
         TextField tfMatricula = new TextField();
-        tfMatricula.setPromptText("Ex: AA-00-BB");
+        tfMatricula.setPromptText("Ex: 11-11-11");
+
+        // Máscara automática: formata matrícula como XX-XX-XX enquanto o utilizador escreve
+        tfMatricula.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null) return;
+            // Remove tudo que não seja letra ou dígito e converte para maiúsculas
+            String digits = newVal.replaceAll("[^A-Za-z0-9]", "").toUpperCase();
+            // Limita a 6 caracteres base
+            if (digits.length() > 6) digits = digits.substring(0, 6);
+            // Reconstrói com traços: XX-XX-XX
+            StringBuilder formatted = new StringBuilder();
+            for (int i = 0; i < digits.length(); i++) {
+                if (i == 2 || i == 4) formatted.append('-');
+                formatted.append(digits.charAt(i));
+            }
+            String result = formatted.toString();
+            if (!result.equals(newVal)) {
+                tfMatricula.setText(result);
+                tfMatricula.positionCaret(result.length());
+            }
+        });
 
         TextField tfConsumo = new TextField();
         tfConsumo.setPromptText("Ex: 5.5 (litros/100km ou kWh/100km)");
