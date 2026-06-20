@@ -1,6 +1,5 @@
 package pt.plataformaaluguerveiculos.views;
 
-import com.aluguer.model.Avaliacao;
 import com.aluguer.service.AvaliacaoService;
 
 import javafx.geometry.Insets;
@@ -16,8 +15,7 @@ public class AvaliarView {
     private VBox root;
     private int notaSelecionada = 0;
 
-    public AvaliarView(int reservaId, int avaliadorId, int avaliadoId,
-                       Avaliacao.TipoAvaliado tipo, String nomeAvaliado) {
+    public AvaliarView(int reservaId, int utilizadorId, int veiculoId, String nomeVeiculo) {
 
         root = new VBox(20);
         root.setPadding(new Insets(40));
@@ -25,10 +23,10 @@ public class AvaliarView {
         root.setStyle("-fx-background-color: white;");
 
         // Título
-        Label titulo = new Label("Avaliar " + (tipo == Avaliacao.TipoAvaliado.PROPRIETARIO ? "Proprietário" : "Locatário"));
+        Label titulo = new Label("Avaliar Veículo");
         titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
 
-        Label subtitulo = new Label("A avaliar: " + nomeAvaliado + " | Reserva #" + reservaId);
+        Label subtitulo = new Label("A avaliar: " + nomeVeiculo + " | Reserva #" + reservaId);
         subtitulo.setStyle("-fx-font-size: 13px; -fx-text-fill: #777777;");
 
         // Estrelas
@@ -64,7 +62,7 @@ public class AvaliarView {
         labelComentario.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #333333;");
 
         TextArea campoComentario = new TextArea();
-        campoComentario.setPromptText("Escreva a sua opinião sobre esta experiência...");
+        campoComentario.setPromptText("Escreva a sua opinião sobre este veículo...");
         campoComentario.setPrefHeight(100);
         campoComentario.setMaxWidth(500);
         campoComentario.setWrapText(true);
@@ -92,8 +90,8 @@ public class AvaliarView {
             try {
                 AvaliacaoService service = new AvaliacaoService();
                 boolean ok = service.avaliar(
-                    reservaId, avaliadorId, avaliadoId,
-                    tipo, notaSelecionada, campoComentario.getText().trim()
+                    reservaId, utilizadorId, veiculoId,
+                    notaSelecionada, campoComentario.getText().trim()
                 );
 
                 if (ok) {

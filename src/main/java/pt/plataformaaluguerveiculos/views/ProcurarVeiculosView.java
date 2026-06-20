@@ -1,16 +1,11 @@
 package pt.plataformaaluguerveiculos.views;
 
-import java.sql.Connection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.aluguer.controller.ReservaService;
-import com.aluguer.model.User;
 import com.aluguer.model.Veiculo;
 import com.aluguer.service.VeiculoService;
-import com.aluguer.util.DatabaseConnection;
-import com.aluguer.util.SessionManager;
 
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -22,6 +17,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -31,13 +27,27 @@ public class ProcurarVeiculosView {
     private VBox root;
     private TableView<Veiculo> tabela;
 
-    // Mapeamento label → preço máximo (null = sem limite)
-    private static final Map<String, Double> RANGES_PRECO = new LinkedHashMap<>();
+    // Filtros
+    private ComboBox<String> comboMarca;
+    private ComboBox<String> comboModelo;
+    private ComboBox<String> comboPrecoPreset;
+    private TextField campoPrecoMin;
+    private TextField campoPrecoMax;
+    private ComboBox<String> comboLocalizacao;
+    private ComboBox<String> comboTipoVeiculo;
+    private ComboBox<String> comboCombustivel;
+    private ComboBox<Integer> comboLugares;
+    private ComboBox<String> comboTransmissao;
+    private ComboBox<Integer> comboAvaliacaoMin;
+    private ComboBox<Integer> comboAvaliacaoMax;
+
+    // Mapeamento label → [precoMin, precoMax] para os presets rápidos
+    private static final Map<String, double[]> RANGES_PRECO = new LinkedHashMap<>();
     static {
-        RANGES_PRECO.put("Até 30€/dia",   30.0);
-        RANGES_PRECO.put("Até 60€/dia",   60.0);
-        RANGES_PRECO.put("Até 100€/dia", 100.0);
-        RANGES_PRECO.put("Mais de 100€",  null); // tratado à parte
+        RANGES_PRECO.put("Até 30€/dia",      new double[]{-1, 30});
+        RANGES_PRECO.put("30€ – 60€/dia",    new double[]{30, 60});
+        RANGES_PRECO.put("60€ – 100€/dia",   new double[]{60, 100});
+        RANGES_PRECO.put("Mais de 100€/dia", new double[]{100, -1});
     }
 
     public ProcurarVeiculosView() {
@@ -50,7 +60,7 @@ public class ProcurarVeiculosView {
         titulo.getStyleClass().add("dashboard-titulo");
 
         // ============================
-        // BARRA DE PESQUISA
+        // BARRA DE PESQUISA POR TEXTO
         // ============================
         TextField campoPesquisa = new TextField();
         campoPesquisa.setPromptText("Pesquisar por marca, modelo ou localização...");
@@ -72,54 +82,40 @@ public class ProcurarVeiculosView {
                 pesquisar(termo);
             }
         });
-
-        // Pesquisa ao pressionar Enter
         campoPesquisa.setOnAction(e -> btnPesquisar.fire());
-
         btnLimparPesquisa.setOnAction(e -> {
             campoPesquisa.clear();
             carregarVeiculos();
         });
 
         // ============================
-        // FILTROS
+        // GRELHA DE FILTROS (2 linhas x 4 colunas)
         // ============================
-        ComboBox<String> comboMarca = new ComboBox<>();
-        comboMarca.setPromptText("Todas as marcas");
-        comboMarca.setPrefWidth(180);
+        GridPane grelhaFiltros = construirGrelhaFiltros();
 
-        ComboBox<String> comboPreco = new ComboBox<>();
-        comboPreco.setPromptText("Qualquer preço");
-        comboPreco.setPrefWidth(160);
-        comboPreco.setItems(FXCollections.observableArrayList(RANGES_PRECO.keySet()));
+        Button btnLimparFiltros = new Button("Limpar filtros");
+        btnLimparFiltros.getStyleClass().add("btn-secundario");
 
-        ComboBox<String> comboLocalizacao = new ComboBox<>();
-        comboLocalizacao.setPromptText("Todas as localizações");
-        comboLocalizacao.setPrefWidth(200);
+        Button btnAplicarFiltros = new Button("Aplicar filtros");
+        btnAplicarFiltros.getStyleClass().add("btn-primario");
 
-        Button btnLimpar = new Button("Limpar filtros");
-        btnLimpar.getStyleClass().add("btn-secundario");
+        HBox botoesFiltro = new HBox(10, btnAplicarFiltros, btnLimparFiltros);
+        botoesFiltro.setAlignment(Pos.CENTER_LEFT);
+        botoesFiltro.setPadding(new Insets(8, 0, 0, 0));
 
-        HBox filtroBox = new HBox(12,
-            new Label("Marca:"), comboMarca,
-            new Label("Preço:"), comboPreco,
-            new Label("Localização:"), comboLocalizacao,
-            btnLimpar
+        VBox filtrosBox = new VBox(10, grelhaFiltros, botoesFiltro);
+        filtrosBox.setPadding(new Insets(14));
+        filtrosBox.setStyle(
+            "-fx-background-color: #f8f9fb;" +
+            "-fx-background-radius: 10;" +
+            "-fx-border-color: #e0e0e0;" +
+            "-fx-border-radius: 10;" +
+            "-fx-border-width: 1;"
         );
-        filtroBox.setAlignment(Pos.CENTER_LEFT);
 
-        carregarMarcas(comboMarca);
-        carregarLocalizacoes(comboLocalizacao);
-
-        // Qualquer alteração num filtro dispara a pesquisa combinada
-        comboMarca.setOnAction(e -> aplicarFiltros(comboMarca, comboPreco, comboLocalizacao));
-        comboPreco.setOnAction(e -> aplicarFiltros(comboMarca, comboPreco, comboLocalizacao));
-        comboLocalizacao.setOnAction(e -> aplicarFiltros(comboMarca, comboPreco, comboLocalizacao));
-
-        btnLimpar.setOnAction(e -> {
-            comboMarca.setValue(null);
-            comboPreco.setValue(null);
-            comboLocalizacao.setValue(null);
+        btnAplicarFiltros.setOnAction(e -> aplicarFiltros());
+        btnLimparFiltros.setOnAction(e -> {
+            limparFiltros();
             carregarVeiculos();
         });
 
@@ -127,8 +123,8 @@ public class ProcurarVeiculosView {
         // TABELA
         // ============================
         tabela = new TableView<>();
-        tabela.setPrefHeight(600);
-        VBox.setVgrow(tabela, javafx.scene.layout.Priority.ALWAYS);
+        tabela.setPrefHeight(550);
+        VBox.setVgrow(tabela, Priority.ALWAYS);
 
         TableColumn<Veiculo, String> colMarca = new TableColumn<>("Marca");
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
@@ -148,124 +144,260 @@ public class ProcurarVeiculosView {
         TableColumn<Veiculo, String> colLocalizacao = new TableColumn<>("Localização");
         colLocalizacao.setCellValueFactory(new PropertyValueFactory<>("localizacao"));
 
-        // TableColumn<Veiculo, String> colEstado = new TableColumn<>("Estado");
-        // colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+        TableColumn<Veiculo, Integer> colLugares = new TableColumn<>("Lugares");
+        colLugares.setCellValueFactory(new PropertyValueFactory<>("lugares"));
+
+        TableColumn<Veiculo, String> colTransmissao = new TableColumn<>("Transmissão");
+        colTransmissao.setCellValueFactory(new PropertyValueFactory<>("transmissao"));
+
+        TableColumn<Veiculo, String> colAvaliacao = new TableColumn<>("Avaliação");
+        colAvaliacao.setCellValueFactory(data -> {
+            double media = data.getValue().getAvaliacaoMedia();
+            String texto = media < 0 ? "Sem avaliações" : String.format("%.1f ★", media);
+            return new javafx.beans.property.SimpleStringProperty(texto);
+        });
 
         tabela.getColumns().addAll(
-            colMarca, colModelo, colAno, colCombustivel, colPreco, colLocalizacao /*, colEstado*/
+            colMarca, colModelo, colAno, colCombustivel, colPreco,
+            colLocalizacao, colLugares, colTransmissao, colAvaliacao
         );
 
         // ============================
-        // BOTÃO RESERVAR
+        // BOTÃO DE AÇÃO — Ver Detalhes
         // ============================
-        Button btnReservar = new Button("Reservar Veículo Selecionado");
-        btnReservar.getStyleClass().add("btn-primario");
-        btnReservar.setDisable(true);
+        Button btnVerDetalhes = new Button("Ver Detalhes");
+        btnVerDetalhes.getStyleClass().add("btn-primario");
+        btnVerDetalhes.setDisable(true);
 
         tabela.getSelectionModel().selectedItemProperty().addListener(
-            (obs, antigo, novo) -> btnReservar.setDisable(novo == null)
+            (obs, antigo, novo) -> btnVerDetalhes.setDisable(novo == null)
         );
 
         tabela.setOnMouseClicked(e -> {
             if (e.getClickCount() == 2) {
-                abrirReserva(tabela.getSelectionModel().getSelectedItem());
+                abrirDetalhe(tabela.getSelectionModel().getSelectedItem());
             }
         });
 
-        btnReservar.setOnAction(e ->
-            abrirReserva(tabela.getSelectionModel().getSelectedItem())
+        btnVerDetalhes.setOnAction(e ->
+            abrirDetalhe(tabela.getSelectionModel().getSelectedItem())
         );
 
         carregarVeiculos();
 
-        root.getChildren().addAll(titulo, pesquisaBox, filtroBox, tabela, btnReservar);
+        HBox acoesBox = new HBox(10, btnVerDetalhes);
+        acoesBox.setAlignment(Pos.CENTER_LEFT);
+
+        root.getChildren().addAll(titulo, pesquisaBox, filtrosBox, tabela, acoesBox);
     }
 
-    private void aplicarFiltros(ComboBox<String> comboMarca,
-                                ComboBox<String> comboPreco,
-                                ComboBox<String> comboLocalizacao) {
-        String marca       = comboMarca.getValue();
-        String localizacao = comboLocalizacao.getValue();
-        String precoLabel  = comboPreco.getValue();
+    // ============================
+    // CONSTRUÇÃO DA GRELHA DE FILTROS
+    // ============================
+    private GridPane construirGrelhaFiltros() {
+        GridPane grid = new GridPane();
+        grid.setHgap(14);
+        grid.setVgap(10);
 
-        Double precoMax = null;
-        Double precoMin = null;
-        if (precoLabel != null) {
-            if (precoLabel.equals("Mais de 100€")) {
-                precoMin = 100.0; // filtrado em memória abaixo
+        // ---- Marca ----
+        comboMarca = new ComboBox<>();
+        comboMarca.setPromptText("Todas as marcas");
+        comboMarca.setPrefWidth(170);
+        carregarMarcas(comboMarca);
+        comboMarca.setOnAction(e -> {
+            // Modelo depende da marca escolhida
+            comboModelo.getSelectionModel().clearSelection();
+            comboModelo.setItems(FXCollections.observableArrayList());
+            String marcaSel = comboMarca.getValue();
+            if (marcaSel != null) {
+                carregarModelosPorMarca(comboModelo, marcaSel);
+                comboModelo.setDisable(false);
             } else {
-                precoMax = RANGES_PRECO.get(precoLabel);
+                comboModelo.setPromptText("Todos os modelos");
+                comboModelo.setDisable(true);
             }
+        });
+
+        // ---- Modelo (dependente da marca) ----
+        comboModelo = new ComboBox<>();
+        comboModelo.setPromptText("Selecione marca primeiro");
+        comboModelo.setPrefWidth(170);
+        comboModelo.setDisable(true);
+
+        // ---- Preço: preset rápido ----
+        comboPrecoPreset = new ComboBox<>();
+        comboPrecoPreset.setPromptText("Faixa de preço");
+        comboPrecoPreset.setPrefWidth(170);
+        comboPrecoPreset.setItems(FXCollections.observableArrayList(RANGES_PRECO.keySet()));
+        comboPrecoPreset.setOnAction(e -> {
+            String sel = comboPrecoPreset.getValue();
+            if (sel != null) {
+                double[] range = RANGES_PRECO.get(sel);
+                campoPrecoMin.setText(range[0] < 0 ? "" : String.valueOf((int) range[0]));
+                campoPrecoMax.setText(range[1] < 0 ? "" : String.valueOf((int) range[1]));
+            }
+        });
+
+        // ---- Preço: valores livres (mín / máx) ----
+        campoPrecoMin = new TextField();
+        campoPrecoMin.setPromptText("Preço mín. (€)");
+        campoPrecoMin.setPrefWidth(110);
+
+        campoPrecoMax = new TextField();
+        campoPrecoMax.setPromptText("Preço máx. (€)");
+        campoPrecoMax.setPrefWidth(110);
+
+        HBox precoLivreBox = new HBox(6, campoPrecoMin, campoPrecoMax);
+
+        // ---- Localização ----
+        comboLocalizacao = new ComboBox<>();
+        comboLocalizacao.setPromptText("Todas as localizações");
+        comboLocalizacao.setPrefWidth(170);
+        carregarLocalizacoes(comboLocalizacao);
+
+        // ---- Tipo de veículo ----
+        comboTipoVeiculo = new ComboBox<>();
+        comboTipoVeiculo.setPromptText("Todos os tipos");
+        comboTipoVeiculo.setPrefWidth(170);
+        carregarTiposVeiculo(comboTipoVeiculo);
+
+        // ---- Combustível ----
+        comboCombustivel = new ComboBox<>();
+        comboCombustivel.setPromptText("Todos os combustíveis");
+        comboCombustivel.setPrefWidth(170);
+        carregarCombustiveis(comboCombustivel);
+
+        // ---- Lugares ----
+        comboLugares = new ComboBox<>();
+        comboLugares.setPromptText("Qualquer nº de lugares");
+        comboLugares.setPrefWidth(170);
+        comboLugares.setItems(FXCollections.observableArrayList(2, 4, 5, 7, 9));
+
+        // ---- Transmissão ----
+        comboTransmissao = new ComboBox<>();
+        comboTransmissao.setPromptText("Qualquer transmissão");
+        comboTransmissao.setPrefWidth(170);
+        carregarTransmissoes(comboTransmissao);
+
+        // ---- Avaliação (mín / máx) ----
+        comboAvaliacaoMin = new ComboBox<>();
+        comboAvaliacaoMin.setPromptText("Avaliação mín. ★");
+        comboAvaliacaoMin.setPrefWidth(170);
+        comboAvaliacaoMin.setItems(FXCollections.observableArrayList(1, 2, 3, 4, 5));
+
+        comboAvaliacaoMax = new ComboBox<>();
+        comboAvaliacaoMax.setPromptText("Avaliação máx. ★");
+        comboAvaliacaoMax.setPrefWidth(170);
+        comboAvaliacaoMax.setItems(FXCollections.observableArrayList(1, 2, 3, 4, 5));
+
+        HBox avaliacaoBox = new HBox(6, comboAvaliacaoMin, comboAvaliacaoMax);
+
+        // ---- Montagem da grelha: 2 linhas x 4 colunas ----
+        grid.add(criarCampoComLabel("Marca", comboMarca),                 0, 0);
+        grid.add(criarCampoComLabel("Modelo", comboModelo),               1, 0);
+        grid.add(criarCampoComLabel("Preço (€/dia)", precoLivreBox),      2, 0);
+        grid.add(criarCampoComLabel("Faixa de preço", comboPrecoPreset),  3, 0);
+
+        grid.add(criarCampoComLabel("Localização", comboLocalizacao),     0, 1);
+        grid.add(criarCampoComLabel("Tipo de veículo", comboTipoVeiculo), 1, 1);
+        grid.add(criarCampoComLabel("Combustível", comboCombustivel),     2, 1);
+        grid.add(criarCampoComLabel("Lugares", comboLugares),             3, 1);
+
+        grid.add(criarCampoComLabel("Transmissão", comboTransmissao),     0, 2);
+        grid.add(criarCampoComLabel("Avaliação (★ mín / máx)", avaliacaoBox), 1, 2);
+
+        return grid;
+    }
+
+    private VBox criarCampoComLabel(String texto, javafx.scene.Node campo) {
+        Label lbl = new Label(texto);
+        lbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666; -fx-font-weight: bold;");
+        VBox box = new VBox(4, lbl, campo);
+        return box;
+    }
+
+    // ============================
+    // AÇÕES DE FILTRO
+    // ============================
+    private void aplicarFiltros() {
+        String marca       = comboMarca.getValue();
+        String modelo       = comboModelo.getValue();
+        String localizacao  = comboLocalizacao.getValue();
+        String tipoVeiculo  = comboTipoVeiculo.getValue();
+        String combustivel  = comboCombustivel.getValue();
+        Integer lugares     = comboLugares.getValue();
+        String transmissao  = comboTransmissao.getValue();
+        Integer avalMin     = comboAvaliacaoMin.getValue();
+        Integer avalMax     = comboAvaliacaoMax.getValue();
+
+        Double precoMin = parseDoubleOuNull(campoPrecoMin.getText());
+        Double precoMax = parseDoubleOuNull(campoPrecoMax.getText());
+
+        if (precoMin != null && precoMax != null && precoMin > precoMax) {
+            mostrarAviso("O preço mínimo não pode ser maior que o preço máximo.");
+            return;
+        }
+        if (avalMin != null && avalMax != null && avalMin > avalMax) {
+            mostrarAviso("A avaliação mínima não pode ser maior que a avaliação máxima.");
+            return;
         }
 
         try {
             VeiculoService service = new VeiculoService();
-            List<Veiculo> lista = service.getVehiclesComFiltros(marca, precoMax, localizacao);
-
-            // "Mais de 100€" não tem suporte direto na query → filtra em memória
-            if (precoMin != null) {
-                final double min = precoMin;
-                lista = lista.stream()
-                    .filter(v -> v.getPrecoDiario() > min)
-                    .toList();
-            }
-
+            List<Veiculo> lista = service.getVehiclesComFiltros(
+                marca, modelo, precoMin, precoMax, localizacao,
+                tipoVeiculo, combustivel, lugares, transmissao,
+                avalMin != null ? avalMin.doubleValue() : null,
+                avalMax != null ? avalMax.doubleValue() : null
+            );
             tabela.setItems(FXCollections.observableArrayList(lista));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void abrirReserva(Veiculo veiculo) {
-        if (veiculo == null) return;
+    private void limparFiltros() {
+        comboMarca.setValue(null);
+        comboModelo.setValue(null);
+        comboModelo.setItems(FXCollections.observableArrayList());
+        comboModelo.setPromptText("Selecione marca primeiro");
+        comboModelo.setDisable(true);
+        comboPrecoPreset.setValue(null);
+        campoPrecoMin.clear();
+        campoPrecoMax.clear();
+        comboLocalizacao.setValue(null);
+        comboTipoVeiculo.setValue(null);
+        comboCombustivel.setValue(null);
+        comboLugares.setValue(null);
+        comboTransmissao.setValue(null);
+        comboAvaliacaoMin.setValue(null);
+        comboAvaliacaoMax.setValue(null);
+    }
 
-        User user = SessionManager.getInstance().getUtilizador();
-        if (user == null) {
-            NavigationManager.getInstance().navegarParaLogin();
-            return;
-        }
-
+    private Double parseDoubleOuNull(String texto) {
+        if (texto == null || texto.isBlank()) return null;
         try {
-            Connection conn = DatabaseConnection.getConnection();
-            ReservaService service = new ReservaService(conn);
-
-            double[] combInfo = estimarDadosCombustivel(veiculo.getCombustivel());
-
-            CriarReservaView view = new CriarReservaView(
-                service,
-                user.getId(),
-                veiculo.getId(),
-                veiculo.getPrecoDiario(),
-                combInfo[0],   // consumo estimado (L/100km ou kWh/100km)
-                combInfo[1],   // preço do combustível (€/L ou €/kWh)
-                0,             // kmDiaMedia=0 → usa DEFAULT_KM_DIA (200 km/dia)
-                user.getSaldo().doubleValue(),
-                veiculo.getMarca() + " " + veiculo.getModelo() + " (" + veiculo.getAno() + ")"
-            );
-
-            NavigationManager.getInstance().navegarParaCriarReserva(view);
-
-        } catch (Exception ex) {
-            ex.printStackTrace();
+            return Double.parseDouble(texto.trim().replace(",", "."));
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
-    /**
-     * Devolve [consumo, precoCombustivel] com base no tipo de combustível.
-     * Valores típicos médios para estimativa de custo na preview de reserva.
-     */
-    private double[] estimarDadosCombustivel(String tipo) {
-        if (tipo == null) return new double[]{7.0, 1.75};
-        switch (tipo.toLowerCase().trim()) {
-            case "diesel":            return new double[]{6.0, 1.60};
-            case "elétrico":
-            case "eletrico":          return new double[]{18.0, 0.25};
-            case "híbrido":
-            case "hibrido":
-            case "híbrido plug-in":
-            case "hibrido plug-in":   return new double[]{4.5, 1.75};
-            default:                  return new double[]{7.0, 1.75}; // gasolina
-        }
+    private void mostrarAviso(String mensagem) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
+            javafx.scene.control.Alert.AlertType.WARNING
+        );
+        alert.setHeaderText(null);
+        alert.setContentText(mensagem);
+        alert.showAndWait();
+    }
+
+    /** Abre o detalhe completo do veículo, de onde o utilizador pode reservar. */
+    private void abrirDetalhe(Veiculo veiculoLinha) {
+        if (veiculoLinha == null) return;
+        NavigationManager.getInstance().navegarParaDetalheVeiculo(
+            veiculoLinha, DetalheVeiculoView.Origem.PROCURAR_VEICULOS
+        );
     }
 
     private void pesquisar(String termo) {
@@ -297,10 +429,47 @@ public class ProcurarVeiculosView {
         }
     }
 
+    private void carregarModelosPorMarca(ComboBox<String> combo, String marca) {
+        try {
+            VeiculoService service = new VeiculoService();
+            combo.setItems(FXCollections.observableArrayList(service.getModelosPorMarca(marca)));
+            combo.setPromptText("Todos os modelos");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void carregarLocalizacoes(ComboBox<String> combo) {
         try {
             VeiculoService service = new VeiculoService();
             combo.setItems(FXCollections.observableArrayList(service.getLocalizacoes()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void carregarTiposVeiculo(ComboBox<String> combo) {
+        try {
+            VeiculoService service = new VeiculoService();
+            combo.setItems(FXCollections.observableArrayList(service.getTiposVeiculo()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void carregarCombustiveis(ComboBox<String> combo) {
+        try {
+            VeiculoService service = new VeiculoService();
+            combo.setItems(FXCollections.observableArrayList(service.getCombustiveis()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void carregarTransmissoes(ComboBox<String> combo) {
+        try {
+            VeiculoService service = new VeiculoService();
+            combo.setItems(FXCollections.observableArrayList(service.getTransmissoes()));
         } catch (Exception e) {
             e.printStackTrace();
         }

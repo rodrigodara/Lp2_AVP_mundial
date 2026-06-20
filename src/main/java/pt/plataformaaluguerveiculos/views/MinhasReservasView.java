@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.aluguer.dao.ReservaDAO;
-import com.aluguer.model.Avaliacao;
 import com.aluguer.model.Reserva;
 import com.aluguer.service.AvaliacaoService;
 import com.aluguer.util.DatabaseConnection;
@@ -184,15 +183,14 @@ public class MinhasReservasView {
                 AvaliacaoService avaliacaoService = new AvaliacaoService();
                 boolean jaAvaliou = avaliacaoService.jaAvaliou(r.getId(), utilizadorId);
 
-                Button btnAvaliar = new Button(jaAvaliou ? "Já avaliou" : "Avaliar Proprietário");
+                Button btnAvaliar = new Button(jaAvaliou ? "Já avaliou" : "Avaliar Veículo");
                 btnAvaliar.getStyleClass().add(jaAvaliou ? "btn-secundario" : "btn-primario");
                 btnAvaliar.setDisable(jaAvaliou);
                 btnAvaliar.setOnAction(e -> NavigationManager.getInstance().navegarParaAvaliar(
                     r.getId(),
                     utilizadorId,
-                    r.getVeiculoId(), // será resolvido para o proprietário na view
-                    Avaliacao.TipoAvaliado.PROPRIETARIO,
-                    "Proprietário do veículo #" + r.getVeiculoId()
+                    r.getVeiculoId(),
+                    "Veículo #" + r.getVeiculoId()
                 ));
 
                 HBox acoes = new HBox(btnAvaliar);

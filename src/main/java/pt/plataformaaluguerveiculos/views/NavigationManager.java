@@ -1,6 +1,5 @@
 package pt.plataformaaluguerveiculos.views;
 
-import com.aluguer.model.Avaliacao;
 import com.aluguer.model.User;
 import com.aluguer.model.Veiculo;
 import com.aluguer.util.SessionManager;
@@ -81,9 +80,13 @@ public class NavigationManager {
         navegarPara(new AdicionarVeiculoView().getRoot());
     }
 
-    public void navegarParaAvaliar(int reservaId, int avaliadorId, int avaliadoId,
-            Avaliacao.TipoAvaliado tipo, String nome) {
-        navegarPara(new AvaliarView(reservaId, avaliadorId, avaliadoId, tipo, nome).getRoot());
+    public void navegarParaAvaliar(int reservaId, int utilizadorId, int veiculoId, String nomeVeiculo) {
+        navegarPara(new AvaliarView(reservaId, utilizadorId, veiculoId, nomeVeiculo).getRoot());
+    }
+
+    public void navegarParaAvaliacoes(int veiculoId, String nomeVeiculo) {
+        garantirNavbar();
+        navegarPara(new AvaliacoesView(veiculoId, nomeVeiculo).getRoot());
     }
 
     public void navegarParaCriarReserva(CriarReservaView view) {
@@ -198,7 +201,32 @@ public class NavigationManager {
         }
 
         garantirNavbar();
-        navegarPara(new DetalheVeiculoView(veiculo).getRoot());
+        navegarPara(new DetalheVeiculoView(carregarComFotos(veiculo)).getRoot());
+    }
+
+    public void navegarParaDetalheVeiculo(Veiculo veiculo, DetalheVeiculoView.Origem origem) {
+        if (bloquearSeAdmin("ver veículo")) {
+            return;
+        }
+
+        garantirNavbar();
+        navegarPara(new DetalheVeiculoView(carregarComFotos(veiculo), origem).getRoot());
+    }
+
+    /**
+     * Garante que o veículo a mostrar no detalhe tem as fotos carregadas.
+     * Listagens (ex: "Os Meus Veículos") usam uma query leve sem fotos por
+     * performance; aqui recarrega-se sempre por ID antes de abrir o detalhe.
+     */
+    private Veiculo carregarComFotos(Veiculo veiculo) {
+        if (veiculo == null) return null;
+        try {
+            Veiculo completo = new com.aluguer.dao.VeiculoDAO().buscarPorId(veiculo.getId());
+            return completo != null ? completo : veiculo;
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return veiculo;
+        }
     }
 
     // =========================

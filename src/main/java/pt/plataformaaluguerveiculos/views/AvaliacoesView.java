@@ -17,13 +17,17 @@ public class AvaliacoesView {
 
     private VBox root;
 
-    public AvaliacoesView(int avaliadoId, String nomeAvaliado) {
+    /**
+     * @param veiculoId   id do veículo cujas avaliações serão mostradas
+     * @param nomeVeiculo nome a exibir no título (ex: "Toyota Corolla (2021)")
+     */
+    public AvaliacoesView(int veiculoId, String nomeVeiculo) {
         root = new VBox(20);
         root.setPadding(new Insets(40));
         root.setAlignment(Pos.TOP_LEFT);
         root.setStyle("-fx-background-color: white;");
 
-        Label titulo = new Label("Avaliações de " + nomeAvaliado);
+        Label titulo = new Label("Avaliações de " + nomeVeiculo);
         titulo.setStyle("-fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
 
         Button btnVoltar = new Button("← Voltar");
@@ -34,8 +38,8 @@ public class AvaliacoesView {
 
         try {
             AvaliacaoService service = new AvaliacaoService();
-            double media = service.getMedia(avaliadoId);
-            List<Avaliacao> lista = service.getAvaliacoes(avaliadoId);
+            double media = service.getMediaVeiculo(veiculoId);
+            List<Avaliacao> lista = service.getAvaliacoesVeiculo(veiculoId);
 
             // Painel de média
             VBox painelMedia = criarPainelMedia(media, lista.size());
@@ -117,18 +121,13 @@ public class AvaliacoesView {
         HBox topo = new HBox(10);
         topo.setAlignment(Pos.CENTER_LEFT);
 
-        Label lblEstrelas = new Label(estrelasTexto(a.getNota()));
+        Label lblEstrelas = new Label(estrelasTexto(a.getClassificacao()));
         lblEstrelas.setStyle("-fx-font-size: 18px; -fx-text-fill: #f4c542;");
 
-        Label lblNota = new Label(a.getNota() + "/5");
+        Label lblNota = new Label(a.getClassificacao() + "/5");
         lblNota.setStyle("-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #333333;");
 
-        String tipoTexto = a.getTipo() == Avaliacao.TipoAvaliado.PROPRIETARIO
-            ? "por Locatário" : "por Proprietário";
-        Label lblTipo = new Label(tipoTexto);
-        lblTipo.setStyle("-fx-font-size: 11px; -fx-text-fill: #999999;");
-
-        topo.getChildren().addAll(lblEstrelas, lblNota, lblTipo);
+        topo.getChildren().addAll(lblEstrelas, lblNota);
 
         card.getChildren().add(topo);
 
@@ -139,8 +138,8 @@ public class AvaliacoesView {
             card.getChildren().add(lblComentario);
         }
 
-        if (a.getDataCriacao() != null) {
-            Label lblData = new Label(a.getDataCriacao().toLocalDate().toString());
+        if (a.getDataAvaliacao() != null) {
+            Label lblData = new Label(a.getDataAvaliacao().toLocalDate().toString());
             lblData.setStyle("-fx-font-size: 11px; -fx-text-fill: #aaaaaa;");
             card.getChildren().add(lblData);
         }

@@ -519,7 +519,7 @@ public class AdminView {
         int proprietarioId = (int) d[12];
         double mediaProprietario;
         try {
-            mediaProprietario = new AvaliacaoDAO().calcularMedia(proprietarioId);
+            mediaProprietario = new AvaliacaoDAO().mediaPorProprietario(proprietarioId);
         } catch (SQLException ex) {
             mediaProprietario = -1;
         }

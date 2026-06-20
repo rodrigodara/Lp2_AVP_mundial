@@ -5,7 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,66 +13,59 @@ import com.aluguer.util.DatabaseConnection;
 
 public class AvaliacaoDAO {
 
-    // ============================
-    // 1. INSERIR AVALIAÇÃO
-    // ============================
+    /**
+     * Insere uma nova avaliação. Devolve false se este utilizador já
+     * avaliou esta reserva (evita avaliações duplicadas).
+     */
     public boolean inserir(Avaliacao a) throws SQLException {
-        if (jaAvaliou(a.getReservaId(), a.getAvaliadorId())) {
+        if (jaAvaliou(a.getReservaId(), a.getUtilizadorId())) {
             return false;
         }
 
-        String sql = "INSERT INTO avaliacao (reservaId, avaliadorId, avaliadoId, tipo, nota, comentario) "
-                   + "VALUES (?, ?, ?, ?, ?, ?)";
-
+        String sql = "INSERT INTO avaliacao (reservaId, utilizadorId, veiculoId, classificacao, comentario) "
+                   + "VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
             stmt.setInt(1, a.getReservaId());
-            stmt.setInt(2, a.getAvaliadorId());
-            stmt.setInt(3, a.getAvaliadoId());
-            stmt.setString(4, a.getTipo().name());
-            stmt.setInt(5, a.getNota());
-            stmt.setString(6, a.getComentario());
+            stmt.setInt(2, a.getUtilizadorId());
+            stmt.setInt(3, a.getVeiculoId());
+            stmt.setInt(4, a.getClassificacao());
+            stmt.setString(5, a.getComentario());
 
-            if (stmt.executeUpdate() > 0) {
+            int linhas = stmt.executeUpdate();
+            if (linhas > 0) {
                 try (ResultSet keys = stmt.getGeneratedKeys()) {
-                    if (keys.next()) a.setId(keys.getInt(1));
+                    if (keys.next()) {
+                        a.setId(keys.getInt(1));
+                    }
                 }
                 return true;
             }
+            return false;
         }
-        return false;
     }
 
-    // ============================
-    // 2. JÁ AVALIOU?
-    // Um avaliador só pode avaliar uma vez por reserva
-    // ============================
-    public boolean jaAvaliou(int reservaId, int avaliadorId) throws SQLException {
-        String sql = "SELECT 1 FROM avaliacao WHERE reservaId = ? AND avaliadorId = ?";
-
+    /** Verifica se este utilizador já avaliou esta reserva. */
+    public boolean jaAvaliou(int reservaId, int utilizadorId) throws SQLException {
+        String sql = "SELECT 1 FROM avaliacao WHERE reservaId = ? AND utilizadorId = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
             stmt.setInt(1, reservaId);
-            stmt.setInt(2, avaliadorId);
+            stmt.setInt(2, utilizadorId);
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next();
             }
         }
     }
 
-    // ============================
-    // 3. LISTAR AVALIAÇÕES DE UM UTILIZADOR
-    // ============================
-    public List<Avaliacao> listarPorAvaliado(int avaliadoId) throws SQLException {
+    /** Todas as avaliações de um veículo específico, mais recentes primeiro. */
+    public List<Avaliacao> listarPorVeiculo(int veiculoId) throws SQLException {
         List<Avaliacao> lista = new ArrayList<>();
-        String sql = "SELECT * FROM avaliacao WHERE avaliadoId = ? ORDER BY dataCriacao DESC";
-
+        String sql = "SELECT * FROM avaliacao WHERE veiculoId = ? ORDER BY dataAvaliacao DESC";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, avaliadoId);
+            stmt.setInt(1, veiculoId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) lista.add(mapRow(rs));
             }
@@ -81,58 +73,108 @@ public class AvaliacaoDAO {
         return lista;
     }
 
-    // ============================
-    // 4. CALCULAR MÉDIA DE UM UTILIZADOR
-    // Devolve -1 se não tiver avaliações
-    // ============================
-    public double calcularMedia(int avaliadoId) throws SQLException {
-        String sql = "SELECT AVG(nota) AS media FROM avaliacao WHERE avaliadoId = ?";
-
+    /** Todas as avaliações recebidas por um proprietário, em qualquer um dos seus veículos. */
+    public List<Avaliacao> listarPorProprietario(int proprietarioId) throws SQLException {
+        List<Avaliacao> lista = new ArrayList<>();
+        String sql = """
+                SELECT av.* FROM avaliacao av
+                JOIN veiculo v ON av.veiculoId = v.id
+                WHERE v.proprietarioId = ?
+                ORDER BY av.dataAvaliacao DESC
+                """;
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, avaliadoId);
+            stmt.setInt(1, proprietarioId);
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next() && rs.getObject("media") != null) {
-                    return rs.getDouble("media");
+                while (rs.next()) lista.add(mapRow(rs));
+            }
+        }
+        return lista;
+    }
+
+    /** Média de classificações de um veículo. Devolve -1 se não houver nenhuma avaliação. */
+    public double mediaPorVeiculo(int veiculoId) throws SQLException {
+        String sql = "SELECT AVG(classificacao) AS media FROM avaliacao WHERE veiculoId = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, veiculoId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    double media = rs.getDouble("media");
+                    return rs.wasNull() ? -1 : media;
                 }
             }
         }
         return -1;
     }
 
-    // ============================
-    // 5. LISTAR AVALIAÇÕES DE UMA RESERVA
-    // ============================
-    public List<Avaliacao> listarPorReserva(int reservaId) throws SQLException {
-        List<Avaliacao> lista = new ArrayList<>();
-        String sql = "SELECT * FROM avaliacao WHERE reservaId = ?";
-
+    /**
+     * Média de classificações de um proprietário, calculada sobre TODAS as
+     * avaliações individuais de TODOS os seus veículos (não é a média das
+     * médias dos carros — um carro com mais reviews pesa mais).
+     * Devolve -1 se não houver nenhuma avaliação.
+     */
+    public double mediaPorProprietario(int proprietarioId) throws SQLException {
+        String sql = """
+                SELECT AVG(av.classificacao) AS media
+                FROM avaliacao av
+                JOIN veiculo v ON av.veiculoId = v.id
+                WHERE v.proprietarioId = ?
+                """;
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-
-            stmt.setInt(1, reservaId);
+            stmt.setInt(1, proprietarioId);
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
+                if (rs.next()) {
+                    double media = rs.getDouble("media");
+                    return rs.wasNull() ? -1 : media;
+                }
             }
         }
-        return lista;
+        return -1;
     }
 
-    // ============================
-    // MAPEAMENTO ResultSet → Avaliacao
-    // ============================
+    /** Número total de avaliações de um veículo. */
+    public int totalPorVeiculo(int veiculoId) throws SQLException {
+        String sql = "SELECT COUNT(*) AS total FROM avaliacao WHERE veiculoId = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, veiculoId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("total");
+            }
+        }
+        return 0;
+    }
+
+    /** Número total de avaliações recebidas por um proprietário. */
+    public int totalPorProprietario(int proprietarioId) throws SQLException {
+        String sql = """
+                SELECT COUNT(*) AS total
+                FROM avaliacao av
+                JOIN veiculo v ON av.veiculoId = v.id
+                WHERE v.proprietarioId = ?
+                """;
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, proprietarioId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return rs.getInt("total");
+            }
+        }
+        return 0;
+    }
+
     private Avaliacao mapRow(ResultSet rs) throws SQLException {
-        Timestamp ts = rs.getTimestamp("dataCriacao");
+        java.sql.Timestamp ts = rs.getTimestamp("dataAvaliacao");
         return new Avaliacao(
-            rs.getInt("id"),
-            rs.getInt("reservaId"),
-            rs.getInt("avaliadorId"),
-            rs.getInt("avaliadoId"),
-            Avaliacao.TipoAvaliado.valueOf(rs.getString("tipo")),
-            rs.getInt("nota"),
-            rs.getString("comentario"),
-            ts != null ? ts.toLocalDateTime() : null
+                rs.getInt("id"),
+                rs.getInt("reservaId"),
+                rs.getInt("utilizadorId"),
+                rs.getInt("veiculoId"),
+                rs.getInt("classificacao"),
+                rs.getString("comentario"),
+                ts != null ? ts.toLocalDateTime() : null
         );
     }
 }
