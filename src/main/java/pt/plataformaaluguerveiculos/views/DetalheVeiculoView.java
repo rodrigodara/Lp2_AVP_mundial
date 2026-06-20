@@ -76,18 +76,19 @@ public class DetalheVeiculoView {
         grd.setVgap(10);
         grd.setPadding(new Insets(10, 0, 10, 10));
 
-        adicionarCampo(grd, 0, "Marca:",        veiculo.getMarca());
-        adicionarCampo(grd, 1, "Modelo:",       veiculo.getModelo());
-        adicionarCampo(grd, 2, "Ano:",          String.valueOf(veiculo.getAno()));
-        adicionarCampo(grd, 3, "Combustível:",  veiculo.getCombustivel());   // ALV-153
-        adicionarCampo(grd, 4, "Transmissão:",  obterTransmissao(veiculo));  // ALV-154
-        adicionarCampo(grd, 5, "Lotação:",      obterLotacao(veiculo));      // ALV-155
-        adicionarCampo(grd, 6, "Quilometragem:",obterQuilometragem(veiculo));// ALV-156
-        adicionarCampo(grd, 7, "Localização:",  veiculo.getLocalizacao());
-        adicionarCampo(grd, 8, "Preço/Dia:",   String.format("%.2f €", veiculo.getPrecoDiario()));
-        adicionarCampo(grd, 9, "Estado:",       veiculo.getEstado());
+        adicionarCampo(grd, 0,  "Marca:",            veiculo.getMarca());
+        adicionarCampo(grd, 1,  "Modelo:",           veiculo.getModelo());
+        adicionarCampo(grd, 2,  "Ano:",              String.valueOf(veiculo.getAno()));
+        adicionarCampo(grd, 3,  "Matrícula:",        veiculo.getMatricula());
+        adicionarCampo(grd, 4,  "Combustível:",      veiculo.getCombustivel());
+        adicionarCampo(grd, 5,  "Transmissão:",      obterTransmissao(veiculo));
+        adicionarCampo(grd, 6,  "Lotação:",          obterLotacao(veiculo));
+        adicionarCampo(grd, 7,  "Quilometragem:",    obterQuilometragem(veiculo));
+        adicionarCampo(grd, 8,  "Localização:",      veiculo.getLocalizacao());
+        adicionarCampo(grd, 9,  "Preço/Dia:",        String.format("%.2f €", veiculo.getPrecoDiario()));
+        adicionarCampo(grd, 10, "Estado:",           veiculo.getEstado());
         if (veiculo.getTipoVeiculo() != null && !veiculo.getTipoVeiculo().isBlank()) {
-            adicionarCampo(grd, 10, "Tipo de veículo:", veiculo.getTipoVeiculo());
+            adicionarCampo(grd, 11, "Tipo de veículo:", veiculo.getTipoVeiculo());
         }
 
         // ============================
@@ -230,12 +231,6 @@ public class DetalheVeiculoView {
     // CARROSSEL DE FOTOS
     // ============================
 
-    /**
-     * Constrói o carrossel de fotos do veículo. O número de "páginas" do
-     * carrossel acompanha o número de fotos disponíveis (1 a 4) — com
-     * apenas 1 foto não há setas de navegação nem pontos, com 2+ fotos
-     * aparecem ambos. Sem nenhuma foto, mostra um placeholder.
-     */
     private javafx.scene.Node construirCarrosselFotos(Veiculo veiculo) {
         List<byte[]> fotos = veiculo.getFotos();
 
@@ -266,12 +261,9 @@ public class DetalheVeiculoView {
         imageView.setPreserveRatio(false);
         imageView.setSmooth(true);
 
-        // Índice da foto atualmente em exibição (estado do carrossel)
         int[] indiceAtual = {0};
-
         Runnable[] atualizarRef = new Runnable[1];
 
-        // Pontos indicadores (um por foto), só mostrados se houver 2+ fotos
         HBox pontosBox = new HBox(8);
         pontosBox.setAlignment(Pos.CENTER);
         List<Label> pontos = new java.util.ArrayList<>();
@@ -299,7 +291,6 @@ public class DetalheVeiculoView {
 
         palco.getChildren().add(imageView);
 
-        // Setas de navegação, só se houver 2+ fotos
         if (fotos.size() > 1) {
             Button btnAnterior = new Button("‹");
             btnAnterior.setStyle(
@@ -340,7 +331,6 @@ public class DetalheVeiculoView {
     // AVALIAÇÕES
     // ============================
 
-    /** Constrói os dois cartões lado a lado: avaliação do veículo e do proprietário. */
     private HBox construirPainelAvaliacoes(Veiculo veiculo) {
         HBox box = new HBox(20);
         box.setAlignment(Pos.CENTER_LEFT);
@@ -441,17 +431,14 @@ public class DetalheVeiculoView {
         grd.add(val, 1, linha);
     }
 
-    /** Transmissão do veículo (campo real, já disponível no modelo). */
     private String obterTransmissao(Veiculo v) {
         return v.getTransmissao() != null ? v.getTransmissao() : "—";
     }
 
-    /** Lotação do veículo (campo real, já disponível no modelo). */
     private String obterLotacao(Veiculo v) {
         return v.getLugares() > 0 ? v.getLugares() + " lugares" : "—";
     }
 
-    /** Quilometragem atual do veículo (campo direto da tabela). */
     private String obterQuilometragem(Veiculo v) {
         return v.getQuilometragem() > 0 ? v.getQuilometragem() + " km" : "—";
     }

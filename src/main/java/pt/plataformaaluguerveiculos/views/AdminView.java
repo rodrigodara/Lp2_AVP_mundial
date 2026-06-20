@@ -190,10 +190,10 @@ public class AdminView {
         Label lblAcoes = label("Ações sobre utilizador selecionado", 15, true, "#1a237e");
 
         Button btnDetalhes    = botao("🔍 Ver Detalhes",      "#1a237e", "white");
-        Button btnTipo        = botao("⚒️ Alterar Tipo",      "#6a1b9a", "white");
+        Button btnTipo        = botao("🛠 Alterar Tipo",      "#6a1b9a", "white");
         Button btnBloquear    = botao("🔒 Bloquear",          "#c62828", "white");
         Button btnDesbloquear = botao("🔓 Desbloquear",       "#2e7d32", "white");
-        Button btnAviso       = botao("⚠︎ Emitir Aviso",      "#e65100", "white");
+        Button btnAviso       = botao("⚠ Emitir Aviso",      "#e65100", "white");
         Button btnVerAvisos   = botao("📋 Ver Avisos",        "#37474f", "white");
 
         HBox acoes = new HBox(10, btnDetalhes, btnTipo, btnBloquear, btnDesbloquear, btnAviso, btnVerAvisos);
