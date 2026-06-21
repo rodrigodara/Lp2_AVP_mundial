@@ -576,6 +576,55 @@ public boolean emitirAviso(int userId, String motivo) throws SQLException {
     }
 
 
+    // =========================================================================
+    // 5. MÉTRICAS POR VEÍCULO (visão global — usado no separador Estatísticas)
+    // =========================================================================
+
+    /**
+     * Devolve, para cada veículo da plataforma, o total de reservas
+     * (qualquer estado) e a receita gerada (apenas reservas ACEITE ou
+     * CONCLUIDO), com marca/modelo e nome do proprietário.
+     *
+     * Cada linha do Object[]: {id, marca, modelo, proprietario, totalReservas, receitaTotal}
+     */
+    public List<Object[]> metricasPorVeiculo() throws SQLException {
+        List<Object[]> lista = new ArrayList<>();
+        String sql = "SELECT v.id, v.marca, v.modelo, u.nome AS proprietario, "
+                   + "       COUNT(r.id) AS totalReservas, "
+                   + "       COALESCE(SUM(CASE WHEN r.estado IN ('ACEITE', 'CONCLUIDO') "
+                   + "                          THEN r.precoTotal ELSE 0 END), 0) AS receitaTotal "
+                   + "FROM veiculo v "
+                   + "JOIN utilizadores u ON v.proprietarioId = u.id "
+                   + "LEFT JOIN reserva r ON r.veiculoId = v.id "
+                   + "GROUP BY v.id, v.marca, v.modelo, u.nome "
+                   + "ORDER BY receitaTotal DESC, v.marca, v.modelo";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                lista.add(new Object[]{
+                    rs.getInt("id"),
+                    rs.getString("marca"),
+                    rs.getString("modelo"),
+                    rs.getString("proprietario"),
+                    rs.getInt("totalReservas"),
+                    rs.getDouble("receitaTotal")
+                });
+            }
+        }
+        return lista;
+    }
+
+    /**
+     * Os N veículos com maior receita gerada (apenas ACEITE/CONCLUIDO).
+     * Atalho sobre metricasPorVeiculo() — já vem ordenado por receita.
+     */
+    public List<Object[]> topVeiculosPorReceita(int limite) throws SQLException {
+        List<Object[]> todos = metricasPorVeiculo();
+        return todos.subList(0, Math.min(limite, todos.size()));
+    }
+
     private User mapUser(ResultSet rs) throws SQLException {
         Date      validadeDate = rs.getDate("validade_carta");
         Timestamp dataCriacao  = rs.getTimestamp("data_criacao");

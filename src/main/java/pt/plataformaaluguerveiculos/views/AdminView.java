@@ -755,6 +755,9 @@ public class AdminView {
         carregarMarcaRegiao.run();
 
         Separator sep1 = new Separator(); Separator sep2 = new Separator(); Separator sep3 = new Separator();
+        Separator sep4 = new Separator();
+
+        VBox blocoVeiculos = criarBlocoMetricasVeiculos();
 
         pane.getChildren().addAll(
             label("Estatísticas", 18, true, "#1a237e"),
@@ -765,13 +768,106 @@ public class AdminView {
             new HBox(30,
                 new VBox(8, lblMarca,  barMarca,  grafMarcaBox,  tblMarca),
                 new VBox(8, lblRegiao, barRegiao, grafRegiaoBox, tblRegiao)
-            )
+            ),
+            sep4,
+            blocoVeiculos
         );
 
         ScrollPane sp = new ScrollPane(pane);
         sp.setFitToWidth(true);
         sp.setStyle("-fx-background: #f4f6fa; -fx-background-color: #f4f6fa;");
         return sp;
+    }
+
+    /**
+     * Bloco "Métricas por Veículo" — visão global de reservas e receita
+     * por veículo, em todos os proprietários. Inclui cards de destaque
+     * (veículo mais rentável, total de reservas, receita total dos
+     * veículos) e uma tabela completa ordenada por receita.
+     */
+    private VBox criarBlocoMetricasVeiculos() {
+        Label lblTitulo = label("Métricas por Veículo", 16, true, "#37474f");
+
+        HBox cardsVeiculos = new HBox(16);
+        cardsVeiculos.setAlignment(Pos.CENTER_LEFT);
+
+        Label lblGrafico = label("Top 10 Veículos por Receita", 14, true, "#37474f");
+        BarChart<String, Number> graficoTop = criarGraficoBarras("Receita (€)");
+        graficoTop.setPrefHeight(280);
+
+        TableView<ObservableList<String>> tabela = criarTabelaStats(
+            new String[]{"Marca", "Modelo", "Proprietário", "Reservas", "Receita (€)"});
+        tabela.setPrefHeight(280);
+
+        Button btnAtualizar = botao("🔄 Atualizar", "#1a237e", "white");
+        Label lblFeedback = new Label();
+        lblFeedback.setFont(Font.font(13));
+
+        Runnable carregar = () -> {
+            try {
+                List<Object[]> dados = dao.metricasPorVeiculo();
+
+                // ---- Tabela completa ----
+                ObservableList<ObservableList<String>> obs = FXCollections.observableArrayList();
+                for (Object[] row : dados) {
+                    obs.add(FXCollections.observableArrayList(
+                        String.valueOf(row[1]),                      // marca
+                        String.valueOf(row[2]),                      // modelo
+                        String.valueOf(row[3]),                      // proprietário
+                        String.valueOf(row[4]),                      // totalReservas
+                        String.format("%.2f", (double) row[5])       // receitaTotal
+                    ));
+                }
+                tabela.setItems(obs);
+
+                // ---- Gráfico — Top 10 por receita (dados já vêm ordenados por receita DESC) ----
+                XYChart.Series<String, Number> serieTop = new XYChart.Series<>();
+                dados.stream().limit(10).forEach(row -> {
+                    String labelBarra = row[1] + " " + row[2]; // "Marca Modelo"
+                    serieTop.getData().add(new XYChart.Data<>(labelBarra, (double) row[5]));
+                });
+                graficoTop.getData().clear();
+                graficoTop.getData().add(serieTop);
+
+                // ---- Cards de destaque ----
+                int totalReservas = 0;
+                double receitaTotal = 0;
+                Object[] maisRentavel = null;
+
+                for (Object[] row : dados) {
+                    totalReservas += (int) row[4];
+                    receitaTotal += (double) row[5];
+                    if (maisRentavel == null || (double) row[5] > (double) maisRentavel[5]) {
+                        maisRentavel = row;
+                    }
+                }
+
+                String descMaisRentavel = (maisRentavel != null && (double) maisRentavel[5] > 0)
+                    ? maisRentavel[1] + " " + maisRentavel[2]
+                    : "—";
+
+                cardsVeiculos.getChildren().setAll(
+                    card("🚗 Veículos Analisados", String.valueOf(dados.size()), "#e3f2fd", "#1565c0"),
+                    card("📋 Reservas (Total)", String.valueOf(totalReservas), "#fff8e1", "#f57f17"),
+                    card("💰 Receita (Total)", String.format("%.2f €", receitaTotal), "#e8f5e9", "#2e7d32"),
+                    card("🏆 Mais Rentável", descMaisRentavel, "#f3e5f5", "#6a1b9a")
+                );
+
+                lblFeedback.setText("");
+            } catch (SQLException ex) {
+                erro(ex, lblFeedback);
+            }
+        };
+
+        btnAtualizar.setOnAction(e -> carregar.run());
+        carregar.run(); // carregar ao abrir
+
+        VBox box = new VBox(14,
+            lblTitulo, cardsVeiculos, btnAtualizar,
+            lblGrafico, graficoTop,
+            tabela, lblFeedback
+        );
+        return box;
     }
 
     private HBox criarCardsGerais() {
