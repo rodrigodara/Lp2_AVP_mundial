@@ -56,6 +56,9 @@ public class User {
     /** Data e hora em que a conta foi criada */
     private LocalDateTime dataCriacao;
 
+    /** Foto de perfil do utilizador (imagem em bytes, opcional) */
+    private byte[] foto;
+
     // -------------------------------------------------------------------------
     // Construtores
     // -------------------------------------------------------------------------
@@ -148,6 +151,9 @@ public class User {
 
     public LocalDateTime getDataCriacao() { return dataCriacao; }
     public void setDataCriacao(LocalDateTime dataCriacao) { this.dataCriacao = dataCriacao; }
+
+    public byte[] getFoto() { return foto; }
+    public void setFoto(byte[] foto) { this.foto = foto; }
 
     // -------------------------------------------------------------------------
     // Métodos de utilidade

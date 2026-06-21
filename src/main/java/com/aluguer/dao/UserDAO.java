@@ -143,6 +143,31 @@ public class UserDAO {
         }
     }
 
+    /**
+     * Atualiza os dados de perfil do utilizador (nome, email, NIF, carta de
+     * condução e foto). A foto pode ser null (sem foto).
+     */
+    public boolean atualizarPerfil(int id, String nome, String email, String nif,
+                                    String numeroCarta, java.sql.Date validadeCarta,
+                                    byte[] foto) throws SQLException {
+        String sql = """
+                UPDATE utilizadores
+                SET nome = ?, email = ?, nif = ?, numero_carta = ?, validade_carta = ?, foto = ?
+                WHERE id = ?
+                """;
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nome);
+            ps.setString(2, email);
+            ps.setString(3, nif);
+            ps.setString(4, numeroCarta);
+            ps.setDate(5, validadeCarta);
+            ps.setBytes(6, foto);
+            ps.setInt(7, id);
+            return ps.executeUpdate() > 0;
+        }
+    }
+
     private User mapRow(ResultSet rs) throws SQLException {
         Date validadeDate = rs.getDate("validade_carta");
         Timestamp dataCriacao = rs.getTimestamp("data_criacao");
@@ -161,6 +186,12 @@ public class UserDAO {
                 dataCriacao != null ? dataCriacao.toLocalDateTime() : null
         );
         user.setTipo(rs.getString("tipo"));
+        try {
+            user.setFoto(rs.getBytes("foto"));
+        } catch (SQLException semColunaFoto) {
+            // Coluna "foto" ainda não existe na BD — ver migração SQL fornecida.
+            user.setFoto(null);
+        }
         return user;
     }
 }

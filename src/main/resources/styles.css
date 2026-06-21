@@ -147,6 +147,62 @@
 }
 
 /* ================================================================
+   Conta — avatar com iniciais
+   ================================================================ */
+.conta-avatar {
+    -fx-background-color: #1a237e;
+    -fx-background-radius: 30;
+    -fx-text-fill: white;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-alignment: center;
+    -fx-min-width: 60;
+    -fx-min-height: 60;
+    -fx-max-width: 60;
+    -fx-max-height: 60;
+    -fx-padding: 0;
+}
+
+/* ================================================================
+   Conta — cartão de saldo com aspeto de cartão bancário
+   ================================================================ */
+.conta-cartao {
+    -fx-background-color: linear-gradient(to bottom right, #1a237e, #3949ab);
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(26,35,126,0.4), 16, 0, 0, 6);
+}
+.conta-cartao-marca {
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+.conta-cartao-chip {
+    -fx-text-fill: #ffd54f;
+    -fx-font-size: 20px;
+    -fx-rotate: 90;
+}
+.conta-cartao-label {
+    -fx-text-fill: #c5cae9;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+.conta-cartao-saldo {
+    -fx-text-fill: white;
+    -fx-font-size: 32px;
+    -fx-font-weight: bold;
+}
+.conta-cartao-numero {
+    -fx-text-fill: #e8eaf6;
+    -fx-font-size: 17px;
+    -fx-font-family: "Consolas";
+}
+.conta-cartao-titular {
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+/* ================================================================
    Procurar Veículos — combos dos filtros (tira o visual "default"
    cinza/quadrado do JavaFX e aplica o estilo da marca)
    ================================================================ */
