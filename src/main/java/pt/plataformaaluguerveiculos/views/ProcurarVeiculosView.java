@@ -1,5 +1,6 @@
 package pt.plataformaaluguerveiculos.views;
 
+import java.io.ByteArrayInputStream;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,19 +14,25 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
-import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Rectangle;
 
 public class ProcurarVeiculosView {
 
+    private static final double LARGURA_CARD = 230;
+    private static final double ALTURA_FOTO = 150;
+
     private VBox root;
-    private TableView<Veiculo> tabela;
+    private FlowPane gridCards;
 
     // Filtros
     private ComboBox<String> comboMarca;
@@ -73,7 +80,10 @@ public class ProcurarVeiculosView {
         Button btnLimparPesquisa = new Button("x");
         btnLimparPesquisa.getStyleClass().add("btn-secundario");
 
-        HBox pesquisaBox = new HBox(8, campoPesquisa, btnPesquisar, btnLimparPesquisa);
+        Button btnToggleFiltros = new Button("Filtros ▾");
+        btnToggleFiltros.getStyleClass().add("btn-secundario");
+
+        HBox pesquisaBox = new HBox(8, campoPesquisa, btnPesquisar, btnLimparPesquisa, btnToggleFiltros);
         pesquisaBox.setAlignment(Pos.CENTER_LEFT);
 
         btnPesquisar.setOnAction(e -> {
@@ -113,6 +123,17 @@ public class ProcurarVeiculosView {
             "-fx-border-width: 1;"
         );
 
+        // ---- Começa escondido para a lista de veículos aparecer logo no topo ----
+        filtrosBox.setVisible(false);
+        filtrosBox.setManaged(false);
+
+        btnToggleFiltros.setOnAction(e -> {
+            boolean aVisivel = !filtrosBox.isVisible();
+            filtrosBox.setVisible(aVisivel);
+            filtrosBox.setManaged(aVisivel);
+            btnToggleFiltros.setText(aVisivel ? "Filtros ▲" : "Filtros ▾");
+        });
+
         btnAplicarFiltros.setOnAction(e -> aplicarFiltros());
         btnLimparFiltros.setOnAction(e -> {
             limparFiltros();
@@ -120,75 +141,128 @@ public class ProcurarVeiculosView {
         });
 
         // ============================
-        // TABELA
+        // GRELHA DE CARDS DE VEÍCULOS
         // ============================
-        tabela = new TableView<>();
-        tabela.setPrefHeight(550);
-        VBox.setVgrow(tabela, Priority.ALWAYS);
+        gridCards = new FlowPane();
+        gridCards.setHgap(18);
+        gridCards.setVgap(18);
+        gridCards.setPadding(new Insets(4));
+        gridCards.setAlignment(Pos.TOP_LEFT);
 
-        TableColumn<Veiculo, String> colMarca = new TableColumn<>("Marca");
-        colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
-
-        TableColumn<Veiculo, String> colModelo = new TableColumn<>("Modelo");
-        colModelo.setCellValueFactory(new PropertyValueFactory<>("modelo"));
-
-        TableColumn<Veiculo, Integer> colAno = new TableColumn<>("Ano");
-        colAno.setCellValueFactory(new PropertyValueFactory<>("ano"));
-
-        TableColumn<Veiculo, String> colCombustivel = new TableColumn<>("Combustível");
-        colCombustivel.setCellValueFactory(new PropertyValueFactory<>("combustivel"));
-
-        TableColumn<Veiculo, Double> colPreco = new TableColumn<>("Preço Diário (€)");
-        colPreco.setCellValueFactory(new PropertyValueFactory<>("precoDiario"));
-
-        TableColumn<Veiculo, String> colLocalizacao = new TableColumn<>("Localização");
-        colLocalizacao.setCellValueFactory(new PropertyValueFactory<>("localizacao"));
-
-        TableColumn<Veiculo, Integer> colLugares = new TableColumn<>("Lugares");
-        colLugares.setCellValueFactory(new PropertyValueFactory<>("lugares"));
-
-        TableColumn<Veiculo, String> colTransmissao = new TableColumn<>("Transmissão");
-        colTransmissao.setCellValueFactory(new PropertyValueFactory<>("transmissao"));
-
-        TableColumn<Veiculo, String> colAvaliacao = new TableColumn<>("Avaliação");
-        colAvaliacao.setCellValueFactory(data -> {
-            double media = data.getValue().getAvaliacaoMedia();
-            String texto = media < 0 ? "Sem avaliações" : String.format("%.1f ★", media);
-            return new javafx.beans.property.SimpleStringProperty(texto);
-        });
-
-        tabela.getColumns().addAll(
-            colMarca, colModelo, colAno, colCombustivel, colPreco,
-            colLocalizacao, colLugares, colTransmissao, colAvaliacao
-        );
-
-        // ============================
-        // BOTÃO DE AÇÃO — Ver Detalhes
-        // ============================
-        Button btnVerDetalhes = new Button("Ver Detalhes");
-        btnVerDetalhes.getStyleClass().add("btn-primario");
-        btnVerDetalhes.setDisable(true);
-
-        tabela.getSelectionModel().selectedItemProperty().addListener(
-            (obs, antigo, novo) -> btnVerDetalhes.setDisable(novo == null)
-        );
-
-        tabela.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2) {
-                abrirDetalhe(tabela.getSelectionModel().getSelectedItem());
-            }
-        });
-
-        btnVerDetalhes.setOnAction(e ->
-            abrirDetalhe(tabela.getSelectionModel().getSelectedItem())
-        );
+        ScrollPane scrollCards = new ScrollPane(gridCards);
+        scrollCards.setFitToWidth(true);
+        scrollCards.setPrefHeight(560);
+        scrollCards.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        VBox.setVgrow(scrollCards, Priority.ALWAYS);
 
         carregarVeiculos();
 
-        HBox acoesBox = new HBox(10, btnVerDetalhes);
-        acoesBox.setAlignment(Pos.CENTER_LEFT);
+        root.getChildren().addAll(titulo, pesquisaBox, filtrosBox, scrollCards);
+    }
 
-        root.getChildren().addAll(titulo, pesquisaBox, filtrosBox, tabela, acoesBox);
+    // ============================
+    // CONSTRUÇÃO DE UM CARD DE VEÍCULO
+    // ============================
+    private VBox criarCardVeiculo(Veiculo v) {
+        // ---- Foto (ou placeholder) ----
+        StackPane fotoBox = new StackPane();
+        fotoBox.setPrefSize(LARGURA_CARD, ALTURA_FOTO);
+        fotoBox.setMinSize(LARGURA_CARD, ALTURA_FOTO);
+        fotoBox.setMaxSize(LARGURA_CARD, ALTURA_FOTO);
+
+        byte[] foto = v.getFoto1();
+        if (foto != null && foto.length > 0) {
+            ImageView imageView = new ImageView();
+            imageView.setFitWidth(LARGURA_CARD);
+            imageView.setFitHeight(ALTURA_FOTO);
+            imageView.setPreserveRatio(false);
+            imageView.setSmooth(true);
+            try {
+                imageView.setImage(new Image(new ByteArrayInputStream(foto)));
+            } catch (Exception ex) {
+                imageView.setImage(null);
+            }
+            fotoBox.getChildren().add(imageView);
+        } else {
+            fotoBox.setStyle("-fx-background-color: #e8eaf6;");
+            Label semFoto = new Label("Sem foto disponível");
+            semFoto.setStyle("-fx-text-fill: #9fa8da; -fx-font-size: 12px;");
+            fotoBox.getChildren().add(semFoto);
+        }
+
+        // ---- Bloco de informação ----
+        Label lblNome = new Label(v.getMarca() + " " + v.getModelo());
+        lblNome.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        lblNome.setWrapText(true);
+
+        Label lblAno = new Label(String.valueOf(v.getAno()) + " · " + v.getCombustivel());
+        lblAno.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
+
+        Label lblLocal = new Label("📍 " + v.getLocalizacao());
+        lblLocal.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
+
+        double media = v.getAvaliacaoMedia();
+        String textoAval = media < 0 ? "Sem avaliações" : String.format("%.1f ★", media);
+        Label lblAval = new Label(textoAval);
+        lblAval.setStyle("-fx-font-size: 12px; -fx-text-fill: #f9a825; -fx-font-weight: bold;");
+
+        Label lblPreco = new Label(String.format("%.0f €/dia", v.getPrecoDiario()));
+        lblPreco.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+
+        HBox linhaPrecoAval = new HBox(lblPreco);
+        linhaPrecoAval.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(lblPreco, Priority.ALWAYS);
+        linhaPrecoAval.getChildren().add(lblAval);
+
+        Button btnVerDetalhes = new Button("Ver Detalhes");
+        btnVerDetalhes.getStyleClass().add("btn-primario");
+        btnVerDetalhes.setMaxWidth(Double.MAX_VALUE);
+        btnVerDetalhes.setOnAction(e -> abrirDetalhe(v));
+
+        VBox infoBox = new VBox(6, lblNome, lblAno, lblLocal, linhaPrecoAval, btnVerDetalhes);
+        infoBox.setPadding(new Insets(12));
+
+        // ---- Conteúdo do card (foto + info), com cantos arredondados ----
+        VBox conteudo = new VBox(fotoBox, infoBox);
+        conteudo.setStyle(
+            "-fx-background-color: white;" +
+            "-fx-background-radius: 12;" +
+            "-fx-border-color: #e0e0e0;" +
+            "-fx-border-radius: 12;" +
+            "-fx-border-width: 1;"
+        );
+
+        Rectangle clip = new Rectangle();
+        clip.setArcWidth(20);
+        clip.setArcHeight(20);
+        clip.widthProperty().bind(conteudo.widthProperty());
+        clip.heightProperty().bind(conteudo.heightProperty());
+        conteudo.setClip(clip);
+
+        // ---- Wrapper externo: só aqui vai a sombra (fora do clip) ----
+        VBox card = new VBox(conteudo);
+        card.setPrefWidth(LARGURA_CARD);
+        card.setMaxWidth(LARGURA_CARD);
+        card.setStyle("-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 8, 0, 0, 3);");
+        card.setCursor(javafx.scene.Cursor.HAND);
+        card.setOnMouseClicked(e -> abrirDetalhe(v));
+
+        return card;
+    }
+
+    /** Reconstrói a grelha de cards a partir de uma lista de veículos. */
+    private void atualizarCards(List<Veiculo> lista) {
+        gridCards.getChildren().clear();
+        if (lista == null || lista.isEmpty()) {
+            Label vazio = new Label("Nenhum veículo encontrado com os critérios indicados.");
+            vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+            vazio.setPadding(new Insets(30));
+            gridCards.getChildren().add(vazio);
+            return;
+        }
+        for (Veiculo v : lista) {
+            gridCards.getChildren().add(criarCardVeiculo(v));
+        }
     }
 
     // ============================
@@ -292,6 +366,16 @@ public class ProcurarVeiculosView {
 
         HBox avaliacaoBox = new HBox(6, comboAvaliacaoMin, comboAvaliacaoMax);
 
+        // ---- Estilo: tirar o visual "default" do JavaFX dos combos e campos ----
+        for (ComboBox<?> combo : new ComboBox<?>[]{
+                comboMarca, comboModelo, comboPrecoPreset, comboLocalizacao,
+                comboTipoVeiculo, comboCombustivel, comboLugares, comboTransmissao,
+                comboAvaliacaoMin, comboAvaliacaoMax}) {
+            combo.getStyleClass().add("combo-filtro");
+        }
+        campoPrecoMin.getStyleClass().add("campo-texto");
+        campoPrecoMax.getStyleClass().add("campo-texto");
+
         // ---- Montagem da grelha: 2 linhas x 4 colunas ----
         grid.add(criarCampoComLabel("Marca", comboMarca),                 0, 0);
         grid.add(criarCampoComLabel("Modelo", comboModelo),               1, 0);
@@ -350,7 +434,7 @@ public class ProcurarVeiculosView {
                 avalMin != null ? avalMin.doubleValue() : null,
                 avalMax != null ? avalMax.doubleValue() : null
             );
-            tabela.setItems(FXCollections.observableArrayList(lista));
+            atualizarCards(lista);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -404,7 +488,7 @@ public class ProcurarVeiculosView {
         try {
             VeiculoService service = new VeiculoService();
             List<Veiculo> lista = service.pesquisar(termo);
-            tabela.setItems(FXCollections.observableArrayList(lista));
+            atualizarCards(lista);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -414,7 +498,7 @@ public class ProcurarVeiculosView {
         try {
             VeiculoService service = new VeiculoService();
             List<Veiculo> lista = service.getAllVehicles();
-            tabela.setItems(FXCollections.observableArrayList(lista));
+            atualizarCards(lista);
         } catch (Exception e) {
             e.printStackTrace();
         }

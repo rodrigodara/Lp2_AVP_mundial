@@ -147,82 +147,61 @@
 }
 
 /* ================================================================
-   ALV-100 — As Minhas Reservas
+   Procurar Veículos — combos dos filtros (tira o visual "default"
+   cinza/quadrado do JavaFX e aplica o estilo da marca)
    ================================================================ */
-.reservas-container {
-    -fx-background-color: white;
-    -fx-max-width: 860px;
-}
-.reservas-titulo {
-    -fx-font-size: 24px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #1a237e;
-}
-.reservas-subtitulo {
+.combo-filtro {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 6;
+    -fx-border-color: #d4d7e8;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
     -fx-font-size: 13px;
-    -fx-text-fill: #777777;
+    -fx-mark-color: #1a237e;
 }
-.reservas-vazio {
-    -fx-font-size: 13px;
-    -fx-text-fill: #999999;
-    -fx-font-style: italic;
+.combo-filtro:hover {
+    -fx-border-color: #9fa8da;
 }
-.reservas-tabs .tab-header-area .tab-header-background {
-    -fx-background-color: #f5f5f5;
-}
-.reservas-tabs .tab {
-    -fx-background-color: #eeeeee;
-    -fx-padding: 6 14 6 14;
-}
-.reservas-tabs .tab:selected {
-    -fx-background-color: white;
+.combo-filtro:focused, .combo-filtro:showing {
     -fx-border-color: #1a237e;
-    -fx-border-width: 0 0 2 0;
 }
-.reservas-tabs .tab .tab-label {
-    -fx-font-size: 12px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #555;
-}
-.reservas-tabs .tab:selected .tab-label {
-    -fx-text-fill: #1a237e;
-}
-.reservas-scroll {
+.combo-filtro .arrow-button {
     -fx-background-color: transparent;
-    -fx-background: transparent;
+    -fx-background-radius: 0 6 6 0;
 }
-.reserva-card-id {
-    -fx-font-size: 14px;
-    -fx-font-weight: bold;
+.combo-filtro .arrow {
+    -fx-background-color: #1a237e;
+}
+
+/* Célula sempre visível no campo (valor escolhido / prompt) —
+   tem de ficar transparente, senão herda o estilo de "selecionado". */
+.combo-filtro > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #333333;
+    -fx-padding: 4 6 4 8;
+}
+
+/* Popup com a lista de opções (é uma janela própria, não é filha do
+   combo no scene graph — por isso usa-se a classe global do JavaFX
+   em vez de a escopar a ".combo-filtro"). */
+.combo-box-popup .list-view {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d4d7e8;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 2);
+}
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #333333;
+    -fx-padding: 6 10 6 10;
+}
+.combo-box-popup .list-view .list-cell:filled:hover {
+    -fx-background-color: #e8eaf6;
     -fx-text-fill: #1a237e;
 }
-.reserva-card-detalhe {
-    -fx-font-size: 13px;
-    -fx-text-fill: #444444;
-}
-.reserva-estado {
-    -fx-font-size: 11px;
-    -fx-font-weight: bold;
-    -fx-background-radius: 4;
-    -fx-padding: 2 8 2 8;
-}
-.estado-pendente   { -fx-background-color: #fff3e0; -fx-text-fill: #e65100; }
-.estado-aceite     { -fx-background-color: #e8f5e9; -fx-text-fill: #2e7d32; }
-.estado-rejeitado  { -fx-background-color: #ffebee; -fx-text-fill: #c62828; }
-.estado-cancelado  { -fx-background-color: #ffebee; -fx-text-fill: #c62828; }
-.estado-concluido  { -fx-background-color: #e8eaf6; -fx-text-fill: #1a237e; }
-
-/* ScrollPane — fundo sempre branco */
-.scroll-pane {
-    -fx-background-color: white;
-    -fx-background: white;
-    -fx-border-color: transparent;
-}
-.scroll-pane > .viewport {
-    -fx-background-color: white;
-    -fx-background: white;
-}
-.scroll-pane .scroll-bar:vertical,
-.scroll-pane .scroll-bar:horizontal {
-    -fx-background-color: #f5f5f5;
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: #1a237e;
+    -fx-text-fill: #ffffff;
 }

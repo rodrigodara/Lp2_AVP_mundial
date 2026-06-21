@@ -304,7 +304,8 @@ public class VeiculoDAO {
         return 0;
     }
 
-    /** Mapeia uma linha sem carregar as fotos — usado em listagens (mais leve). */
+    /** Mapeia uma linha de listagem: traz a foto de capa (foto1), mas não foto2-4
+     *  (essas só são carregadas no detalhe, via mapRowComFotos, por serem mais pesadas). */
     private Veiculo mapRow(ResultSet rs) throws SQLException {
         Veiculo v = new Veiculo(
             rs.getInt("id"),
@@ -323,6 +324,7 @@ public class VeiculoDAO {
             rs.getDouble("consumo")
         );
         v.setQuilometragem(rs.getInt("quilometragem"));
+        v.setFoto1(rs.getBytes("foto1"));
         return v;
     }
 

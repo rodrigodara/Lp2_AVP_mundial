@@ -145,3 +145,63 @@
     -fx-background-color: #e8eaf6; -fx-text-fill: #1a237e;
     -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 4; -fx-padding: 2 8 2 8;
 }
+
+/* ================================================================
+   Procurar Veículos — combos dos filtros (tira o visual "default"
+   cinza/quadrado do JavaFX e aplica o estilo da marca)
+   ================================================================ */
+.combo-filtro {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 6;
+    -fx-border-color: #d4d7e8;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-font-size: 13px;
+    -fx-mark-color: #1a237e;
+}
+.combo-filtro:hover {
+    -fx-border-color: #9fa8da;
+}
+.combo-filtro:focused, .combo-filtro:showing {
+    -fx-border-color: #1a237e;
+}
+.combo-filtro .arrow-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 0 6 6 0;
+}
+.combo-filtro .arrow {
+    -fx-background-color: #1a237e;
+}
+
+/* Célula sempre visível no campo (valor escolhido / prompt) —
+   tem de ficar transparente, senão herda o estilo de "selecionado". */
+.combo-filtro > .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #333333;
+    -fx-padding: 4 6 4 8;
+}
+
+/* Popup com a lista de opções (é uma janela própria, não é filha do
+   combo no scene graph — por isso usa-se a classe global do JavaFX
+   em vez de a escopar a ".combo-filtro"). */
+.combo-box-popup .list-view {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #d4d7e8;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 2);
+}
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #333333;
+    -fx-padding: 6 10 6 10;
+}
+.combo-box-popup .list-view .list-cell:filled:hover {
+    -fx-background-color: #e8eaf6;
+    -fx-text-fill: #1a237e;
+}
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: #1a237e;
+    -fx-text-fill: #ffffff;
+}
