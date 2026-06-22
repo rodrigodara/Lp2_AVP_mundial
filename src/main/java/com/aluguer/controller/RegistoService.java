@@ -1,11 +1,11 @@
 package com.aluguer.controller;
 
+import java.sql.SQLException;
+import java.time.LocalDate;
+
 import com.aluguer.dao.UserDAO;
 import com.aluguer.model.User;
 import com.aluguer.util.PasswordUtil;
-
-import java.sql.SQLException;
-import java.time.LocalDate;
 
 public class RegistoService {
 

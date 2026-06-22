@@ -23,8 +23,10 @@ public class ReservaService {
 
     private final ReservaDAO reservaDAO;
     private final PrecoDinamicoService precoDinamicoService;
+    private final Connection conn;
 
     public ReservaService(Connection conn) {
+        this.conn = conn;
         this.reservaDAO = new ReservaDAO(conn);
         this.precoDinamicoService = new PrecoDinamicoService();
     }
@@ -212,13 +214,12 @@ public class ReservaService {
 
         double caucao = calcularCaucao(renda, comb);
 
+        // saldoAtual deve ser o saldo DISPONÍVEL (total - pendente), não o total.
+        // O chamador deve passar user.getSaldoDisponivel() em vez de user.getSaldo().
         if (saldoAtual < renda + caucao) {
             throw new ReservaException(String.format(
                     "Saldo insuficiente. Necessário: %.2f€ (renda %.2f€ + caução %.2f€). Disponível: %.2f€",
-                    renda + caucao,
-                    renda,
-                    caucao,
-                    saldoAtual));
+                    renda + caucao, renda, caucao, saldoAtual));
         }
 
         Reserva reserva = new Reserva(
@@ -233,6 +234,25 @@ public class ReservaService {
         if (!reservaDAO.inserir(reserva)) {
             throw new ReservaException(
                     "Erro ao guardar a reserva. Tente novamente.");
+        }
+
+        // -------------------------------------------------------
+        // SALDO PENDENTE: ao criar a reserva, recalcular o maior
+        // valor pendente do utilizador (bloqueia o levantamento).
+        // Usa uma conexão própria do pool para evitar depender de
+        // this.conn que pode já ter sido devolvida ao pool.
+        // -------------------------------------------------------
+        try (java.sql.Connection connPendente = com.aluguer.util.DatabaseConnection.getConnection()) {
+            new com.aluguer.dao.UserDAO().recalcularSaldoPendente(utilizadorId, connPendente);
+            // Atualizar o objeto em sessão para refletir o novo saldo pendente
+            com.aluguer.model.User sessaoUser = com.aluguer.util.SessionManager.getInstance().getUtilizador();
+            if (sessaoUser != null && sessaoUser.getId() == utilizadorId) {
+                // Recarregar saldo_pendente da BD para a sessão
+                new com.aluguer.dao.UserDAO().findById(utilizadorId)
+                    .ifPresent(u -> sessaoUser.setSaldoPendente(u.getSaldoPendente()));
+            }
+        } catch (Exception ex) {
+            System.err.println("[ReservaService] Aviso: falha ao recalcular saldo pendente: " + ex.getMessage());
         }
 
         // notificar o proprietario do veiculo do novo pedido

@@ -202,7 +202,7 @@ public class ProcurarVeiculosView {
         lblLocal.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
 
         double media = v.getAvaliacaoMedia();
-        String textoAval = media < 0 ? "Sem avaliações" : String.format("%.1f ★", media);
+        String textoAval = media < 0 ? " Sem avaliações" : String.format(" %.1f ★", media);
         Label lblAval = new Label(textoAval);
         lblAval.setStyle("-fx-font-size: 12px; -fx-text-fill: #f9a825; -fx-font-weight: bold;");
 

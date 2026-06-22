@@ -38,6 +38,14 @@ public class User {
     private BigDecimal saldo;
 
     /**
+     * Saldo pendente (bloqueado) em conta (em euros).
+     * Corresponde ao maior valor (precoTotal + caucao) das reservas PENDENTES
+     * do utilizador. Este montante não pode ser levantado enquanto a reserva
+     * estiver pendente.
+     */
+    private BigDecimal saldoPendente = BigDecimal.ZERO;
+
+    /**
      * Perfil do utilizador:
      *   "UTILIZADOR"     → acesso normal à plataforma
      *   "ADMINISTRADOR"  → acesso ao painel de administração (RF6)
@@ -140,6 +148,14 @@ public class User {
     public BigDecimal getSaldo() { return saldo; }
     public void setSaldo(BigDecimal saldo) { this.saldo = saldo; }
 
+    public BigDecimal getSaldoPendente() { return saldoPendente != null ? saldoPendente : BigDecimal.ZERO; }
+    public void setSaldoPendente(BigDecimal saldoPendente) { this.saldoPendente = saldoPendente != null ? saldoPendente : BigDecimal.ZERO; }
+
+    /** Saldo disponível para levantar (saldo total - saldo pendente) */
+    public BigDecimal getSaldoDisponivel() {
+        return saldo.subtract(getSaldoPendente()).max(BigDecimal.ZERO);
+    }
+
     public String getPerfil() { return perfil; }
     public void setPerfil(String perfil) { this.perfil = perfil; }
 
@@ -170,10 +186,10 @@ public class User {
         return !validadeCarta.isBefore(LocalDate.now());
     }
 
-    /** Devolve true se o saldo é suficiente para cobrir o valor pedido */
+    /** Devolve true se o saldo disponível (excluindo pendente) é suficiente para cobrir o valor pedido */
     public boolean temSaldoSuficiente(BigDecimal valor) {
         if (valor == null || saldo == null) return false;
-        return saldo.compareTo(valor) >= 0;
+        return getSaldoDisponivel().compareTo(valor) >= 0;
     }
 
     @Override

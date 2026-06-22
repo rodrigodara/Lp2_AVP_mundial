@@ -192,6 +192,61 @@ public class UserDAO {
             // Coluna "foto" ainda não existe na BD — ver migração SQL fornecida.
             user.setFoto(null);
         }
+        try {
+            user.setSaldoPendente(rs.getBigDecimal("saldo_pendente"));
+        } catch (SQLException semColuna) {
+            user.setSaldoPendente(java.math.BigDecimal.ZERO);
+        }
         return user;
     }
-}
+
+    /**
+     * Atualiza o saldo do utilizador na BD.
+     * @param utilizadorId id do utilizador
+     * @param novoSaldo novo saldo a definir
+     * @return true se atualizado com sucesso
+     */
+    public boolean atualizarSaldo(int utilizadorId, java.math.BigDecimal novoSaldo) {
+        String sql = "UPDATE utilizadores SET saldo = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, novoSaldo);
+            ps.setInt(2, utilizadorId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[UserDAO] Erro ao atualizar saldo: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Recalcula e atualiza o saldo_pendente do utilizador.
+     * O saldo pendente é o maior valor (precoTotal + caucao) entre todas
+     * as reservas PENDENTES do utilizador.
+     * Exemplo: reservas pendentes de 200€, 500€ e 100€ → saldo_pendente = 500€
+     * @param utilizadorId id do utilizador
+     * @param conn conexão BD (para usar na mesma transação)
+     */
+    public void recalcularSaldoPendente(int utilizadorId, Connection conn) {
+        String sql = """
+            SELECT COALESCE(MAX(precoTotal + caucao), 0) AS maior_pendente
+            FROM reserva
+            WHERE utilizadorId = ? AND estado = 'PENDENTE'
+            """;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, utilizadorId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    java.math.BigDecimal pendente = rs.getBigDecimal("maior_pendente");
+                    String upd = "UPDATE utilizadores SET saldo_pendente = ? WHERE id = ?";
+                    try (PreparedStatement psUpd = conn.prepareStatement(upd)) {
+                        psUpd.setBigDecimal(1, pendente);
+                        psUpd.setInt(2, utilizadorId);
+                        psUpd.executeUpdate();
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[UserDAO] Erro ao recalcular saldo pendente: " + e.getMessage());
+        }
+    }}

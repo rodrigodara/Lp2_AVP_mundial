@@ -45,6 +45,61 @@ public class ReservaService {
             boolean ok = dao.atualizarEstado(reservaId, Estado.ACEITE);
 
             if (ok) {
+                // -------------------------------------------------------
+                // PAGAMENTO: cobrar precoTotal + caucao ao locatário
+                // 10% do precoTotal vai para a plataforma (comissão)
+                // O restante (90%) fica retido para pagar ao proprietário
+                // A caução só é devolvida quando o dono concluir e reportar OK
+                // -------------------------------------------------------
+                com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
+
+                double comissao       = reserva.getPrecoTotal() * 0.10;  // 10% para o site
+                double totalADebitar  = reserva.getPrecoTotal() + reserva.getCaucao();
+
+                // Verificar se o locatário tem saldo suficiente
+                java.util.Optional<com.aluguer.model.User> locatarioOpt;
+                try {
+                    locatarioOpt = userDAO.findById(reserva.getUtilizadorId());
+                } catch (java.sql.SQLException ex) {
+                    return ResultadoOperacao.erro("Erro ao consultar locatário: " + ex.getMessage());
+                }
+
+                if (locatarioOpt.isEmpty()) {
+                    return ResultadoOperacao.erro("Locatário não encontrado.");
+                }
+
+                com.aluguer.model.User locatario = locatarioOpt.get();
+                java.math.BigDecimal totalBD = java.math.BigDecimal.valueOf(totalADebitar);
+
+                if (!locatario.temSaldoSuficiente(totalBD)) {
+                    // Reverter estado para PENDENTE se não tiver saldo
+                    dao.atualizarEstado(reservaId, Estado.PENDENTE);
+                    return ResultadoOperacao.erro(String.format(
+                        "Saldo insuficiente do locatário. Necessário: %.2f€ (renda %.2f€ + caução %.2f€). Disponível: %.2f€",
+                        totalADebitar, reserva.getPrecoTotal(), reserva.getCaucao(),
+                        locatario.getSaldoDisponivel()));
+                }
+
+                // Debitar saldo ao locatário
+                java.math.BigDecimal novoSaldoLocatario = locatario.getSaldo().subtract(totalBD);
+                boolean debitoOk = userDAO.atualizarSaldo(reserva.getUtilizadorId(), novoSaldoLocatario);
+                if (!debitoOk) {
+                    dao.atualizarEstado(reservaId, Estado.PENDENTE);
+                    return ResultadoOperacao.erro("Falha ao debitar saldo do locatário.");
+                }
+
+                // Atualizar sessão se for o utilizador atual
+                com.aluguer.util.SessionManager sm = com.aluguer.util.SessionManager.getInstance();
+                if (sm.getUtilizador() != null && sm.getUtilizador().getId() == reserva.getUtilizadorId()) {
+                    sm.getUtilizador().setSaldo(novoSaldoLocatario);
+                }
+
+                // Recalcular saldo pendente do locatário (reserva já está ACEITE, não conta mais)
+                userDAO.recalcularSaldoPendente(reserva.getUtilizadorId(), conn);
+
+                System.out.println(String.format(
+                    "[ReservaService] Pagamento efetuado: -%.2f€ do locatário #%d | Comissão plataforma: %.2f€ | Caução retida: %.2f€",
+                    totalADebitar, reserva.getUtilizadorId(), comissao, reserva.getCaucao()));
                 VeiculoDAO veiculoDAO = new VeiculoDAO();
                 int kmAtual = veiculoDAO.buscarKmAtual(reserva.getVeiculoId());
                 dao.atualizarKmInicial(reservaId, kmAtual);
@@ -114,7 +169,11 @@ public class ReservaService {
                     }
                 }
 
-                return ResultadoOperacao.sucesso("Reserva #" + reservaId + " aceite com sucesso.");
+                return ResultadoOperacao.sucesso(String.format(
+                    "Reserva #%d aceite. Cobrado ao locatário: %.2f€ (renda %.2f€ + caução %.2f€ retida). Comissão plataforma: %.2f€.",
+                    reservaId, reserva.getPrecoTotal() + reserva.getCaucao(),
+                    reserva.getPrecoTotal(), reserva.getCaucao(),
+                    reserva.getPrecoTotal() * 0.10));
             } else {
                 return ResultadoOperacao.erro("Falha ao aceitar a reserva. Tente novamente.");
             }
@@ -210,13 +269,45 @@ public class ReservaService {
             if (!ok) return ResultadoOperacao.erro("Falha ao cancelar a reserva.");
 
             double reembolso = reserva.getCaucao() + reserva.getPrecoTotal();
-            com.aluguer.dao.ContaDAO contaDAO = new com.aluguer.dao.ContaDAO(conn);
-            boolean saldoOk = contaDAO.atualizarSaldo(reserva.getUtilizadorId(), reembolso);
+            com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
 
-            if (!saldoOk)
-                return ResultadoOperacao.erro("Reserva cancelada, mas falhou o reembolso.");
+            // Devolver saldo ao locatário (tabela utilizadores, consistente com o resto do sistema)
+            try {
+                java.util.Optional<com.aluguer.model.User> locOpt = userDAO.findById(reserva.getUtilizadorId());
+                if (locOpt.isEmpty())
+                    return ResultadoOperacao.erro("Reserva cancelada, mas locatário não encontrado para reembolso.");
 
-            return ResultadoOperacao.sucesso("Reserva cancelada com sucesso. Reembolso: +" + reembolso + "€");
+                com.aluguer.model.User locatario = locOpt.get();
+                java.math.BigDecimal novoSaldo = locatario.getSaldo()
+                    .add(java.math.BigDecimal.valueOf(reembolso));
+                boolean saldoOk = userDAO.atualizarSaldo(reserva.getUtilizadorId(), novoSaldo);
+
+                if (!saldoOk)
+                    return ResultadoOperacao.erro("Reserva cancelada, mas falhou o reembolso.");
+
+                // Atualizar sessão se for o utilizador atual
+                com.aluguer.util.SessionManager sm = com.aluguer.util.SessionManager.getInstance();
+                if (sm.getUtilizador() != null && sm.getUtilizador().getId() == reserva.getUtilizadorId()) {
+                    sm.getUtilizador().setSaldo(novoSaldo);
+                }
+
+            } catch (java.sql.SQLException ex) {
+                return ResultadoOperacao.erro("Reserva cancelada, mas erro ao reembolsar: " + ex.getMessage());
+            }
+
+            // Recalcular saldo_pendente: se não houver mais reservas PENDENTES, volta a 0
+            userDAO.recalcularSaldoPendente(reserva.getUtilizadorId(), conn);
+
+            // Notificação in-app
+            NotificacaoService.getInstance().criarNotificacao(
+                reserva.getUtilizadorId(),
+                "CANCELADO",
+                null
+            );
+
+            return ResultadoOperacao.sucesso(String.format(
+                "Reserva #%d cancelada com sucesso. Reembolso: +%.2f€ (renda %.2f€ + caução %.2f€).",
+                reservaId, reembolso, reserva.getPrecoTotal(), reserva.getCaucao()));
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -240,8 +331,76 @@ public class ReservaService {
                 return ResultadoOperacao.erro("So e possivel concluir reservas no estado ACEITE.");
 
             boolean ok = dao.atualizarEstado(reservaId, Estado.CONCLUIDO);
-            if (ok) return ResultadoOperacao.sucesso("Reserva #" + reservaId + " concluida com sucesso.");
-            else     return ResultadoOperacao.erro("Falha ao concluir a reserva. Tente novamente.");
+            if (ok) {
+                // -------------------------------------------------------
+                // CONCLUSÃO: o dono confirmou que está tudo bem
+                // 1. Devolver caução ao locatário
+                // 2. Pagar ao proprietário (precoTotal - 10% comissão)
+                // -------------------------------------------------------
+                com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
+
+                double comissao      = reserva.getPrecoTotal() * 0.10;  // 10% plataforma
+                double pagoAoDono    = reserva.getPrecoTotal() - comissao;  // 90% para o proprietário
+                double caucaoDevolver = reserva.getCaucao();
+
+                // 1. Devolver caução ao locatário
+                try {
+                    java.util.Optional<com.aluguer.model.User> locOpt = userDAO.findById(reserva.getUtilizadorId());
+                    if (locOpt.isPresent()) {
+                        com.aluguer.model.User locatario = locOpt.get();
+                        java.math.BigDecimal novoSaldoLoc = locatario.getSaldo()
+                            .add(java.math.BigDecimal.valueOf(caucaoDevolver));
+                        userDAO.atualizarSaldo(reserva.getUtilizadorId(), novoSaldoLoc);
+
+                        // Atualizar sessão se for o utilizador atual
+                        com.aluguer.util.SessionManager sm = com.aluguer.util.SessionManager.getInstance();
+                        if (sm.getUtilizador() != null && sm.getUtilizador().getId() == reserva.getUtilizadorId()) {
+                            sm.getUtilizador().setSaldo(novoSaldoLoc);
+                        }
+
+                        System.out.println(String.format(
+                            "[ReservaService] Caução devolvida: +%.2f€ ao locatário #%d",
+                            caucaoDevolver, reserva.getUtilizadorId()));
+                    }
+                } catch (java.sql.SQLException ex) {
+                    System.err.println("[ReservaService] Falha ao devolver caução: " + ex.getMessage());
+                }
+
+                // 2. Pagar proprietário (90% do precoTotal)
+                try {
+                    VeiculoDAO veiculoDAO2 = new VeiculoDAO();
+                    com.aluguer.model.Veiculo veiculoConcluido = veiculoDAO2.buscarPorId(reserva.getVeiculoId());
+                    if (veiculoConcluido != null) {
+                        java.util.Optional<com.aluguer.model.User> propOpt =
+                            userDAO.findById(veiculoConcluido.getProprietarioId());
+                        if (propOpt.isPresent()) {
+                            com.aluguer.model.User proprietario = propOpt.get();
+                            java.math.BigDecimal novoSaldoProp = proprietario.getSaldo()
+                                .add(java.math.BigDecimal.valueOf(pagoAoDono));
+                            userDAO.atualizarSaldo(veiculoConcluido.getProprietarioId(), novoSaldoProp);
+
+                            // Atualizar sessão se for o utilizador atual
+                            com.aluguer.util.SessionManager sm2 = com.aluguer.util.SessionManager.getInstance();
+                            if (sm2.getUtilizador() != null && sm2.getUtilizador().getId() == veiculoConcluido.getProprietarioId()) {
+                                sm2.getUtilizador().setSaldo(novoSaldoProp);
+                            }
+
+                            System.out.println(String.format(
+                                "[ReservaService] Pagamento ao proprietário #%d: +%.2f€ (total %.2f€ - 10%% comissão %.2f€)",
+                                veiculoConcluido.getProprietarioId(), pagoAoDono,
+                                reserva.getPrecoTotal(), comissao));
+                        }
+                    }
+                } catch (Exception ex) {
+                    System.err.println("[ReservaService] Falha ao pagar proprietário: " + ex.getMessage());
+                }
+
+                return ResultadoOperacao.sucesso(String.format(
+                    "Reserva #%d concluída. Caução devolvida: %.2f€ | Pago ao proprietário: %.2f€",
+                    reservaId, caucaoDevolver, pagoAoDono));
+            } else {
+                return ResultadoOperacao.erro("Falha ao concluir a reserva. Tente novamente.");
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();

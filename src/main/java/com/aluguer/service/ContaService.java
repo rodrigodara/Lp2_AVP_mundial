@@ -85,10 +85,18 @@ public class ContaService {
             return ReservaService.ResultadoOperacao.erro("Não existe sessão ativa.");
         }
 
-        // ALV-116: validar saldo suficiente
+        // ALV-116: validar saldo suficiente (excluindo saldo pendente/bloqueado)
         if (!user.temSaldoSuficiente(montante)) {
+            java.math.BigDecimal pendente = user.getSaldoPendente();
+            if (pendente.compareTo(java.math.BigDecimal.ZERO) > 0) {
+                return ReservaService.ResultadoOperacao.erro(
+                    String.format(
+                        "Saldo insuficiente. Saldo total: %.2f€ | Bloqueado (reserva pendente): %.2f€ | Disponível para levantar: %.2f€",
+                        user.getSaldo(), pendente, user.getSaldoDisponivel())
+                );
+            }
             return ReservaService.ResultadoOperacao.erro(
-                String.format("Saldo insuficiente. Saldo atual: %.2f€", user.getSaldo())
+                String.format("Saldo insuficiente. Saldo disponível: %.2f€", user.getSaldoDisponivel())
             );
         }
 

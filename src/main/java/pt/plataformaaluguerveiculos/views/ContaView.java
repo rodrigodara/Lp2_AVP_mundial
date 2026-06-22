@@ -247,7 +247,7 @@ public class ContaView {
         Label lblSaldoLabel = new Label("Saldo disponível");
         lblSaldoLabel.getStyleClass().add("conta-cartao-label");
 
-        lblSaldoCartao = new Label(formatarSaldo(user.getSaldo()));
+        lblSaldoCartao = new Label(formatarSaldoComPendente(user));
         lblSaldoCartao.getStyleClass().add("conta-cartao-saldo");
 
         String numeroFalso = String.format("•••• •••• •••• %04d", Math.abs(user.getId()) % 10000);
@@ -308,6 +308,16 @@ public class ContaView {
 
     private String formatarSaldo(BigDecimal saldo) {
         return String.format("%.2f €", saldo != null ? saldo : BigDecimal.ZERO);
+    }
+
+    private String formatarSaldoComPendente(com.aluguer.model.User u) {
+        BigDecimal disponivel = u.getSaldoDisponivel();
+        BigDecimal pendente   = u.getSaldoPendente();
+        String base = String.format("%.2f €", disponivel);
+        if (pendente != null && pendente.compareTo(BigDecimal.ZERO) > 0) {
+            base += String.format("%n(Pendente: %.2f €)", pendente);
+        }
+        return base;
     }
 
     // ==================================================================
@@ -798,7 +808,7 @@ public class ContaView {
             return;
         }
         if (lblSaldoCartao != null) {
-            lblSaldoCartao.setText(formatarSaldo(user.getSaldo()));
+            lblSaldoCartao.setText(formatarSaldoComPendente(user));
         }
         carregarTransacoesRecentes(user);
     }

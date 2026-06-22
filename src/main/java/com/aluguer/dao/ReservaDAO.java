@@ -16,6 +16,8 @@ public class ReservaDAO {
 
     private final Connection conn;
 
+    public Connection getConnection() { return conn; }
+
     public ReservaDAO(Connection conn) {
         this.conn = conn;
     }

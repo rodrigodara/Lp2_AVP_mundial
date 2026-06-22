@@ -40,6 +40,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -386,6 +387,19 @@ public class AdminView {
         // ---- Duplo-clique numa linha → ver detalhe completo (apenas leitura) ----
         tabela.setRowFactory(tv -> {
             TableRow<ObservableList<String>> row = new TableRow<>();
+
+            // Tooltip com o preço ao passar o rato
+            Tooltip tooltip = new Tooltip();
+            tooltip.setStyle("-fx-font-size: 13px;");
+            row.itemProperty().addListener((obs, oldItem, newItem) -> {
+                if (newItem != null) {
+                    tooltip.setText("💰 Preço/dia: " + newItem.get(7));
+                    Tooltip.install(row, tooltip);
+                } else {
+                    Tooltip.uninstall(row, tooltip);
+                }
+            });
+
             row.setOnMouseClicked(ev -> {
                 if (ev.getClickCount() == 2 && !row.isEmpty()) {
                     mostrarDetalhesVeiculo(Integer.parseInt(row.getItem().get(0)));
@@ -927,7 +941,19 @@ public class AdminView {
     private void preencherGrafico(BarChart<String, Number> chart, List<Object[]> dados) {
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
         for (Object[] row : dados) {
-            serie.getData().add(new XYChart.Data<>(String.valueOf(row[0]), (double) row[2]));
+            XYChart.Data<String, Number> dataPoint =
+                new XYChart.Data<>(String.valueOf(row[0]), (double) row[2]);
+            serie.getData().add(dataPoint);
+
+            dataPoint.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                if (newNode != null) {
+                    Tooltip tooltip = new Tooltip(
+                        String.format("%s\nReceita: %.2f €", row[0], (double) row[2])
+                    );
+                    tooltip.setStyle("-fx-font-size: 13px;");
+                    Tooltip.install(newNode, tooltip);
+                }
+            });
         }
         chart.getData().clear();
         chart.getData().add(serie);
@@ -953,7 +979,19 @@ public class AdminView {
         XYChart.Series<String, Number> serie = new XYChart.Series<>();
         serie.setName(nomeSerie);
         for (Object[] row : dados) {
-            serie.getData().add(new XYChart.Data<>(String.valueOf(row[0]), (double) row[2]));
+            XYChart.Data<String, Number> dataPoint =
+                new XYChart.Data<>(String.valueOf(row[0]), (double) row[2]);
+            serie.getData().add(dataPoint);
+
+            dataPoint.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                if (newNode != null) {
+                    Tooltip tooltip = new Tooltip(
+                        String.format("%s — %s\nReceita: %.2f €", nomeSerie, row[0], (double) row[2])
+                    );
+                    tooltip.setStyle("-fx-font-size: 13px;");
+                    Tooltip.install(newNode, tooltip);
+                }
+            });
         }
         chart.getData().clear();
         chart.getData().add(serie);
