@@ -5,6 +5,7 @@ import java.sql.SQLException;
 
 import com.aluguer.dao.AvailabilityDAO;
 import com.aluguer.dao.ReservaDAO;
+import com.aluguer.dao.TransactionDAO;
 import com.aluguer.dao.VeiculoDAO;
 import com.aluguer.model.Reserva;
 import com.aluguer.model.Reserva.Estado;
@@ -12,6 +13,10 @@ import com.aluguer.model.Veiculo;
 import com.aluguer.util.DatabaseConnection;
 
 public class ReservaService {
+
+    /** Percentagem do precoTotal retida pela plataforma como comissão em
+     *  cada reserva (aplicada ao aceitar e mantida ao concluir). */
+    private static final double COMISSAO_PLATAFORMA = 0.15;
 
     public ReservaService() {}
 
@@ -53,7 +58,7 @@ public class ReservaService {
                 // -------------------------------------------------------
                 com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
 
-                double comissao       = reserva.getPrecoTotal() * 0.10;  // 10% para o site
+                double comissao       = reserva.getPrecoTotal() * COMISSAO_PLATAFORMA;  // 15% para o site
                 double totalADebitar  = reserva.getPrecoTotal() + reserva.getCaucao();
 
                 // Verificar se o locatário tem saldo suficiente
@@ -173,7 +178,7 @@ public class ReservaService {
                     "Reserva #%d aceite. Cobrado ao locatário: %.2f€ (renda %.2f€ + caução %.2f€ retida). Comissão plataforma: %.2f€.",
                     reservaId, reserva.getPrecoTotal() + reserva.getCaucao(),
                     reserva.getPrecoTotal(), reserva.getCaucao(),
-                    reserva.getPrecoTotal() * 0.10));
+                    reserva.getPrecoTotal() * COMISSAO_PLATAFORMA));
             } else {
                 return ResultadoOperacao.erro("Falha ao aceitar a reserva. Tente novamente.");
             }
@@ -240,12 +245,17 @@ public class ReservaService {
 
     // ================================================================
     // Cancelar reserva
-    //   - PENDENTE: pode cancelar sempre (ainda não houve pagamento nem
-    //     compromisso do proprietário, por isso não há regra das 48h
-    //     nem reembolso a processar).
+    //   - PENDENTE: pode cancelar sempre. Se faltarem menos de 24h para o
+    //     início, é cobrada uma penalização de 15% do precoTotal (debitada
+    //     ao saldo real do utilizador, já que ainda não houve nenhum
+    //     pagamento — o saldo_pendente é só um bloqueio informativo).
     //   - ACEITE: só pode cancelar com 48h ou mais de antecedência, e
     //     implica reembolso (renda + caução) ao locatário.
     // ================================================================
+
+    /** Percentagem do precoTotal cobrada ao cancelar uma reserva PENDENTE
+     *  com menos de 24h de antecedência para o início. */
+    private static final double PENALIZACAO_CANCELAMENTO_TARDIO = 0.15;
 
     public ResultadoOperacao cancelarReserva(int reservaId, int utilizadorId) {
         try (Connection conn = DatabaseConnection.getConnection()) {
@@ -280,8 +290,45 @@ public class ReservaService {
             com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
 
             // Se a reserva ainda estava PENDENTE, não houve pagamento — não há reembolso.
-            // Só é preciso recalcular o saldo pendente (este pedido deixa de o ocupar).
+            // Pode no entanto haver uma penalização, se faltarem menos de 24h para o início.
             if (!eraAceite) {
+                long horasAteInicio = java.time.Duration.between(
+                    java.time.LocalDateTime.now(),
+                    reserva.getDataInicio().atStartOfDay()
+                ).toHours();
+
+                boolean cancelamentoTardio = horasAteInicio < 24;
+                double penalizacao = cancelamentoTardio
+                    ? reserva.getPrecoTotal() * PENALIZACAO_CANCELAMENTO_TARDIO
+                    : 0.0;
+
+                if (cancelamentoTardio) {
+                    try {
+                        java.util.Optional<com.aluguer.model.User> locOpt = userDAO.findById(reserva.getUtilizadorId());
+                        if (locOpt.isEmpty())
+                            return ResultadoOperacao.erro("Reserva cancelada, mas locatário não encontrado para aplicar a penalização.");
+
+                        com.aluguer.model.User locatario = locOpt.get();
+                        java.math.BigDecimal novoSaldo = locatario.getSaldo()
+                            .subtract(java.math.BigDecimal.valueOf(penalizacao));
+                        boolean saldoOk = userDAO.atualizarSaldo(reserva.getUtilizadorId(), novoSaldo);
+
+                        if (!saldoOk)
+                            return ResultadoOperacao.erro("Reserva cancelada, mas falhou a cobrança da penalização.");
+
+                        com.aluguer.util.SessionManager sm = com.aluguer.util.SessionManager.getInstance();
+                        if (sm.getUtilizador() != null && sm.getUtilizador().getId() == reserva.getUtilizadorId()) {
+                            sm.getUtilizador().setSaldo(novoSaldo);
+                        }
+
+                        new TransactionDAO(conn).registarParaUtilizador(
+                            reserva.getUtilizadorId(), penalizacao,
+                            com.aluguer.model.Transaction.Tipo.penalizacao);
+                    } catch (java.sql.SQLException ex) {
+                        return ResultadoOperacao.erro("Reserva cancelada, mas erro ao cobrar a penalização: " + ex.getMessage());
+                    }
+                }
+
                 userDAO.recalcularSaldoPendente(reserva.getUtilizadorId(), conn);
 
                 NotificacaoService.getInstance().criarNotificacao(
@@ -290,8 +337,14 @@ public class ReservaService {
                     null
                 );
 
+                if (cancelamentoTardio) {
+                    return ResultadoOperacao.sucesso(String.format(
+                        "Reserva #%d (pendente) cancelada. Como faltavam menos de 24h para o início, foi cobrada uma penalização de %.2f€ (15%% de %.2f€).",
+                        reservaId, penalizacao, reserva.getPrecoTotal()));
+                }
+
                 return ResultadoOperacao.sucesso(String.format(
-                    "Reserva #%d (pendente) cancelada com sucesso. Como ainda não tinha sido aceite, não houve qualquer cobrança a reembolsar.",
+                    "Reserva #%d (pendente) cancelada com sucesso, sem qualquer cobrança.",
                     reservaId));
             }
 
@@ -366,8 +419,8 @@ public class ReservaService {
                 // -------------------------------------------------------
                 com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
 
-                double comissao      = reserva.getPrecoTotal() * 0.10;  // 10% plataforma
-                double pagoAoDono    = reserva.getPrecoTotal() - comissao;  // 90% para o proprietário
+                double comissao      = reserva.getPrecoTotal() * COMISSAO_PLATAFORMA;  // 15% plataforma
+                double pagoAoDono    = reserva.getPrecoTotal() - comissao;  // 85% para o proprietário
                 double caucaoDevolver = reserva.getCaucao();
 
                 // 1. Devolver caução ao locatário
@@ -388,6 +441,10 @@ public class ReservaService {
                         System.out.println(String.format(
                             "[ReservaService] Caução devolvida: +%.2f€ ao locatário #%d",
                             caucaoDevolver, reserva.getUtilizadorId()));
+
+                        new TransactionDAO(conn).registarParaUtilizador(
+                            reserva.getUtilizadorId(), caucaoDevolver,
+                            com.aluguer.model.Transaction.Tipo.reembolso_caucao);
                     }
                     dao.atualizarCaucaoEstado(reservaId, "DEVOLVIDA");
                 } catch (java.sql.SQLException ex) {
@@ -414,9 +471,13 @@ public class ReservaService {
                             }
 
                             System.out.println(String.format(
-                                "[ReservaService] Pagamento ao proprietário #%d: +%.2f€ (total %.2f€ - 10%% comissão %.2f€)",
+                                "[ReservaService] Pagamento ao proprietário #%d: +%.2f€ (total %.2f€ - 15%% comissão %.2f€)",
                                 veiculoConcluido.getProprietarioId(), pagoAoDono,
                                 reserva.getPrecoTotal(), comissao));
+
+                            new TransactionDAO(conn).registarParaUtilizador(
+                                veiculoConcluido.getProprietarioId(), pagoAoDono,
+                                com.aluguer.model.Transaction.Tipo.recebimento_proprietario);
                         }
                     }
                 } catch (Exception ex) {
@@ -468,7 +529,7 @@ public class ReservaService {
             // Paga ao proprietário o valor normal do aluguer (90% do precoTotal).
             // A caução é tratada à parte, quando a denúncia for decidida.
             com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
-            double comissao   = reserva.getPrecoTotal() * 0.10;
+            double comissao   = reserva.getPrecoTotal() * COMISSAO_PLATAFORMA;
             double pagoAoDono = reserva.getPrecoTotal() - comissao;
 
             try {

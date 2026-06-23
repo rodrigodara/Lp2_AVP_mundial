@@ -6,7 +6,11 @@ public class Transaction {
 
     public enum Tipo {
         deposito,
-        levantamento
+        levantamento,
+        pagamento_reserva,
+        penalizacao,
+        reembolso_caucao,
+        recebimento_proprietario
     }
 
     private int id;

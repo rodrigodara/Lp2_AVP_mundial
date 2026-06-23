@@ -126,8 +126,10 @@ public class ReservaDAO {
     }
 
     public boolean atualizarEstado(int id, Reserva.Estado estado) {
-        // Quando muda para ACEITE ou REJEITADO grava o timestamp e limpa a flag de lida
-        boolean registarData = (estado == Reserva.Estado.ACEITE || estado == Reserva.Estado.REJEITADO);
+        // Quando muda para ACEITE, REJEITADO ou CANCELADO grava o timestamp e limpa a flag de lida
+        boolean registarData = (estado == Reserva.Estado.ACEITE
+            || estado == Reserva.Estado.REJEITADO
+            || estado == Reserva.Estado.CANCELADO);
         String sql = registarData
             ? "UPDATE reserva SET estado = ?, estado_data = NOW(), notif_lida = 0 WHERE id = ?"
             : "UPDATE reserva SET estado = ? WHERE id = ?";

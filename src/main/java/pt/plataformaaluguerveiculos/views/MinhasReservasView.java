@@ -251,7 +251,7 @@ public class MinhasReservasView {
                 "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold; " +
                 "-fx-background-radius: 6; -fx-padding: 6 12;"
             );
-            btnCancelar.setOnAction(e -> cancelarReserva(r));
+            btnCancelar.setOnAction(e -> confirmarCancelamento(r));
 
             HBox linhaCancelar = new HBox(btnCancelar);
             linhaCancelar.setAlignment(Pos.CENTER_RIGHT);
@@ -441,6 +441,107 @@ public class MinhasReservasView {
      *  já que não houve pagamento nem compromisso do proprietário. */
     private boolean podeCancelar(Reserva r) {
         return r.getEstado() == Reserva.Estado.PENDENTE;
+    }
+
+    private static final double PENALIZACAO_CANCELAMENTO_TARDIO = 0.15;
+
+    /** Mostra um diálogo de confirmação antes de cancelar — avisando do valor
+     *  da penalização (15%) se faltarem menos de 24h para o início. */
+    private void confirmarCancelamento(Reserva r) {
+        long horasAteInicio = java.time.Duration.between(
+            java.time.LocalDateTime.now(),
+            r.getDataInicio().atStartOfDay()
+        ).toHours();
+
+        boolean haPenalizacao = horasAteInicio < 24;
+        double penalizacao = haPenalizacao ? r.getPrecoTotal() * PENALIZACAO_CANCELAMENTO_TARDIO : 0.0;
+
+        String mensagem = haPenalizacao
+            ? String.format(
+                "Tem a certeza que quer cancelar a Reserva #%d?%n%n" +
+                "⚠ Faltam menos de 24h para o início. Será cobrada uma penalização de " +
+                "%.2f€ (15%% de %.2f€).",
+                r.getId(), penalizacao, r.getPrecoTotal())
+            : String.format(
+                "Tem a certeza que quer cancelar a Reserva #%d?%n%nNão haverá qualquer cobrança.",
+                r.getId());
+
+        mostrarConfirmacao(mensagem, haPenalizacao, () -> cancelarReserva(r));
+    }
+
+    /** Diálogo genérico de confirmação Sim/Não, no mesmo estilo visual do mostrarFeedback. */
+    private void mostrarConfirmacao(String mensagem, boolean aviso, Runnable aoConfirmar) {
+        String cor = aviso ? "#ef6c00" : "#1a237e";
+
+        Stage dialog = new Stage(StageStyle.TRANSPARENT);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(root.getScene() != null ? root.getScene().getWindow() : null);
+
+        Label lblIcone = new Label(aviso ? "⚠" : "❓");
+        lblIcone.setStyle("-fx-font-size: 20px; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        Label lblTitulo = new Label("Confirmar cancelamento");
+        lblTitulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        HBox iconeTitulo = new HBox(10, lblIcone, lblTitulo);
+        iconeTitulo.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnFechar = new Button("×");
+        btnFechar.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: white;" +
+            "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 0 4 0 4;"
+        );
+        btnFechar.setOnAction(e -> dialog.close());
+
+        HBox topo = new HBox(iconeTitulo, btnFechar);
+        topo.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(iconeTitulo, Priority.ALWAYS);
+        topo.setPadding(new Insets(16, 18, 14, 20));
+        topo.setStyle("-fx-background-color: " + cor + "; -fx-background-radius: 14 14 0 0;");
+
+        Label lblMensagem = new Label(mensagem);
+        lblMensagem.setWrapText(true);
+        lblMensagem.setMaxWidth(360);
+        lblMensagem.setStyle("-fx-font-size: 13px; -fx-text-fill: #333333;");
+
+        Button btnNao = new Button("Não, voltar");
+        btnNao.setStyle(
+            "-fx-background-color: #e0e0e0; -fx-text-fill: #333333; -fx-font-weight: bold;" +
+            "-fx-background-radius: 6; -fx-padding: 8 20 8 20; -fx-cursor: hand;"
+        );
+        btnNao.setOnAction(e -> dialog.close());
+
+        Button btnSim = new Button("Sim, cancelar");
+        btnSim.setStyle(
+            "-fx-background-color: " + cor + "; -fx-text-fill: white; -fx-font-weight: bold;" +
+            "-fx-background-radius: 6; -fx-padding: 8 20 8 20; -fx-cursor: hand;"
+        );
+        btnSim.setOnAction(e -> {
+            dialog.close();
+            aoConfirmar.run();
+        });
+
+        HBox linhaBotoes = new HBox(10, btnNao, btnSim);
+        linhaBotoes.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox corpo = new VBox(18, lblMensagem, linhaBotoes);
+        corpo.setPadding(new Insets(20, 22, 20, 22));
+        corpo.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 14 14;");
+
+        VBox layout = new VBox(topo, corpo);
+        layout.setStyle(
+            "-fx-background-radius: 14; -fx-background-color: white;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 18, 0, 0, 6);"
+        );
+
+        StackPane wrapper = new StackPane(layout);
+        wrapper.setStyle("-fx-background-color: transparent;");
+        wrapper.setPadding(new Insets(12));
+
+        javafx.scene.Scene scene = new javafx.scene.Scene(wrapper);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        dialog.setScene(scene);
+        dialog.showAndWait();
     }
 
     private void cancelarReserva(Reserva r) {

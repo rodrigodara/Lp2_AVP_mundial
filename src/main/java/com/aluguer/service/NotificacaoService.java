@@ -55,18 +55,35 @@ public class NotificacaoService {
         }
     }
 
-    /** Cria notificação manual — usado para AVISO (admin) e PROPOSTA (proprietário). */
+    /** Cria notificação manual — usado para AVISO (admin) e PROPOSTA (proprietário).
+     *  Se mensagem for null (ex.: chamadas para ACEITE/REJEITADO/CANCELADO, que na
+     *  prática já são lidas diretamente da tabela reserva), gera uma mensagem por
+     *  defeito a partir do tipo — a coluna `mensagem` é NOT NULL na base de dados. */
     public void criarNotificacao(int utilizadorId, String tipo, String mensagem) {
+        String mensagemFinal = (mensagem != null && !mensagem.isBlank())
+            ? mensagem
+            : mensagemPorDefeito(tipo);
+
         String sql = "INSERT INTO notificacoes (utilizadorId, tipo, mensagem) VALUES (?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, utilizadorId);
             ps.setString(2, tipo);
-            ps.setString(3, mensagem);
+            ps.setString(3, mensagemFinal);
             ps.executeUpdate();
         } catch (SQLException e) {
             System.err.println("[NotificacaoService] Erro ao criar notificação: " + e.getMessage());
         }
+    }
+
+    private String mensagemPorDefeito(String tipo) {
+        if (tipo == null) return "Tem uma nova notificação.";
+        return switch (tipo) {
+            case "ACEITE"    -> "A sua reserva foi aceite.";
+            case "REJEITADO" -> "A sua reserva foi recusada.";
+            case "CANCELADO" -> "A sua reserva foi cancelada.";
+            default          -> "Tem uma nova notificação.";
+        };
     }
 
     // =========================================================================
@@ -76,7 +93,7 @@ public class NotificacaoService {
     public List<Notificacao> listar(int utilizadorId) {
         List<Notificacao> lista = new ArrayList<>();
 
-        // 1) ACEITE e REJEITADO — vêm da tabela reserva
+        // 1) ACEITE, REJEITADO e CANCELADO — vêm da tabela reserva
         String sqlReserva = """
             SELECT r.id, r.estado AS tipo, r.estado_data AS data_criacao,
                    CONCAT(v.marca, ' ', v.modelo) AS nomeVeiculo,
@@ -84,7 +101,7 @@ public class NotificacaoService {
             FROM reserva r
             JOIN veiculo v ON v.id = r.veiculoId
             WHERE r.utilizadorId = ?
-              AND r.estado IN ('ACEITE', 'REJEITADO')
+              AND r.estado IN ('ACEITE', 'REJEITADO', 'CANCELADO')
               AND r.notif_lida = 0
               AND r.estado_data >= NOW() - INTERVAL 24 HOUR
             ORDER BY r.estado_data DESC
@@ -92,11 +109,14 @@ public class NotificacaoService {
             """;
 
         // 2) AVISO e PROPOSTA — vêm da tabela notificacoes
+        // (exclui ACEITE/REJEITADO/CANCELADO mesmo que existam aqui também,
+        //  para não duplicar o que já vem da tabela reserva acima)
         String sqlNotif = """
             SELECT id, tipo, mensagem, lida, data_criacao
             FROM notificacoes
             WHERE utilizadorId = ?
               AND lida = 0
+              AND tipo NOT IN ('ACEITE', 'REJEITADO', 'CANCELADO')
               AND data_criacao >= NOW() - INTERVAL 24 HOUR
             ORDER BY data_criacao DESC
             LIMIT 50
@@ -161,13 +181,14 @@ public class NotificacaoService {
         String sqlReserva = """
             SELECT COUNT(*) FROM reserva
             WHERE utilizadorId = ?
-              AND estado IN ('ACEITE', 'REJEITADO')
+              AND estado IN ('ACEITE', 'REJEITADO', 'CANCELADO')
               AND notif_lida = 0
               AND estado_data >= NOW() - INTERVAL 24 HOUR
             """;
         String sqlNotif = """
             SELECT COUNT(*) FROM notificacoes
             WHERE utilizadorId = ? AND lida = 0
+              AND tipo NOT IN ('ACEITE', 'REJEITADO', 'CANCELADO')
               AND data_criacao >= NOW() - INTERVAL 24 HOUR
             """;
 

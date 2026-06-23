@@ -1,5 +1,6 @@
 package pt.plataformaaluguerveiculos.views;
 
+import java.io.ByteArrayInputStream;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -46,14 +47,13 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
-
-import java.io.ByteArrayInputStream;
 
 /**
  * AdminView — Painel de Administração.
@@ -765,7 +765,7 @@ public class AdminView {
 
         // ---- Cards gerais ----
         Label lblGerais = label("Resumo Geral", 17, true, "#1a237e");
-        HBox cardsBox   = criarCardsGerais();
+        FlowPane cardsBox = criarCardsGerais();
 
         // ---- Filtro por período ----
         Label lblPeriodo = label("Análise por Período", 16, true, "#37474f");
@@ -1049,8 +1049,8 @@ public class AdminView {
         return box;
     }
 
-    private HBox criarCardsGerais() {
-        HBox box = new HBox(16);
+    private FlowPane criarCardsGerais() {
+        FlowPane box = new FlowPane(16, 16);
         box.setAlignment(Pos.CENTER_LEFT);
         try {
             int[] s = dao.estatisticasGerais();
@@ -1061,6 +1061,12 @@ public class AdminView {
                 card("🚗 Veículos",       String.valueOf(s[3]), "#e3f2fd", "#1565c0"),
                 card("📋 Reservas",       String.valueOf(s[4]), "#fff8e1", "#f57f17"),
                 card("💰 Receita Total",  s[5] + " €",          "#f3e5f5", "#6a1b9a")
+            );
+
+            double[] lucro = dao.calcularLucroSite();
+            box.getChildren().addAll(
+                card("🏦 Lucro do Site (Concluídas)", String.format("%.2f €", lucro[0]), "#e0f2f1", "#00695c"),
+                card("⏳ Lucro do Site (Pendente)",    String.format("%.2f €", lucro[1]), "#fff3e0", "#ef6c00")
             );
         } catch (SQLException e) {
             e.printStackTrace();

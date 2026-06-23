@@ -234,8 +234,13 @@ public class SinhoNotificacoesView {
             atualizarBadge();
             popup.hide();
             if (n.isReserva) {
-                // ACEITE -> tab 1, REJEITADO -> tab 2
-                int tab = "ACEITE".equals(n.tipo) ? 1 : 2;
+                // ACEITE -> tab 1, REJEITADO -> tab 2, CANCELADO -> tab 3
+                int tab = switch (n.tipo) {
+                    case "ACEITE"    -> 1;
+                    case "REJEITADO" -> 2;
+                    case "CANCELADO" -> 3;
+                    default          -> 1;
+                };
                 NavigationManager.getInstance().navegarParaMinhasReservasEstado(tab);
             } else if ("PROPOSTA".equals(n.tipo)) {
                 // Novo pedido de reserva recebido -> vai direto para
@@ -355,6 +360,7 @@ public class SinhoNotificacoesView {
             case "PROPOSTA"  -> "#1565c0";
             case "ACEITE"    -> "#2e7d32";
             case "REJEITADO" -> "#b71c1c";
+            case "CANCELADO" -> "#ef6c00";
             default          -> "#37474f";
         };
     }
@@ -365,6 +371,7 @@ public class SinhoNotificacoesView {
             case "PROPOSTA"  -> "PEDIDO";
             case "ACEITE"    -> "ACEITE";
             case "REJEITADO" -> "RECUSADO";
+            case "CANCELADO" -> "CANCELADO";
             default          -> "INFO";
         };
     }
@@ -375,6 +382,7 @@ public class SinhoNotificacoesView {
             case "PROPOSTA"  -> "Novo Pedido de Reserva";
             case "ACEITE"    -> "Reserva Aceite";
             case "REJEITADO" -> "Reserva Recusada";
+            case "CANCELADO" -> "Reserva Cancelada";
             default          -> "Notificacao";
         };
     }
@@ -383,6 +391,7 @@ public class SinhoNotificacoesView {
         return switch (n.tipo) {
             case "ACEITE"    -> "A tua reserva do " + n.nomeVeiculo + " foi aceite";
             case "REJEITADO" -> "A tua reserva do " + n.nomeVeiculo + " foi recusada";
+            case "CANCELADO" -> "A tua reserva do " + n.nomeVeiculo + " foi cancelada";
             default          -> n.getMensagem();
         };
     }

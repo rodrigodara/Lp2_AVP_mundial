@@ -9,11 +9,13 @@ import java.util.Optional;
 
 import com.aluguer.dao.DenunciaDAO;
 import com.aluguer.dao.ReservaDAO;
+import com.aluguer.dao.TransactionDAO;
 import com.aluguer.dao.UserDAO;
 import com.aluguer.dao.VeiculoDAO;
 import com.aluguer.model.Denuncia;
 import com.aluguer.model.Reserva;
 import com.aluguer.model.Reserva.Estado;
+import com.aluguer.model.Transaction;
 import com.aluguer.model.User;
 import com.aluguer.model.Veiculo;
 import com.aluguer.service.ReservaService.ResultadoOperacao;
@@ -250,6 +252,14 @@ public class DenunciaService {
                 if (sm.getUtilizador() != null && sm.getUtilizador().getId() == beneficiarioId) {
                     sm.getUtilizador().setSaldo(novoSaldo);
                 }
+
+                // Registar a transação: se for o proprietário (denunciante aprovado),
+                // é um recebimento; se for o locatário (denúncia rejeitada), é a
+                // devolução normal da caução.
+                Transaction.Tipo tipoTransacao = aprovarDenunciante
+                    ? Transaction.Tipo.recebimento_proprietario
+                    : Transaction.Tipo.reembolso_caucao;
+                new TransactionDAO(conn).registarParaUtilizador(beneficiarioId, caucao, tipoTransacao);
             }
         } catch (SQLException ex) {
             System.err.println("[DenunciaService] Falha ao mover caução: " + ex.getMessage());

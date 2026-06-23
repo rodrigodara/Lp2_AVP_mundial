@@ -366,6 +366,37 @@ public boolean emitirAviso(int userId, String motivo) throws SQLException {
         return s;
     }
 
+    /** Percentagem de comissão da plataforma sobre o precoTotal de cada reserva. */
+    private static final double COMISSAO_PLATAFORMA = 0.15;
+
+    /**
+     * Lucro da plataforma (comissão de 15%), separado em dois valores:
+     *   [0] = lucro já consolidado, de reservas CONCLUIDO
+     *   [1] = lucro pendente, de reservas ACEITE (ainda a decorrer)
+     */
+    public double[] calcularLucroSite() throws SQLException {
+        double[] lucro = new double[2];
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                "SELECT estado, COALESCE(SUM(precoTotal), 0) AS total "
+              + "FROM reserva "
+              + "WHERE estado IN ('ACEITE', 'CONCLUIDO') "
+              + "GROUP BY estado");
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                double receita = rs.getDouble("total");
+                double comissao = receita * COMISSAO_PLATAFORMA;
+                if ("CONCLUIDO".equals(rs.getString("estado"))) {
+                    lucro[0] = comissao;
+                } else {
+                    lucro[1] = comissao;
+                }
+            }
+        }
+        return lucro;
+    }
+
     public List<Object[]> estatisticasPorPeriodo(String agrupamento) throws SQLException {
         List<Object[]> lista = new ArrayList<>();
         String fmt = switch (agrupamento) {

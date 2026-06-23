@@ -100,8 +100,13 @@ public class ContaView {
         VBox cartaoBancario = criarCartaoBancario(user);
 
         VBox cardTransacoes = criarCardTransacoesRecentes(user);
+        cardTransacoes.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(cardTransacoes, Priority.ALWAYS);
 
-        root.getChildren().addAll(titulo, subtitulo, cardPerfil, cartaoBancario, cardTransacoes);
+        HBox linhaCartaoTransacoes = new HBox(20, cartaoBancario, cardTransacoes);
+        linhaCartaoTransacoes.setAlignment(Pos.TOP_LEFT);
+
+        root.getChildren().addAll(titulo, subtitulo, cardPerfil, linhaCartaoTransacoes);
     }
 
     // ==================================================================
@@ -359,19 +364,33 @@ public class ContaView {
         transacoes.stream().limit(5).forEach(t -> transacoesBox.getChildren().add(criarLinhaTransacao(t)));
     }
 
-    private HBox criarLinhaTransacao(Transaction t) {
-        boolean deposito = t.getTipo() == Transaction.Tipo.deposito;
+    /** Para cada tipo de transação: [ícone, label, isCredito (+) ou débito (-), cor]. */
+    private record InfoTipo(String icone, String label, boolean credito, String cor) {}
 
-        Label icone = new Label(deposito ? "↑" : "↓");
+    private InfoTipo infoParaTipo(Transaction.Tipo tipo) {
+        return switch (tipo) {
+            case deposito                 -> new InfoTipo("↑", "Depósito",                     true,  "#2e7d32");
+            case levantamento             -> new InfoTipo("↓", "Levantamento",                  false, "#c62828");
+            case penalizacao              -> new InfoTipo("⚠", "Penalização por cancelamento",  false, "#ef6c00");
+            case reembolso_caucao         -> new InfoTipo("🔄", "Reembolso de caução",            true,  "#2e7d32");
+            case recebimento_proprietario -> new InfoTipo("🚗", "Pagamento de aluguer recebido",  true,  "#1565c0");
+            default                       -> new InfoTipo("•", "Transação",                      true,  "#555555");
+        };
+    }
+
+    private HBox criarLinhaTransacao(Transaction t) {
+        InfoTipo info = infoParaTipo(t.getTipo());
+
+        Label icone = new Label(info.icone());
         icone.setStyle(
-                "-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: white;"
-                + "-fx-background-color: " + (deposito ? "#2e7d32" : "#c62828") + ";"
+                "-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: white;"
+                + "-fx-background-color: " + info.cor() + ";"
                 + "-fx-background-radius: 12; -fx-min-width: 24; -fx-min-height: 24;"
                 + "-fx-alignment: center;"
         );
         icone.setAlignment(Pos.CENTER);
 
-        Label lblTipo = new Label(deposito ? "Depósito" : "Levantamento");
+        Label lblTipo = new Label(info.label());
         lblTipo.setStyle("-fx-font-size: 13px; -fx-text-fill: #333333; -fx-font-weight: bold;");
 
         Label lblData = new Label(t.getData() != null ? t.getData().format(FORMATO_DATA_HORA) : "—");
@@ -381,9 +400,9 @@ public class ContaView {
 
         Region espacador = criarEspacador();
 
-        Label lblValor = new Label((deposito ? "+ " : "- ") + String.format("%.2f €", t.getValor()));
+        Label lblValor = new Label((info.credito() ? "+ " : "- ") + String.format("%.2f €", t.getValor()));
         lblValor.setStyle(
-                "-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: " + (deposito ? "#2e7d32" : "#c62828") + ";"
+                "-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: " + info.cor() + ";"
         );
 
         HBox linha = new HBox(12, icone, infoBox, espacador, lblValor);

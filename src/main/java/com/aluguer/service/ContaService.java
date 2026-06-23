@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import com.aluguer.dao.TransactionDAO;
 import com.aluguer.model.User;
 import com.aluguer.util.DatabaseConnection;
 import com.aluguer.util.SessionManager;
@@ -51,6 +52,7 @@ public class ContaService {
 
         if (ok) {
             user.setSaldo(novoSaldo); // atualizar sessão local
+            registarTransacao(user.getId(), montante.doubleValue(), com.aluguer.model.Transaction.Tipo.deposito);
             return ReservaService.ResultadoOperacao.sucesso(
                 String.format("Depósito de %.2f€ efetuado com sucesso. Saldo atual: %.2f€",
                     montante, novoSaldo)
@@ -106,6 +108,7 @@ public class ContaService {
 
         if (ok) {
             user.setSaldo(novoSaldo); // atualizar sessão local
+            registarTransacao(user.getId(), montante.doubleValue(), com.aluguer.model.Transaction.Tipo.levantamento);
             return ReservaService.ResultadoOperacao.sucesso(
                 String.format("Levantamento de %.2f€ efetuado com sucesso. Saldo atual: %.2f€",
                     montante, novoSaldo)
@@ -142,6 +145,19 @@ public class ContaService {
         } catch (SQLException e) {
             System.err.println("[ContaService] Erro ao atualizar saldo: " + e.getMessage());
             return false;
+        }
+    }
+
+    // ================================================================
+    // Auxiliar — registar transação (não bloqueia a operação principal
+    // se falhar; só regista o erro na consola)
+    // ================================================================
+
+    private void registarTransacao(int utilizadorId, double valor, com.aluguer.model.Transaction.Tipo tipo) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            new TransactionDAO(conn).registarParaUtilizador(utilizadorId, valor, tipo);
+        } catch (SQLException e) {
+            System.err.println("[ContaService] Falha ao registar transação: " + e.getMessage());
         }
     }
 

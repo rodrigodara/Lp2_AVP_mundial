@@ -25,6 +25,22 @@ public class TransactionDAO {
     }
 
     // ----------------------------------------------------------------
+    // Registar uma transação genérica para um utilizador (qualquer Tipo).
+    // Resolve o contaId automaticamente (criando a conta se necessário).
+    // ----------------------------------------------------------------
+
+    public boolean registarParaUtilizador(int utilizadorId, double valor, Transaction.Tipo tipo) {
+        try {
+            int contaId = new com.aluguer.dao.ContaDAO(conn).obterOuCriarContaId(utilizadorId);
+            return inserir(new Transaction(contaId, valor, tipo));
+        } catch (SQLException e) {
+            System.err.println("[TransactionDAO] Erro ao registar transação para utilizador #"
+                + utilizadorId + ": " + e.getMessage());
+            return false;
+        }
+    }
+
+    // ----------------------------------------------------------------
     // Registar depósito
     // ----------------------------------------------------------------
 
