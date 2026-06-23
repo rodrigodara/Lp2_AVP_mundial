@@ -239,7 +239,12 @@ public class ReservaService {
     }
 
     // ================================================================
-    // Cancelar reserva (regra das 48 horas)
+    // Cancelar reserva
+    //   - PENDENTE: pode cancelar sempre (ainda não houve pagamento nem
+    //     compromisso do proprietário, por isso não há regra das 48h
+    //     nem reembolso a processar).
+    //   - ACEITE: só pode cancelar com 48h ou mais de antecedência, e
+    //     implica reembolso (renda + caução) ao locatário.
     // ================================================================
 
     public ResultadoOperacao cancelarReserva(int reservaId, int utilizadorId) {
@@ -253,23 +258,45 @@ public class ReservaService {
             if (reserva.getUtilizadorId() != utilizadorId)
                 return ResultadoOperacao.erro("Nao pode cancelar reservas de outros utilizadores.");
 
-            if (reserva.getEstado() != Estado.ACEITE)
+            if (reserva.getEstado() != Estado.PENDENTE && reserva.getEstado() != Estado.ACEITE)
                 return ResultadoOperacao.erro(
-                    "Apenas reservas ACEITES podem ser canceladas. Estado atual: " + reserva.getEstado());
+                    "Apenas reservas PENDENTES ou ACEITES podem ser canceladas. Estado atual: " + reserva.getEstado());
 
-            long horas = java.time.Duration.between(
-                java.time.LocalDateTime.now(),
-                reserva.getDataInicio().atStartOfDay()
-            ).toHours();
+            boolean eraAceite = reserva.getEstado() == Estado.ACEITE;
 
-            if (horas < 48)
-                return ResultadoOperacao.erro("Nao e possivel cancelar: faltam menos de 48 horas para o inicio.");
+            if (eraAceite) {
+                long horas = java.time.Duration.between(
+                    java.time.LocalDateTime.now(),
+                    reserva.getDataInicio().atStartOfDay()
+                ).toHours();
+
+                if (horas < 48)
+                    return ResultadoOperacao.erro("Nao e possivel cancelar: faltam menos de 48 horas para o inicio.");
+            }
 
             boolean ok = dao.atualizarEstado(reservaId, Estado.CANCELADO);
             if (!ok) return ResultadoOperacao.erro("Falha ao cancelar a reserva.");
 
-            double reembolso = reserva.getCaucao() + reserva.getPrecoTotal();
             com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
+
+            // Se a reserva ainda estava PENDENTE, não houve pagamento — não há reembolso.
+            // Só é preciso recalcular o saldo pendente (este pedido deixa de o ocupar).
+            if (!eraAceite) {
+                userDAO.recalcularSaldoPendente(reserva.getUtilizadorId(), conn);
+
+                NotificacaoService.getInstance().criarNotificacao(
+                    reserva.getUtilizadorId(),
+                    "CANCELADO",
+                    null
+                );
+
+                return ResultadoOperacao.sucesso(String.format(
+                    "Reserva #%d (pendente) cancelada com sucesso. Como ainda não tinha sido aceite, não houve qualquer cobrança a reembolsar.",
+                    reservaId));
+            }
+
+            // Reserva estava ACEITE — já houve pagamento, por isso há reembolso.
+            double reembolso = reserva.getCaucao() + reserva.getPrecoTotal();
 
             // Devolver saldo ao locatário (tabela utilizadores, consistente com o resto do sistema)
             try {

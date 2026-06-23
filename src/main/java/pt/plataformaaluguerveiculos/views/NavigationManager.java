@@ -12,6 +12,7 @@ public class NavigationManager {
     private static NavigationManager instance;
     private BaseLayoutView baseLayout;
     private int utilizadorLogadoId = -1;
+    private ConversaView conversaAberta;
 
     private NavigationManager() {
     }
@@ -169,6 +170,19 @@ public class NavigationManager {
         if (utilizadorLogadoId < 0) return;
         garantirNavbar();
         navegarPara(new MinhasReservasView(utilizadorLogadoId, tab).getRoot());
+    }
+
+    /** Navega para a conversa (chat) de uma reserva ACEITE, entre locatário e proprietário. */
+    public void navegarParaConversa(int reservaId) {
+        if (bloquearSeAdmin("ver conversa")) return;
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+
+        if (conversaAberta != null) {
+            conversaAberta.pararAutoRefresh();
+        }
+        conversaAberta = new ConversaView(reservaId, utilizadorLogadoId);
+        navegarPara(conversaAberta.getRoot());
     }
 
     // =========================

@@ -30,9 +30,19 @@ public class ProcurarVeiculosView {
 
     private static final double LARGURA_CARD = 230;
     private static final double ALTURA_FOTO = 150;
+    private static final int TAMANHO_PAGINA = 10;
 
     private VBox root;
     private FlowPane gridCards;
+    private ScrollPane scrollCards;
+
+    // Paginação
+    private List<Veiculo> listaCompleta = java.util.Collections.emptyList();
+    private int paginaAtual = 0;
+    private HBox paginacaoBox;
+    private Label lblPaginacao;
+    private Button btnPaginaAnterior;
+    private Button btnPaginaSeguinte;
 
     // Filtros
     private ComboBox<String> comboMarca;
@@ -149,15 +159,47 @@ public class ProcurarVeiculosView {
         gridCards.setPadding(new Insets(4));
         gridCards.setAlignment(Pos.TOP_LEFT);
 
-        ScrollPane scrollCards = new ScrollPane(gridCards);
-        scrollCards.setFitToWidth(true);
-        scrollCards.setPrefHeight(560);
-        scrollCards.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-        VBox.setVgrow(scrollCards, Priority.ALWAYS);
+        ScrollPane scroll = new ScrollPane(gridCards);
+        scroll.setFitToWidth(true);
+        scroll.setPrefHeight(560);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        this.scrollCards = scroll;
+
+        // ============================
+        // CONTROLOS DE PAGINAÇÃO
+        // ============================
+        btnPaginaAnterior = new Button("‹ Anterior");
+        btnPaginaAnterior.getStyleClass().add("btn-secundario");
+        btnPaginaAnterior.setOnAction(e -> {
+            if (paginaAtual > 0) {
+                paginaAtual--;
+                renderizarPaginaAtual();
+                scrollCards.setVvalue(0);
+            }
+        });
+
+        btnPaginaSeguinte = new Button("Seguinte ›");
+        btnPaginaSeguinte.getStyleClass().add("btn-secundario");
+        btnPaginaSeguinte.setOnAction(e -> {
+            int totalPaginas = totalPaginas();
+            if (paginaAtual < totalPaginas - 1) {
+                paginaAtual++;
+                renderizarPaginaAtual();
+                scrollCards.setVvalue(0);
+            }
+        });
+
+        lblPaginacao = new Label();
+        lblPaginacao.setStyle("-fx-font-size: 12px; -fx-text-fill: #666666;");
+
+        paginacaoBox = new HBox(14, btnPaginaAnterior, lblPaginacao, btnPaginaSeguinte);
+        paginacaoBox.setAlignment(Pos.CENTER);
+        paginacaoBox.setPadding(new Insets(6, 0, 0, 0));
 
         carregarVeiculos();
 
-        root.getChildren().addAll(titulo, pesquisaBox, filtrosBox, scrollCards);
+        root.getChildren().addAll(titulo, pesquisaBox, filtrosBox, scrollCards, paginacaoBox);
     }
 
     // ============================
@@ -250,19 +292,54 @@ public class ProcurarVeiculosView {
         return card;
     }
 
-    /** Reconstrói a grelha de cards a partir de uma lista de veículos. */
+    /** Recebe a lista completa (de uma pesquisa/filtro) e mostra a partir da página 1. */
     private void atualizarCards(List<Veiculo> lista) {
+        this.listaCompleta = (lista != null) ? lista : java.util.Collections.emptyList();
+        this.paginaAtual = 0;
+        renderizarPaginaAtual();
+    }
+
+    private int totalPaginas() {
+        if (listaCompleta.isEmpty()) return 1;
+        return (int) Math.ceil(listaCompleta.size() / (double) TAMANHO_PAGINA);
+    }
+
+    /** Constrói os cards apenas para a página atual e atualiza os controlos de paginação. */
+    private void renderizarPaginaAtual() {
         gridCards.getChildren().clear();
-        if (lista == null || lista.isEmpty()) {
+
+        if (listaCompleta.isEmpty()) {
             Label vazio = new Label("Nenhum veículo encontrado com os critérios indicados.");
             vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
             vazio.setPadding(new Insets(30));
             gridCards.getChildren().add(vazio);
+
+            paginacaoBox.setVisible(false);
+            paginacaoBox.setManaged(false);
             return;
         }
-        for (Veiculo v : lista) {
+
+        int totalPaginas = totalPaginas();
+        if (paginaAtual >= totalPaginas) paginaAtual = totalPaginas - 1;
+        if (paginaAtual < 0) paginaAtual = 0;
+
+        int inicio = paginaAtual * TAMANHO_PAGINA;
+        int fim = Math.min(inicio + TAMANHO_PAGINA, listaCompleta.size());
+
+        for (Veiculo v : listaCompleta.subList(inicio, fim)) {
             gridCards.getChildren().add(criarCardVeiculo(v));
         }
+
+        lblPaginacao.setText(
+            "Página " + (paginaAtual + 1) + " de " + totalPaginas +
+            "  ·  " + listaCompleta.size() + " veículos"
+        );
+        btnPaginaAnterior.setDisable(paginaAtual == 0);
+        btnPaginaSeguinte.setDisable(paginaAtual >= totalPaginas - 1);
+
+        boolean mostrarPaginacao = totalPaginas > 1;
+        paginacaoBox.setVisible(mostrarPaginacao);
+        paginacaoBox.setManaged(mostrarPaginacao);
     }
 
     // ============================

@@ -73,8 +73,10 @@ public class DenunciaService {
                 return ResultadoOperacao.erro("A reserva foi concluída, mas houve uma falha a registar a denúncia. Contacte o suporte.");
 
             notificacaoService.criarNotificacao(reserva.getUtilizadorId(), "AVISO",
-                "🚩 O proprietário reportou um problema na tua reserva #" + reservaId +
-                ". A caução fica retida até decisão da administração. Podes responder em 'As Minhas Reservas'.");
+                "🚩 O proprietário reportou um problema no teu aluguer do " +
+                veiculo.getMarca() + " " + veiculo.getModelo() +
+                ". A caução fica retida até decisão da administração. " +
+                "Podes responder em 'As Minhas Reservas' (separador Concluídas).");
 
             return ResultadoOperacao.sucesso(String.format(
                 "Denúncia registada. A caução (%.2f€) fica retida até a administração decidir o caso.",

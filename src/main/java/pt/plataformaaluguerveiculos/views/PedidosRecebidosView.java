@@ -17,7 +17,6 @@ import com.aluguer.util.DatabaseConnection;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -179,10 +178,8 @@ public class PedidosRecebidosView {
         );
         lblPreco.getStyleClass().add("reserva-card-detalhe");
 
-        Label lblVeiculo = new Label("Veículo ID: " + r.getVeiculoId());
+        Label lblVeiculo = new Label("🚗 " + nomeVeiculo(r.getVeiculoId()));
         lblVeiculo.getStyleClass().add("reserva-card-detalhe");
-
-        // --- ALV-91: Botões Aceitar / Rejeitar ---
         Button btnAceitar  = new Button("✔  Aceitar");
         Button btnRejeitar = new Button("✘  Rejeitar");
 
@@ -238,7 +235,7 @@ public class PedidosRecebidosView {
 
         linhaId.getChildren().addAll(lblId, badge);
 
-        Label lblVeiculo = new Label("Veículo ID: " + r.getVeiculoId());
+        Label lblVeiculo = new Label("🚗 " + nomeVeiculo(r.getVeiculoId()));
         lblVeiculo.getStyleClass().add("reserva-card-detalhe");
 
         Label lblDatas = new Label(
@@ -252,6 +249,13 @@ public class PedidosRecebidosView {
             + "  |  Caução: " + String.format("%.2f€", r.getCaucao())
         );
         lblPreco.getStyleClass().add("reserva-card-detalhe");
+
+        Button btnConversar = new Button("💬  Conversar");
+        btnConversar.setStyle(
+            "-fx-background-color: #1a237e; -fx-text-fill: white; -fx-font-weight: bold;" +
+            "-fx-background-radius: 6; -fx-padding: 8 16 8 16; -fx-cursor: hand;"
+        );
+        btnConversar.setOnAction(e -> NavigationManager.getInstance().navegarParaConversa(r.getId()));
 
         Button btnConcluir = new Button("✔  Concluir Viagem");
         btnConcluir.getStyleClass().add("btn-aceitar");
@@ -268,7 +272,7 @@ public class PedidosRecebidosView {
         );
         btnReportar.setOnAction(e -> abrirDialogoReportar(r));
 
-        HBox acoes = new HBox(10, btnReportar, btnConcluir);
+        HBox acoes = new HBox(10, btnConversar, btnReportar, btnConcluir);
         acoes.setAlignment(Pos.CENTER_RIGHT);
 
         card.getChildren().addAll(linhaId, lblVeiculo, lblDatas, lblPreco, acoes);
@@ -366,8 +370,10 @@ public class PedidosRecebidosView {
             );
             if (resultado.isSucesso()) {
                 dialog.close();
-                mostrarFeedback(resultado);
-                construirPagina();
+                javafx.application.Platform.runLater(() -> {
+                    mostrarFeedback(resultado);
+                    construirPagina();
+                });
             } else {
                 lblFeedback.setText("❌ " + resultado.getMensagem());
                 lblFeedback.setStyle("-fx-text-fill: #c62828;");
@@ -393,6 +399,24 @@ public class PedidosRecebidosView {
     // Lógica de dados
     // ----------------------------------------------------------------
 
+    /** Cache simples: evita ir à BD repetidamente para o mesmo veículo na mesma página. */
+    private final java.util.Map<Integer, String> cacheNomeVeiculo = new java.util.HashMap<>();
+
+    private String nomeVeiculo(int veiculoId) {
+        return cacheNomeVeiculo.computeIfAbsent(veiculoId, id -> {
+            try {
+                com.aluguer.dao.VeiculoDAO veiculoDAO = new com.aluguer.dao.VeiculoDAO();
+                com.aluguer.model.Veiculo veiculo = veiculoDAO.buscarPorId(id);
+                if (veiculo != null) {
+                    return veiculo.getMarca() + " " + veiculo.getModelo();
+                }
+            } catch (SQLException e) {
+                System.err.println("[PedidosRecebidosView] Erro ao buscar veículo #" + id + ": " + e.getMessage());
+            }
+            return "Veículo #" + id;
+        });
+    }
+
     private List<Reserva> carregarPorEstado(Reserva.Estado estado) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             ReservaDAO dao = new ReservaDAO(conn);
@@ -410,16 +434,70 @@ public class PedidosRecebidosView {
     // ----------------------------------------------------------------
 
     private void mostrarFeedback(ResultadoOperacao resultado) {
-        Alert alert = new Alert(
-            resultado.isSucesso() ? Alert.AlertType.INFORMATION : Alert.AlertType.ERROR
+        boolean sucesso = resultado.isSucesso();
+        String cor = sucesso ? "#2e7d32" : "#c62828";
+        String icone = sucesso ? "✔" : "✘";
+        String titulo = sucesso ? "Sucesso" : "Erro";
+
+        Stage dialog = new Stage(StageStyle.TRANSPARENT);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(root.getScene() != null ? root.getScene().getWindow() : null);
+
+        Label lblIcone = new Label(icone);
+        lblIcone.setStyle("-fx-font-size: 20px; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        Label lblTitulo = new Label(titulo);
+        lblTitulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        HBox iconeTitulo = new HBox(10, lblIcone, lblTitulo);
+        iconeTitulo.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnFechar = new Button("×");
+        btnFechar.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: white;" +
+            "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 0 4 0 4;"
         );
-        alert.setTitle(resultado.isSucesso() ? "Sucesso" : "Erro");
-        alert.setHeaderText(null);
-        alert.setContentText(resultado.getMensagem());
-        alert.getDialogPane().getStyleClass().add(
-            resultado.isSucesso() ? "feedback-sucesso" : "feedback-error"
+        btnFechar.setOnAction(e -> dialog.close());
+
+        HBox topo = new HBox(iconeTitulo, btnFechar);
+        topo.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(iconeTitulo, Priority.ALWAYS);
+        topo.setPadding(new Insets(16, 18, 14, 20));
+        topo.setStyle("-fx-background-color: " + cor + "; -fx-background-radius: 14 14 0 0;");
+
+        Label lblMensagem = new Label(resultado.getMensagem());
+        lblMensagem.setWrapText(true);
+        lblMensagem.setStyle("-fx-font-size: 13px; -fx-text-fill: #333333;");
+
+        Button btnOk = new Button("OK");
+        btnOk.setStyle(
+            "-fx-background-color: " + cor + "; -fx-text-fill: white; -fx-font-weight: bold;" +
+            "-fx-background-radius: 6; -fx-padding: 8 28 8 28; -fx-cursor: hand;"
         );
-        alert.showAndWait();
+        btnOk.setOnAction(e -> dialog.close());
+        btnOk.setDefaultButton(true);
+
+        HBox linhaBotao = new HBox(btnOk);
+        linhaBotao.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox corpo = new VBox(18, lblMensagem, linhaBotao);
+        corpo.setPadding(new Insets(20, 22, 20, 22));
+        corpo.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 14 14;");
+
+        VBox layout = new VBox(topo, corpo);
+        layout.setStyle(
+            "-fx-background-radius: 14; -fx-background-color: white;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 18, 0, 0, 6);"
+        );
+
+        StackPane wrapper = new StackPane(layout);
+        wrapper.setStyle("-fx-background-color: transparent;");
+        wrapper.setPadding(new Insets(12));
+
+        javafx.scene.Scene scene = new javafx.scene.Scene(wrapper);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        dialog.setScene(scene);
+        dialog.showAndWait();
     }
 
     // ----------------------------------------------------------------

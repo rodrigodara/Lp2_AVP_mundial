@@ -162,7 +162,7 @@ public class CriarReservaView {
         Button btnCancelar = new Button("Cancelar");
         btnCancelar.getStyleClass().add("btn-secundario");
         btnCancelar.setMaxWidth(Double.MAX_VALUE);
-        btnCancelar.setOnAction(e -> NavigationManager.getInstance().navegarParaDashboard());
+        btnCancelar.setOnAction(e -> NavigationManager.getInstance().navegarParaMeusVeiculos());
 
         HBox botoes = new HBox(12, btnCancelar, btnReservar);
         HBox.setHgrow(btnReservar, Priority.ALWAYS);

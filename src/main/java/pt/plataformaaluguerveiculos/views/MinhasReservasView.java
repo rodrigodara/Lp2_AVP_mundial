@@ -31,6 +31,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -242,16 +243,33 @@ public class MinhasReservasView {
             }
         }
 
-        // Botão Cancelar
-        javafx.scene.control.Button btnCancelar = new javafx.scene.control.Button("Cancelar");
-        btnCancelar.setStyle(
-            "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold; " +
-            "-fx-background-radius: 6; -fx-padding: 6 12;"
-        );
-
+        // Botão Cancelar — disponível apenas em reservas PENDENTES
+        // (ainda não foram aceites, por isso não há regra das 48h nem reembolso)
         if (podeCancelar(r)) {
+            javafx.scene.control.Button btnCancelar = new javafx.scene.control.Button("Cancelar");
+            btnCancelar.setStyle(
+                "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold; " +
+                "-fx-background-radius: 6; -fx-padding: 6 12;"
+            );
             btnCancelar.setOnAction(e -> cancelarReserva(r));
-            card.getChildren().add(btnCancelar);
+
+            HBox linhaCancelar = new HBox(btnCancelar);
+            linhaCancelar.setAlignment(Pos.CENTER_RIGHT);
+            card.getChildren().add(linhaCancelar);
+        }
+
+        // Botão Conversar — disponível enquanto a reserva está ACEITE
+        if (r.getEstado() == Reserva.Estado.ACEITE) {
+            Button btnConversar = new Button("💬  Conversar");
+            btnConversar.setStyle(
+                "-fx-background-color: #1a237e; -fx-text-fill: white; -fx-font-weight: bold; " +
+                "-fx-background-radius: 6; -fx-padding: 6 12;"
+            );
+            btnConversar.setOnAction(e -> NavigationManager.getInstance().navegarParaConversa(r.getId()));
+
+            HBox linhaConversar = new HBox(btnConversar);
+            linhaConversar.setAlignment(Pos.CENTER_RIGHT);
+            card.getChildren().add(linhaConversar);
         }
 
         // Botão Avaliar — apenas em reservas CONCLUÍDAS
@@ -391,13 +409,10 @@ public class MinhasReservasView {
             );
             if (resultado.isSucesso()) {
                 dialog.close();
-                javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-                    javafx.scene.control.Alert.AlertType.INFORMATION
-                );
-                alert.setHeaderText(null);
-                alert.setContentText(resultado.getMensagem());
-                alert.showAndWait();
-                construirPagina();
+                javafx.application.Platform.runLater(() -> {
+                    mostrarFeedback(true, resultado.getMensagem());
+                    construirPagina();
+                });
             } else {
                 lblFeedback.setText("❌ " + resultado.getMensagem());
                 lblFeedback.setStyle("-fx-text-fill: #c62828;");
@@ -422,31 +437,91 @@ public class MinhasReservasView {
         dialog.showAndWait();
     }
 
+    /** Só é possível cancelar reservas ainda PENDENTES — sem regra das 48h,
+     *  já que não houve pagamento nem compromisso do proprietário. */
     private boolean podeCancelar(Reserva r) {
-        if (r.getEstado() != Reserva.Estado.ACEITE)
-            return false;
-        long horas = java.time.Duration.between(
-                java.time.LocalDateTime.now(),
-                r.getDataInicio().atStartOfDay()
-        ).toHours();
-        return horas >= 48;
+        return r.getEstado() == Reserva.Estado.PENDENTE;
     }
 
     private void cancelarReserva(Reserva r) {
         com.aluguer.service.ReservaService service = new com.aluguer.service.ReservaService();
         var resultado = service.cancelarReserva(r.getId(), utilizadorId);
 
-        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(
-            resultado.isSucesso() ? javafx.scene.control.Alert.AlertType.INFORMATION
-                                  : javafx.scene.control.Alert.AlertType.ERROR
-        );
-        alert.setHeaderText(null);
-        alert.setContentText(resultado.getMensagem());
-        alert.showAndWait();
+        mostrarFeedback(resultado.isSucesso(), resultado.getMensagem());
 
         if (resultado.isSucesso()) {
             construirPagina();
         }
+    }
+
+    // ----------------------------------------------------------------
+    // Popup de feedback (sucesso/erro) com o estilo da app
+    // ----------------------------------------------------------------
+
+    private void mostrarFeedback(boolean sucesso, String mensagem) {
+        String cor = sucesso ? "#2e7d32" : "#c62828";
+        String iconeTxt = sucesso ? "✔" : "✘";
+        String titulo = sucesso ? "Sucesso" : "Erro";
+
+        Stage dialog = new Stage(StageStyle.TRANSPARENT);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initOwner(root.getScene() != null ? root.getScene().getWindow() : null);
+
+        Label lblIcone = new Label(iconeTxt);
+        lblIcone.setStyle("-fx-font-size: 20px; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        Label lblTitulo = new Label(titulo);
+        lblTitulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+
+        HBox iconeTitulo = new HBox(10, lblIcone, lblTitulo);
+        iconeTitulo.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnFechar = new Button("×");
+        btnFechar.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: white;" +
+            "-fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 0 4 0 4;"
+        );
+        btnFechar.setOnAction(e -> dialog.close());
+
+        HBox topo = new HBox(iconeTitulo, btnFechar);
+        topo.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(iconeTitulo, Priority.ALWAYS);
+        topo.setPadding(new Insets(16, 18, 14, 20));
+        topo.setStyle("-fx-background-color: " + cor + "; -fx-background-radius: 14 14 0 0;");
+
+        Label lblMensagem = new Label(mensagem);
+        lblMensagem.setWrapText(true);
+        lblMensagem.setStyle("-fx-font-size: 13px; -fx-text-fill: #333333;");
+
+        Button btnOk = new Button("OK");
+        btnOk.setStyle(
+            "-fx-background-color: " + cor + "; -fx-text-fill: white; -fx-font-weight: bold;" +
+            "-fx-background-radius: 6; -fx-padding: 8 28 8 28; -fx-cursor: hand;"
+        );
+        btnOk.setOnAction(e -> dialog.close());
+        btnOk.setDefaultButton(true);
+
+        HBox linhaBotao = new HBox(btnOk);
+        linhaBotao.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox corpo = new VBox(18, lblMensagem, linhaBotao);
+        corpo.setPadding(new Insets(20, 22, 20, 22));
+        corpo.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 14 14;");
+
+        VBox layout = new VBox(topo, corpo);
+        layout.setStyle(
+            "-fx-background-radius: 14; -fx-background-color: white;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.25), 18, 0, 0, 6);"
+        );
+
+        StackPane wrapper = new StackPane(layout);
+        wrapper.setStyle("-fx-background-color: transparent;");
+        wrapper.setPadding(new Insets(12));
+
+        javafx.scene.Scene scene = new javafx.scene.Scene(wrapper);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+        dialog.setScene(scene);
+        dialog.showAndWait();
     }
 
     private List<Reserva> carregarReservas() {

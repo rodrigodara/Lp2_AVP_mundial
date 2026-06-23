@@ -24,6 +24,11 @@ public class VeiculoDAO {
         "id, marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, " +
         "estado, matricula, tipoVeiculo, lugares, transmissao, consumo, quilometragem, foto1";
 
+    /** Mesma lista de colunas, prefixada com "v." — usada nas queries com LEFT JOIN a avaliacao. */
+    private static final String COLUNAS_LISTA_V =
+        "v.id, v.marca, v.modelo, v.ano, v.combustivel, v.precoDiario, v.localizacao, v.proprietarioId, " +
+        "v.estado, v.matricula, v.tipoVeiculo, v.lugares, v.transmissao, v.consumo, v.quilometragem, v.foto1";
+
     public boolean inserir(Veiculo v) throws SQLException {
         String sql = "INSERT INTO veiculo "
                    + "(marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, estado, matricula, tipoVeiculo, lugares, transmissao, consumo, quilometragem, foto1, foto2, foto3, foto4) "
@@ -54,11 +59,13 @@ public class VeiculoDAO {
 
     public List<Veiculo> listarTodos() throws SQLException {
         List<Veiculo> lista = new ArrayList<>();
-        String sql = "SELECT " + COLUNAS_LISTA + " FROM veiculo";
+        String sql = "SELECT " + COLUNAS_LISTA_V + ", AVG(a.classificacao) AS avaliacaoMedia, " +
+                     "COUNT(a.id) AS totalAvaliacoes " +
+                     "FROM veiculo v LEFT JOIN avaliacao a ON a.veiculoId = v.id GROUP BY v.id";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) lista.add(mapRow(rs));
+            while (rs.next()) lista.add(mapRowComAvaliacao(rs));
         }
         return lista;
     }
@@ -116,12 +123,15 @@ public class VeiculoDAO {
 
     public List<Veiculo> listarPorProprietario(int proprietarioId) throws SQLException {
         List<Veiculo> lista = new ArrayList<>();
-        String sql = "SELECT " + COLUNAS_LISTA + " FROM veiculo WHERE proprietarioId = ?";
+        String sql = "SELECT " + COLUNAS_LISTA_V + ", AVG(a.classificacao) AS avaliacaoMedia, " +
+                     "COUNT(a.id) AS totalAvaliacoes " +
+                     "FROM veiculo v LEFT JOIN avaliacao a ON a.veiculoId = v.id " +
+                     "WHERE v.proprietarioId = ? GROUP BY v.id";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, proprietarioId);
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
+                while (rs.next()) lista.add(mapRowComAvaliacao(rs));
             }
         }
         return lista;
@@ -223,9 +233,7 @@ public class VeiculoDAO {
         List<Veiculo> lista = new ArrayList<>();
 
         StringBuilder sql = new StringBuilder(
-                "SELECT v.id, v.marca, v.modelo, v.ano, v.combustivel, v.precoDiario, v.localizacao, " +
-                "v.proprietarioId, v.estado, v.matricula, v.tipoVeiculo, v.lugares, v.transmissao, " +
-                "v.consumo, v.quilometragem, v.foto1, " +
+                "SELECT " + COLUNAS_LISTA_V + ", " +
                 "AVG(a.classificacao) AS avaliacaoMedia, COUNT(a.id) AS totalAvaliacoes "
               + "FROM veiculo v LEFT JOIN avaliacao a ON a.veiculoId = v.id WHERE 1=1");
 
@@ -265,11 +273,7 @@ public class VeiculoDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    Veiculo veic = mapRow(rs);
-                    double media = rs.getDouble("avaliacaoMedia");
-                    veic.setAvaliacaoMedia(rs.wasNull() ? -1 : media);
-                    veic.setTotalAvaliacoes(rs.getInt("totalAvaliacoes"));
-                    lista.add(veic);
+                    lista.add(mapRowComAvaliacao(rs));
                 }
             }
         }
@@ -279,14 +283,17 @@ public class VeiculoDAO {
     public List<Veiculo> pesquisar(String termo) throws SQLException {
         List<Veiculo> lista = new ArrayList<>();
         String like = "%" + termo.trim() + "%";
-        String sql = "SELECT " + COLUNAS_LISTA + " FROM veiculo WHERE marca LIKE ? OR modelo LIKE ? OR localizacao LIKE ?";
+        String sql = "SELECT " + COLUNAS_LISTA_V + ", AVG(a.classificacao) AS avaliacaoMedia, " +
+                     "COUNT(a.id) AS totalAvaliacoes " +
+                     "FROM veiculo v LEFT JOIN avaliacao a ON a.veiculoId = v.id " +
+                     "WHERE v.marca LIKE ? OR v.modelo LIKE ? OR v.localizacao LIKE ? GROUP BY v.id";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, like);
             stmt.setString(2, like);
             stmt.setString(3, like);
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
+                while (rs.next()) lista.add(mapRowComAvaliacao(rs));
             }
         }
         return lista;
@@ -350,6 +357,15 @@ public class VeiculoDAO {
         v.setFoto2(rs.getBytes("foto2"));
         v.setFoto3(rs.getBytes("foto3"));
         v.setFoto4(rs.getBytes("foto4"));
+        return v;
+    }
+
+    /** Mapeia uma linha já com avaliacaoMedia/totalAvaliacoes calculados pelo LEFT JOIN com avaliacao. */
+    private Veiculo mapRowComAvaliacao(ResultSet rs) throws SQLException {
+        Veiculo v = mapRow(rs);
+        double media = rs.getDouble("avaliacaoMedia");
+        v.setAvaliacaoMedia(rs.wasNull() ? -1 : media);
+        v.setTotalAvaliacoes(rs.getInt("totalAvaliacoes"));
         return v;
     }
 }
