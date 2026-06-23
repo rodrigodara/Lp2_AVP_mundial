@@ -158,6 +158,19 @@ public class ReservaDAO {
     return atualizarEstado(id, Reserva.Estado.CANCELADO);
     }
 
+    /** Atualiza o estado da caução: DEVOLVIDA | RETIDA | EM_DISPUTA. */
+    public boolean atualizarCaucaoEstado(int reservaId, String caucaoEstado) {
+        String sql = "UPDATE reserva SET caucao_estado = ? WHERE id = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, caucaoEstado);
+            stmt.setInt(2, reservaId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.err.println("[ReservaDAO] Erro ao atualizar estado da caução: " + e.getMessage());
+            return false;
+        }
+    }
+
 
     public boolean existeSobreposicao(int veiculoId, LocalDate inicio, LocalDate fim, int excluirId) {
         String sql = """
@@ -508,6 +521,7 @@ public class ReservaDAO {
         java.sql.Timestamp ts = rs.getTimestamp("estado_data");
         if (ts != null) r.setEstadoData(ts.toLocalDateTime());
         r.setNotifLida(rs.getBoolean("notif_lida"));
+        r.setCaucaoEstado(rs.getString("caucao_estado"));
         return r;
     }
 }

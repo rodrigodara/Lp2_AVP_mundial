@@ -26,6 +26,7 @@ public class Reserva {
     private int kmFinal;
     private LocalDateTime estadoData;   // quando mudou para ACEITE/REJEITADO
     private boolean notifLida;          // se o locatário já viu a notificação
+    private String caucaoEstado;        // null | DEVOLVIDA | RETIDA | EM_DISPUTA
 
     public Reserva(int id, int utilizadorId, int veiculoId,
                    LocalDate dataInicio, LocalDate dataFim,
@@ -96,6 +97,11 @@ public class Reserva {
 
     public boolean isNotifLida() { return notifLida; }
     public void setNotifLida(boolean notifLida) { this.notifLida = notifLida; }
+
+    public String getCaucaoEstado() { return caucaoEstado; }
+    public void setCaucaoEstado(String caucaoEstado) { this.caucaoEstado = caucaoEstado; }
+
+    public boolean isCaucaoEmDisputa() { return "EM_DISPUTA".equals(caucaoEstado); }
 
     // ── helpers ───────────────────────────────────────────────────
 

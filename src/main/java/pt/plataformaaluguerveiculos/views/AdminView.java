@@ -7,7 +7,10 @@ import java.util.List;
 
 import com.aluguer.dao.AdminDAO;
 import com.aluguer.dao.AvaliacaoDAO;
+import com.aluguer.model.Denuncia;
 import com.aluguer.model.User;
+import com.aluguer.service.DenunciaService;
+import com.aluguer.service.ReservaService.ResultadoOperacao;
 import com.aluguer.util.SessionManager;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -41,11 +44,16 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+
+import java.io.ByteArrayInputStream;
 
 /**
  * AdminView — Painel de Administração.
@@ -59,6 +67,7 @@ public class AdminView {
 
     private final VBox root;
     private final AdminDAO dao = new AdminDAO();
+    private final DenunciaService denunciaService = new DenunciaService();
     private final int adminId;
 
     // -------------------------------------------------------------------------
@@ -81,9 +90,10 @@ public class AdminView {
 
         Tab tabUtilizadores  = new Tab("👤 Utilizadores",  buildUtilizadoresPane());
         Tab tabVeiculos      = new Tab("🚗 Veículos",      buildVeiculosPane());
+        Tab tabDenuncias     = new Tab("🚩 Denúncias",     buildDenunciasPane());
         Tab tabEstatisticas  = new Tab("📊 Estatísticas",  buildEstatisticasPane());
 
-        tabs.getTabs().addAll(tabUtilizadores, tabVeiculos, tabEstatisticas);
+        tabs.getTabs().addAll(tabUtilizadores, tabVeiculos, tabDenuncias, tabEstatisticas);
         VBox.setVgrow(tabs, Priority.ALWAYS);
 
         root.getChildren().addAll(header, tabs);
@@ -347,7 +357,162 @@ public class AdminView {
     }
 
     // =========================================================================
-    // 2. VEÍCULOS
+    // 2. DENÚNCIAS
+    // =========================================================================
+
+    private ScrollPane buildDenunciasPane() {
+        VBox pane = new VBox(18);
+        pane.setPadding(new Insets(24));
+        pane.setStyle("-fx-background-color: #f4f6fa;");
+
+        Label lblTitulo = label("Denúncias Pendentes", 18, true, "#1a237e");
+        Label lblSub = new Label(
+            "Denúncias de problemas em reservas (com caução em disputa) e denúncias gerais a utilizadores."
+        );
+        lblSub.setStyle("-fx-font-size: 12px; -fx-text-fill: #777777;");
+
+        VBox lista = new VBox(12);
+
+        Label lblFeedback = new Label();
+        lblFeedback.setFont(Font.font(13));
+
+        Runnable[] recarregar = new Runnable[1];
+        recarregar[0] = () -> {
+            lista.getChildren().clear();
+            List<Denuncia> pendentes = denunciaService.listarPendentes();
+            if (pendentes.isEmpty()) {
+                Label vazio = new Label("Não há denúncias pendentes de momento.");
+                vazio.setStyle("-fx-font-size: 13px; -fx-text-fill: #999999; -fx-font-style: italic;");
+                lista.getChildren().add(vazio);
+            } else {
+                for (Denuncia d : pendentes) {
+                    lista.getChildren().add(criarCardDenuncia(d, recarregar, lblFeedback));
+                }
+            }
+        };
+        recarregar[0].run();
+
+        ScrollPane scroll = new ScrollPane(lista);
+        scroll.setFitToWidth(true);
+        scroll.setPrefViewportHeight(480);
+        scroll.setStyle("-fx-background: #f4f6fa; -fx-background-color: #f4f6fa;");
+
+        pane.getChildren().addAll(lblTitulo, lblSub, scroll, lblFeedback);
+
+        ScrollPane spExterno = new ScrollPane(pane);
+        spExterno.setFitToWidth(true);
+        spExterno.setStyle("-fx-background: #f4f6fa; -fx-background-color: #f4f6fa;");
+        return spExterno;
+    }
+
+    private VBox criarCardDenuncia(Denuncia d, Runnable[] recarregar, Label lblFeedback) {
+        VBox card = new VBox(8);
+        card.setPadding(new Insets(16));
+        card.setStyle(
+            "-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 8;" +
+            "-fx-background-radius: 8; -fx-border-width: 1;" +
+            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4, 0, 0, 2);"
+        );
+
+        HBox topo = new HBox(10);
+        topo.setAlignment(Pos.CENTER_LEFT);
+        Label lblId = new Label("Denúncia #" + d.getId());
+        lblId.setStyle("-fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #1a237e;");
+        Label badgeTipo = new Label(d.isLigadaAReserva() ? "RESERVA #" + d.getReservaId() : "DENÚNCIA GERAL");
+        badgeTipo.setStyle(
+            "-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #c62828;" +
+            "-fx-background-color: #ffebee; -fx-background-radius: 4; -fx-padding: 2 8 2 8;"
+        );
+        topo.getChildren().addAll(lblId, badgeTipo);
+
+        Label lblPartes = new Label(
+            "Denunciante: utilizador #" + d.getDenuncianteId() + "   |   Denunciado: utilizador #" + d.getDenunciadoId()
+        );
+        lblPartes.setStyle("-fx-font-size: 12px; -fx-text-fill: #444444;");
+
+        Label lblMotivo = new Label("Motivo: " + d.getMotivo());
+        lblMotivo.setWrapText(true);
+        lblMotivo.setStyle("-fx-font-size: 13px; -fx-text-fill: #333333;");
+
+        HBox linhaFotos = new HBox(20);
+        linhaFotos.setAlignment(Pos.CENTER_LEFT);
+        linhaFotos.getChildren().add(criarBlocoFoto("Prova do denunciante", d.getFoto()));
+
+        if (d.temResposta()) {
+            linhaFotos.getChildren().add(criarBlocoFoto("Contraprova do denunciado", d.getFotoResposta()));
+        }
+
+        VBox respostaBox = new VBox(4);
+        if (d.temResposta()) {
+            Label lblResposta = new Label("Versão do denunciado: " + d.getRespostaTexto());
+            lblResposta.setWrapText(true);
+            lblResposta.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555; -fx-font-style: italic;");
+            respostaBox.getChildren().add(lblResposta);
+        } else {
+            Label lblSemResposta = new Label("O denunciado ainda não respondeu.");
+            lblSemResposta.setStyle("-fx-font-size: 12px; -fx-text-fill: #999999; -fx-font-style: italic;");
+            respostaBox.getChildren().add(lblSemResposta);
+        }
+
+        Button btnAprovar = botao("✔ Aprovar Denúncia", "#2e7d32", "white");
+        Button btnRejeitar = botao("✘ Rejeitar Denúncia", "#c62828", "white");
+
+        Label lblExplicacao = new Label(
+            d.isLigadaAReserva()
+                ? "Aprovar = caução fica retida a favor do proprietário (denunciante). Rejeitar = caução é devolvida ao locatário."
+                : "Aprovar = a denúncia procede (pode ser seguida de aviso ao utilizador). Rejeitar = sem consequências."
+        );
+        lblExplicacao.setWrapText(true);
+        lblExplicacao.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
+
+        btnAprovar.setOnAction(e -> dialogTexto("Decisão (aprovar denúncia #" + d.getId() + ")", decisao -> {
+            ResultadoOperacao r = denunciaService.decidir(d.getId(), true, decisao);
+            if (r.isSucesso()) { sucesso(r.getMensagem(), lblFeedback); recarregar[0].run(); }
+            else erroMsg(r.getMensagem(), lblFeedback);
+        }));
+
+        btnRejeitar.setOnAction(e -> dialogTexto("Decisão (rejeitar denúncia #" + d.getId() + ")", decisao -> {
+            ResultadoOperacao r = denunciaService.decidir(d.getId(), false, decisao);
+            if (r.isSucesso()) { sucesso(r.getMensagem(), lblFeedback); recarregar[0].run(); }
+            else erroMsg(r.getMensagem(), lblFeedback);
+        }));
+
+        HBox acoes = new HBox(10, btnAprovar, btnRejeitar);
+        acoes.setAlignment(Pos.CENTER_RIGHT);
+
+        card.getChildren().addAll(topo, lblPartes, lblMotivo, linhaFotos, respostaBox, lblExplicacao, acoes);
+        return card;
+    }
+
+    private StackPane criarBlocoFoto(String legenda, byte[] foto) {
+        StackPane box = new StackPane();
+        box.setMinSize(140, 100);
+        box.setMaxSize(140, 100);
+        box.setStyle("-fx-background-color: #f1f1f1; -fx-background-radius: 6;");
+
+        if (foto != null) {
+            ImageView iv = new ImageView(new Image(new ByteArrayInputStream(foto)));
+            iv.setFitWidth(140);
+            iv.setFitHeight(100);
+            iv.setPreserveRatio(true);
+            box.getChildren().add(iv);
+        } else {
+            Label l = new Label("Sem foto");
+            l.setStyle("-fx-text-fill: #999999; -fx-font-size: 11px;");
+            box.getChildren().add(l);
+        }
+
+        Tooltip.install(box, new Tooltip(legenda));
+        return box;
+    }
+
+    private void erroMsg(String msg, Label lbl) {
+        lbl.setText("❌ " + msg);
+        lbl.setStyle("-fx-text-fill: #c62828;");
+    }
+
+    // =========================================================================
+    // 3. VEÍCULOS
     // =========================================================================
     private ScrollPane buildVeiculosPane() {
         VBox pane = new VBox(18);

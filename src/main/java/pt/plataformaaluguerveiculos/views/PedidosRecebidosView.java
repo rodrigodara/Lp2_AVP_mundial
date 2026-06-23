@@ -1,11 +1,16 @@
 package pt.plataformaaluguerveiculos.views;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
 import com.aluguer.dao.ReservaDAO;
 import com.aluguer.model.Reserva;
+import com.aluguer.service.DenunciaService;
 import com.aluguer.service.ReservaService;
 import com.aluguer.service.ReservaService.ResultadoOperacao;
 import com.aluguer.util.DatabaseConnection;
@@ -18,9 +23,17 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 /**
  * ALV-90 — Criar página de pedidos recebidos
@@ -35,6 +48,7 @@ public class PedidosRecebidosView {
     private VBox root;
     private final int proprietarioId;
     private final ReservaService reservaService;
+    private final DenunciaService denunciaService;
 
     // ----------------------------------------------------------------
     // Construtor
@@ -43,6 +57,7 @@ public class PedidosRecebidosView {
     public PedidosRecebidosView(int proprietarioId) {
         this.proprietarioId = proprietarioId;
         this.reservaService  = new ReservaService();
+        this.denunciaService = new DenunciaService();
 
         root = new VBox(16);
         root.setPadding(new Insets(30));
@@ -246,11 +261,132 @@ public class PedidosRecebidosView {
             if (resultado.isSucesso()) construirPagina();
         });
 
-        HBox acoes = new HBox(btnConcluir);
+        Button btnReportar = new Button("🚩  Reportar Problema");
+        btnReportar.setStyle(
+            "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold;" +
+            "-fx-background-radius: 6; -fx-padding: 8 16 8 16; -fx-cursor: hand;"
+        );
+        btnReportar.setOnAction(e -> abrirDialogoReportar(r));
+
+        HBox acoes = new HBox(10, btnReportar, btnConcluir);
         acoes.setAlignment(Pos.CENTER_RIGHT);
 
         card.getChildren().addAll(linhaId, lblVeiculo, lblDatas, lblPreco, acoes);
         return card;
+    }
+
+    // ----------------------------------------------------------------
+    // Diálogo: Reportar Problema (motivo + foto de prova)
+    // ----------------------------------------------------------------
+
+    private void abrirDialogoReportar(Reserva r) {
+        Stage dialog = new Stage(StageStyle.UNDECORATED);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+
+        Label lblTitulo = new Label("Reportar problema — Reserva #" + r.getId());
+        lblTitulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+        VBox topo = new VBox(lblTitulo);
+        topo.setPadding(new Insets(18, 24, 16, 24));
+        topo.setStyle("-fx-background-color: #c62828; -fx-background-radius: 12 12 0 0;");
+
+        Label lblInfo = new Label(
+            "Descreve o problema encontrado (ex.: danos no veículo). A reserva será " +
+            "concluída e a caução de " + String.format("%.2f€", r.getCaucao()) +
+            " fica retida até a administração decidir o caso."
+        );
+        lblInfo.setWrapText(true);
+        lblInfo.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555;");
+
+        TextArea txtMotivo = new TextArea();
+        txtMotivo.setPromptText("Descreve o problema...");
+        txtMotivo.setWrapText(true);
+        txtMotivo.setPrefRowCount(4);
+
+        // ---- Foto de prova ----
+        byte[][] fotoSelecionada = {null};
+        StackPane previewBox = new StackPane();
+        previewBox.setMinSize(120, 90);
+        previewBox.setMaxSize(120, 90);
+        previewBox.setStyle("-fx-background-color: #f1f1f1; -fx-background-radius: 6;");
+
+        Label lblSemFoto = new Label("Sem foto");
+        lblSemFoto.setStyle("-fx-text-fill: #999999; -fx-font-size: 11px;");
+        previewBox.getChildren().add(lblSemFoto);
+
+        Button btnEscolherFoto = new Button("📷  Escolher foto…");
+        btnEscolherFoto.getStyleClass().add("btn-secundario");
+
+        Label lblFeedback = new Label();
+        lblFeedback.setStyle("-fx-font-size: 12px;");
+
+        btnEscolherFoto.setOnAction(e -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Escolher foto de prova");
+            chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Imagens", "*.png", "*.jpg", "*.jpeg")
+            );
+            File ficheiro = chooser.showOpenDialog(dialog);
+            if (ficheiro != null) {
+                try {
+                    fotoSelecionada[0] = Files.readAllBytes(ficheiro.toPath());
+                    ImageView iv = new ImageView(new Image(new ByteArrayInputStream(fotoSelecionada[0])));
+                    iv.setFitWidth(120);
+                    iv.setFitHeight(90);
+                    iv.setPreserveRatio(true);
+                    previewBox.getChildren().setAll(iv);
+                } catch (IOException ex) {
+                    lblFeedback.setText("❌ Não foi possível ler a imagem selecionada.");
+                    lblFeedback.setStyle("-fx-text-fill: #c62828;");
+                }
+            }
+        });
+
+        HBox linhaFoto = new HBox(16, previewBox, btnEscolherFoto);
+        linhaFoto.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.getStyleClass().add("btn-secundario");
+        btnCancelar.setOnAction(e -> dialog.close());
+
+        Button btnConfirmar = new Button("🚩  Reportar e Concluir");
+        btnConfirmar.setStyle(
+            "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold;" +
+            "-fx-background-radius: 6; -fx-padding: 8 16 8 16; -fx-cursor: hand;"
+        );
+
+        btnConfirmar.setOnAction(e -> {
+            String motivo = txtMotivo.getText();
+            if (motivo == null || motivo.isBlank()) {
+                lblFeedback.setText("⚠️ Indica o motivo do problema.");
+                lblFeedback.setStyle("-fx-text-fill: #e65100;");
+                return;
+            }
+            ResultadoOperacao resultado = denunciaService.reportarProblemaReserva(
+                r.getId(), proprietarioId, motivo, fotoSelecionada[0]
+            );
+            if (resultado.isSucesso()) {
+                dialog.close();
+                mostrarFeedback(resultado);
+                construirPagina();
+            } else {
+                lblFeedback.setText("❌ " + resultado.getMensagem());
+                lblFeedback.setStyle("-fx-text-fill: #c62828;");
+            }
+        });
+
+        HBox botoes = new HBox(10, btnCancelar, btnConfirmar);
+        botoes.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox corpo = new VBox(14, lblInfo, txtMotivo, linhaFoto, lblFeedback, botoes);
+        corpo.setPadding(new Insets(20, 24, 22, 24));
+        corpo.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
+
+        VBox layout = new VBox(topo, corpo);
+        layout.setStyle("-fx-background-radius: 12; -fx-background-color: white;");
+
+        javafx.scene.Scene scene = new javafx.scene.Scene(layout, 440, 420);
+        dialog.setScene(scene);
+        dialog.showAndWait();
     }
 
     // ----------------------------------------------------------------

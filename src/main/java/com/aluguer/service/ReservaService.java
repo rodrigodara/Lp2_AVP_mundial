@@ -362,6 +362,7 @@ public class ReservaService {
                             "[ReservaService] Caução devolvida: +%.2f€ ao locatário #%d",
                             caucaoDevolver, reserva.getUtilizadorId()));
                     }
+                    dao.atualizarCaucaoEstado(reservaId, "DEVOLVIDA");
                 } catch (java.sql.SQLException ex) {
                     System.err.println("[ReservaService] Falha ao devolver caução: " + ex.getMessage());
                 }
@@ -401,6 +402,73 @@ public class ReservaService {
             } else {
                 return ResultadoOperacao.erro("Falha ao concluir a reserva. Tente novamente.");
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return ResultadoOperacao.erro("Erro de base de dados: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
+    // Concluir reserva reportando um problema (caução fica em disputa)
+    // ================================================================
+
+    /**
+     * Igual a {@link #concluirReserva}, mas usado quando o proprietário
+     * reporta um problema (ex.: danos no veículo): a reserva passa a
+     * CONCLUIDO e o proprietário recebe o pagamento normal (90% do preço),
+     * mas a CAUÇÃO NÃO é devolvida automaticamente — fica marcada como
+     * EM_DISPUTA até a administração decidir o caso da denúncia.
+     */
+    public ResultadoOperacao concluirComProblema(int reservaId, int proprietarioId) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            ReservaDAO dao = new ReservaDAO(conn);
+            Reserva reserva = dao.buscarPorId(reservaId);
+
+            if (reserva == null)
+                return ResultadoOperacao.erro("Reserva #" + reservaId + " nao encontrada.");
+
+            if (reserva.getEstado() != Estado.ACEITE)
+                return ResultadoOperacao.erro("So e possivel concluir reservas no estado ACEITE.");
+
+            boolean ok = dao.atualizarEstado(reservaId, Estado.CONCLUIDO);
+            if (!ok)
+                return ResultadoOperacao.erro("Falha ao concluir a reserva. Tente novamente.");
+
+            // A caução fica em disputa — não é devolvida nem retida ainda
+            dao.atualizarCaucaoEstado(reservaId, "EM_DISPUTA");
+
+            // Paga ao proprietário o valor normal do aluguer (90% do precoTotal).
+            // A caução é tratada à parte, quando a denúncia for decidida.
+            com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
+            double comissao   = reserva.getPrecoTotal() * 0.10;
+            double pagoAoDono = reserva.getPrecoTotal() - comissao;
+
+            try {
+                VeiculoDAO veiculoDAO2 = new VeiculoDAO();
+                Veiculo veiculoConcluido = veiculoDAO2.buscarPorId(reserva.getVeiculoId());
+                if (veiculoConcluido != null) {
+                    java.util.Optional<com.aluguer.model.User> propOpt =
+                        userDAO.findById(veiculoConcluido.getProprietarioId());
+                    if (propOpt.isPresent()) {
+                        com.aluguer.model.User proprietario = propOpt.get();
+                        java.math.BigDecimal novoSaldoProp = proprietario.getSaldo()
+                            .add(java.math.BigDecimal.valueOf(pagoAoDono));
+                        userDAO.atualizarSaldo(veiculoConcluido.getProprietarioId(), novoSaldoProp);
+
+                        com.aluguer.util.SessionManager sm2 = com.aluguer.util.SessionManager.getInstance();
+                        if (sm2.getUtilizador() != null && sm2.getUtilizador().getId() == veiculoConcluido.getProprietarioId()) {
+                            sm2.getUtilizador().setSaldo(novoSaldoProp);
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                System.err.println("[ReservaService] Falha ao pagar proprietário (concluirComProblema): " + ex.getMessage());
+            }
+
+            return ResultadoOperacao.sucesso(String.format(
+                "Reserva #%d concluída com denúncia. Caução (%.2f€) fica em disputa até decisão da administração.",
+                reservaId, reserva.getCaucao()));
 
         } catch (SQLException e) {
             e.printStackTrace();

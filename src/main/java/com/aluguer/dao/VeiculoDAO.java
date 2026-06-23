@@ -12,6 +12,18 @@ import com.aluguer.util.DatabaseConnection;
 
 public class VeiculoDAO {
 
+    /**
+     * Colunas usadas nas listagens (cards, pesquisa, filtros).
+     * Exclui foto2/foto3/foto4 de propósito: nessas vistas só é preciso
+     * foto1 para a miniatura, e trazer as 4 fotos de TODOS os veículos
+     * de uma vez facilmente excede o max_allowed_packet do MySQL
+     * (PacketTooBigException) à medida que a tabela cresce.
+     * O detalhe de 1 veículo continua a usar mapRowComFotos (todas as fotos).
+     */
+    private static final String COLUNAS_LISTA =
+        "id, marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, " +
+        "estado, matricula, tipoVeiculo, lugares, transmissao, consumo, quilometragem, foto1";
+
     public boolean inserir(Veiculo v) throws SQLException {
         String sql = "INSERT INTO veiculo "
                    + "(marca, modelo, ano, combustivel, precoDiario, localizacao, proprietarioId, estado, matricula, tipoVeiculo, lugares, transmissao, consumo, quilometragem, foto1, foto2, foto3, foto4) "
@@ -42,7 +54,7 @@ public class VeiculoDAO {
 
     public List<Veiculo> listarTodos() throws SQLException {
         List<Veiculo> lista = new ArrayList<>();
-        String sql = "SELECT * FROM veiculo";
+        String sql = "SELECT " + COLUNAS_LISTA + " FROM veiculo";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -104,7 +116,7 @@ public class VeiculoDAO {
 
     public List<Veiculo> listarPorProprietario(int proprietarioId) throws SQLException {
         List<Veiculo> lista = new ArrayList<>();
-        String sql = "SELECT * FROM veiculo WHERE proprietarioId = ?";
+        String sql = "SELECT " + COLUNAS_LISTA + " FROM veiculo WHERE proprietarioId = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, proprietarioId);
@@ -211,7 +223,10 @@ public class VeiculoDAO {
         List<Veiculo> lista = new ArrayList<>();
 
         StringBuilder sql = new StringBuilder(
-                "SELECT v.*, AVG(a.classificacao) AS avaliacaoMedia, COUNT(a.id) AS totalAvaliacoes "
+                "SELECT v.id, v.marca, v.modelo, v.ano, v.combustivel, v.precoDiario, v.localizacao, " +
+                "v.proprietarioId, v.estado, v.matricula, v.tipoVeiculo, v.lugares, v.transmissao, " +
+                "v.consumo, v.quilometragem, v.foto1, " +
+                "AVG(a.classificacao) AS avaliacaoMedia, COUNT(a.id) AS totalAvaliacoes "
               + "FROM veiculo v LEFT JOIN avaliacao a ON a.veiculoId = v.id WHERE 1=1");
 
         if (marca != null)        sql.append(" AND v.marca = ?");
@@ -264,7 +279,7 @@ public class VeiculoDAO {
     public List<Veiculo> pesquisar(String termo) throws SQLException {
         List<Veiculo> lista = new ArrayList<>();
         String like = "%" + termo.trim() + "%";
-        String sql = "SELECT * FROM veiculo WHERE marca LIKE ? OR modelo LIKE ? OR localizacao LIKE ?";
+        String sql = "SELECT " + COLUNAS_LISTA + " FROM veiculo WHERE marca LIKE ? OR modelo LIKE ? OR localizacao LIKE ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, like);
