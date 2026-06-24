@@ -397,9 +397,33 @@ public class ReservaService {
 
     // ================================================================
     // Concluir reserva
+    //
+    //   - Entrega no prazo (dataDevolucaoReal == null ou >= dataFim):
+    //     paga-se o precoTotal completo ao proprietário (menos comissão).
+    //
+    //   - Entrega antecipada (dataDevolucaoReal < dataFim):
+    //     o locatário só paga pelos dias efetivamente usados, mais uma
+    //     multa progressiva pelos dias que faltam (1º dia=10%, 2º=12.5%,
+    //     3º=15%... de um dia de aluguer, somados), com o total nunca a
+    //     exceder o precoTotal original. O proprietário recebe 85% desse
+    //     total retido; o resto é devolvido ao locatário junto da caução.
     // ================================================================
 
+    /** Incremento percentual por dia adicional que falta na entrega antecipada. */
+    private static final double INCREMENTO_MULTA_POR_DIA = 0.025;   // +2,5 pontos percentuais
+    private static final double MULTA_BASE_PRIMEIRO_DIA  = 0.10;    // 10% no 1º dia que falta
+
+    /** Mantido por compatibilidade — assume entrega no prazo (sem multa). */
     public ResultadoOperacao concluirReserva(int reservaId, int proprietarioId) {
+        return concluirReserva(reservaId, proprietarioId, null);
+    }
+
+    /**
+     * @param dataDevolucaoReal data em que o veículo foi de facto devolvido.
+     *                          Se for null ou >= dataFim planeada, é tratada
+     *                          como entrega no prazo (sem multa).
+     */
+    public ResultadoOperacao concluirReserva(int reservaId, int proprietarioId, java.time.LocalDate dataDevolucaoReal) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             ReservaDAO dao = new ReservaDAO(conn);
             Reserva reserva = dao.buscarPorId(reservaId);
@@ -410,20 +434,49 @@ public class ReservaService {
             if (reserva.getEstado() != Estado.ACEITE)
                 return ResultadoOperacao.erro("So e possivel concluir reservas no estado ACEITE.");
 
+            long numeroDias = reserva.getNumeroDias();
+            boolean entregaAntecipada = dataDevolucaoReal != null
+                && dataDevolucaoReal.isBefore(reserva.getDataFim())
+                && !dataDevolucaoReal.isBefore(reserva.getDataInicio());
+
+            long diasUsados = numeroDias;
+            long diasQueFaltam = 0;
+            double precoPorDia = numeroDias > 0 ? reserva.getPrecoTotal() / numeroDias : 0;
+            double multa = 0;
+            double valorBaseFaturado = reserva.getPrecoTotal();   // valor sobre o qual incide a comissão
+
+            if (entregaAntecipada) {
+                diasUsados = java.time.temporal.ChronoUnit.DAYS.between(reserva.getDataInicio(), dataDevolucaoReal) + 1;
+                if (diasUsados < 1) diasUsados = 1;
+                diasQueFaltam = numeroDias - diasUsados;
+
+                double percentagemMultaAcumulada = 0;
+                for (int i = 1; i <= diasQueFaltam; i++) {
+                    percentagemMultaAcumulada += MULTA_BASE_PRIMEIRO_DIA + (i - 1) * INCREMENTO_MULTA_POR_DIA;
+                }
+                multa = precoPorDia * percentagemMultaAcumulada;
+
+                double pagamentoPeloUso = precoPorDia * diasUsados;
+                valorBaseFaturado = Math.min(pagamentoPeloUso + multa, reserva.getPrecoTotal());
+                multa = valorBaseFaturado - pagamentoPeloUso;  // ajusta a multa caso o tecto tenha cortado algo
+            }
+
+            double valorADevolverAoLocatario = reserva.getPrecoTotal() - valorBaseFaturado;
+
             boolean ok = dao.atualizarEstado(reservaId, Estado.CONCLUIDO);
             if (ok) {
                 // -------------------------------------------------------
                 // CONCLUSÃO: o dono confirmou que está tudo bem
-                // 1. Devolver caução ao locatário
-                // 2. Pagar ao proprietário (precoTotal - 10% comissão)
+                // 1. Devolver caução (+ eventual valor não usado) ao locatário
+                // 2. Pagar ao proprietário (valorBaseFaturado - 15% comissão)
                 // -------------------------------------------------------
                 com.aluguer.dao.UserDAO userDAO = new com.aluguer.dao.UserDAO();
 
-                double comissao      = reserva.getPrecoTotal() * COMISSAO_PLATAFORMA;  // 15% plataforma
-                double pagoAoDono    = reserva.getPrecoTotal() - comissao;  // 85% para o proprietário
-                double caucaoDevolver = reserva.getCaucao();
+                double comissao   = valorBaseFaturado * COMISSAO_PLATAFORMA;  // 15% plataforma
+                double pagoAoDono = valorBaseFaturado - comissao;             // 85% para o proprietário
+                double caucaoDevolver = reserva.getCaucao() + valorADevolverAoLocatario;
 
-                // 1. Devolver caução ao locatário
+                // 1. Devolver caução (+ valor não usado, se entrega antecipada) ao locatário
                 try {
                     java.util.Optional<com.aluguer.model.User> locOpt = userDAO.findById(reserva.getUtilizadorId());
                     if (locOpt.isPresent()) {
@@ -439,8 +492,8 @@ public class ReservaService {
                         }
 
                         System.out.println(String.format(
-                            "[ReservaService] Caução devolvida: +%.2f€ ao locatário #%d",
-                            caucaoDevolver, reserva.getUtilizadorId()));
+                            "[ReservaService] Caução%s devolvida: +%.2f€ ao locatário #%d",
+                            entregaAntecipada ? " + valor não usado" : "", caucaoDevolver, reserva.getUtilizadorId()));
 
                         new TransactionDAO(conn).registarParaUtilizador(
                             reserva.getUtilizadorId(), caucaoDevolver,
@@ -451,7 +504,7 @@ public class ReservaService {
                     System.err.println("[ReservaService] Falha ao devolver caução: " + ex.getMessage());
                 }
 
-                // 2. Pagar proprietário (90% do precoTotal)
+                // 2. Pagar proprietário (85% do valor faturado — total ou parcial+multa)
                 try {
                     VeiculoDAO veiculoDAO2 = new VeiculoDAO();
                     com.aluguer.model.Veiculo veiculoConcluido = veiculoDAO2.buscarPorId(reserva.getVeiculoId());
@@ -471,9 +524,9 @@ public class ReservaService {
                             }
 
                             System.out.println(String.format(
-                                "[ReservaService] Pagamento ao proprietário #%d: +%.2f€ (total %.2f€ - 15%% comissão %.2f€)",
+                                "[ReservaService] Pagamento ao proprietário #%d: +%.2f€ (faturado %.2f€ - 15%% comissão %.2f€)",
                                 veiculoConcluido.getProprietarioId(), pagoAoDono,
-                                reserva.getPrecoTotal(), comissao));
+                                valorBaseFaturado, comissao));
 
                             new TransactionDAO(conn).registarParaUtilizador(
                                 veiculoConcluido.getProprietarioId(), pagoAoDono,
@@ -482,6 +535,13 @@ public class ReservaService {
                     }
                 } catch (Exception ex) {
                     System.err.println("[ReservaService] Falha ao pagar proprietário: " + ex.getMessage());
+                }
+
+                if (entregaAntecipada) {
+                    return ResultadoOperacao.sucesso(String.format(
+                        "Reserva #%d concluída com entrega antecipada (%d de %d dias usados, %d dias por cumprir).%n" +
+                        "Multa aplicada: %.2f€. Pago ao proprietário: %.2f€ | Devolvido ao locatário: %.2f€ (caução + valor não usado).",
+                        reservaId, diasUsados, numeroDias, diasQueFaltam, multa, pagoAoDono, caucaoDevolver));
                 }
 
                 return ResultadoOperacao.sucesso(String.format(

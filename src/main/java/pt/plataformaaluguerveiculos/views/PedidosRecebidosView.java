@@ -18,6 +18,7 @@ import com.aluguer.util.DatabaseConnection;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
@@ -259,11 +260,7 @@ public class PedidosRecebidosView {
 
         Button btnConcluir = new Button("✔  Concluir Viagem");
         btnConcluir.getStyleClass().add("btn-aceitar");
-        btnConcluir.setOnAction(e -> {
-            ResultadoOperacao resultado = reservaService.concluirReserva(r.getId(), proprietarioId);
-            mostrarFeedback(resultado);
-            if (resultado.isSucesso()) construirPagina();
-        });
+        btnConcluir.setOnAction(e -> abrirDialogoConcluir(r));
 
         Button btnReportar = new Button("🚩  Reportar Problema");
         btnReportar.setStyle(
@@ -282,6 +279,124 @@ public class PedidosRecebidosView {
     // ----------------------------------------------------------------
     // Diálogo: Reportar Problema (motivo + foto de prova)
     // ----------------------------------------------------------------
+
+    private void abrirDialogoConcluir(Reserva r) {
+        Stage dialog = new Stage(StageStyle.UNDECORATED);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+
+        Label lblTitulo = new Label("Concluir Viagem — Reserva #" + r.getId());
+        lblTitulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+        VBox topo = new VBox(lblTitulo);
+        topo.setPadding(new Insets(18, 24, 16, 24));
+        topo.setStyle("-fx-background-color: #2e7d32; -fx-background-radius: 12 12 0 0;");
+
+        long numeroDias = r.getNumeroDias();
+        double precoPorDia = numeroDias > 0 ? r.getPrecoTotal() / numeroDias : 0;
+
+        Label lblInfo = new Label(
+            "Indica a data em que o veículo foi devolvido. Período reservado: " +
+            r.getDataInicio() + " → " + r.getDataFim() + " (" + numeroDias + " dias, " +
+            String.format("%.2f€/dia", precoPorDia) + ")."
+        );
+        lblInfo.setWrapText(true);
+        lblInfo.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555;");
+
+        Label lblDataLabel = new Label("Data de devolução real:");
+        lblDataLabel.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #333333;");
+
+        DatePicker datePicker = new DatePicker(r.getDataFim());
+        datePicker.setMaxWidth(Double.MAX_VALUE);
+
+        Label lblPreview = new Label();
+        lblPreview.setWrapText(true);
+        lblPreview.setStyle(
+            "-fx-font-size: 12px; -fx-text-fill: #1a237e; -fx-background-color: #e8eaf6;" +
+            "-fx-background-radius: 8; -fx-padding: 12;"
+        );
+
+        Runnable atualizarPreview = () -> {
+            java.time.LocalDate dataEscolhida = datePicker.getValue();
+            if (dataEscolhida == null) {
+                lblPreview.setText("Escolhe uma data de devolução.");
+                return;
+            }
+            if (dataEscolhida.isBefore(r.getDataInicio())) {
+                lblPreview.setText("⚠️ A data não pode ser anterior ao início da reserva (" + r.getDataInicio() + ").");
+                return;
+            }
+
+            if (!dataEscolhida.isBefore(r.getDataFim())) {
+                lblPreview.setText(String.format(
+                    "Entrega no prazo. Pago ao proprietário: %.2f€ | Caução devolvida: %.2f€",
+                    r.getPrecoTotal() * 0.85, r.getCaucao()
+                ));
+                return;
+            }
+
+            long diasUsados = java.time.temporal.ChronoUnit.DAYS.between(r.getDataInicio(), dataEscolhida) + 1;
+            if (diasUsados < 1) diasUsados = 1;
+            long diasQueFaltam = numeroDias - diasUsados;
+
+            double percentagemAcumulada = 0;
+            for (int i = 1; i <= diasQueFaltam; i++) {
+                percentagemAcumulada += 0.10 + (i - 1) * 0.025;
+            }
+            double multa = precoPorDia * percentagemAcumulada;
+            double pagamentoPeloUso = precoPorDia * diasUsados;
+            double valorFaturado = Math.min(pagamentoPeloUso + multa, r.getPrecoTotal());
+            double multaReal = valorFaturado - pagamentoPeloUso;
+            double devolvidoAoLocatario = r.getPrecoTotal() - valorFaturado;
+            double pagoAoDono = valorFaturado * 0.85;
+
+            lblPreview.setText(String.format(
+                "Entrega antecipada: %d de %d dias usados (%d dias por cumprir).%n" +
+                "Multa: %.2f€  |  Pago ao proprietário: %.2f€%n" +
+                "Devolvido ao locatário: %.2f€ (caução + valor não usado)",
+                diasUsados, numeroDias, diasQueFaltam, multaReal, pagoAoDono,
+                r.getCaucao() + devolvidoAoLocatario
+            ));
+        };
+
+        datePicker.valueProperty().addListener((obs, oldV, newV) -> atualizarPreview.run());
+        atualizarPreview.run();
+
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.getStyleClass().add("btn-secundario");
+        btnCancelar.setOnAction(e -> dialog.close());
+
+        Button btnConfirmar = new Button("✔  Confirmar Conclusão");
+        btnConfirmar.setStyle(
+            "-fx-background-color: #2e7d32; -fx-text-fill: white; -fx-font-weight: bold;" +
+            "-fx-background-radius: 6; -fx-padding: 8 16 8 16; -fx-cursor: hand;"
+        );
+        btnConfirmar.setOnAction(e -> {
+            java.time.LocalDate dataEscolhida = datePicker.getValue();
+            if (dataEscolhida == null || dataEscolhida.isBefore(r.getDataInicio())) {
+                lblPreview.setText("⚠️ Escolhe uma data de devolução válida (não anterior ao início).");
+                return;
+            }
+            dialog.close();
+            javafx.application.Platform.runLater(() -> {
+                ResultadoOperacao resultado = reservaService.concluirReserva(r.getId(), proprietarioId, dataEscolhida);
+                mostrarFeedback(resultado);
+                if (resultado.isSucesso()) construirPagina();
+            });
+        });
+
+        HBox botoes = new HBox(10, btnCancelar, btnConfirmar);
+        botoes.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox corpo = new VBox(14, lblInfo, lblDataLabel, datePicker, lblPreview, botoes);
+        corpo.setPadding(new Insets(20, 24, 22, 24));
+        corpo.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
+
+        VBox layout = new VBox(topo, corpo);
+        layout.setStyle("-fx-background-radius: 12; -fx-background-color: white;");
+
+        javafx.scene.Scene scene = new javafx.scene.Scene(layout, 460, 400);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
 
     private void abrirDialogoReportar(Reserva r) {
         Stage dialog = new Stage(StageStyle.UNDECORATED);

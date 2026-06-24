@@ -1,9 +1,5 @@
 package pt.plataformaaluguerveiculos.views;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -38,6 +34,11 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 public class MinhasReservasView {
 
@@ -518,7 +519,11 @@ public class MinhasReservasView {
         );
         btnSim.setOnAction(e -> {
             dialog.close();
-            aoConfirmar.run();
+            // Adiar a ação (que pode abrir outro Stage modal, como o feedback
+            // de sucesso/erro) para depois deste diálogo terminar de fechar
+            // por completo — abrir um showAndWait() ainda "dentro" do fecho
+            // do anterior pode bloquear a janela no Windows.
+            javafx.application.Platform.runLater(aoConfirmar);
         });
 
         HBox linhaBotoes = new HBox(10, btnNao, btnSim);

@@ -8,8 +8,13 @@ import java.util.List;
 
 import com.aluguer.dao.AdminDAO;
 import com.aluguer.dao.AvaliacaoDAO;
+import com.aluguer.dao.ReservaDAO;
+import com.aluguer.dao.UserDAO;
+import com.aluguer.dao.VeiculoDAO;
 import com.aluguer.model.Denuncia;
+import com.aluguer.model.Reserva;
 import com.aluguer.model.User;
+import com.aluguer.model.Veiculo;
 import com.aluguer.service.DenunciaService;
 import com.aluguer.service.ReservaService.ResultadoOperacao;
 import com.aluguer.util.SessionManager;
@@ -19,6 +24,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
@@ -51,9 +57,13 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 /**
  * AdminView — Painel de Administração.
@@ -405,8 +415,45 @@ public class AdminView {
         return spExterno;
     }
 
+    /** Caches simples para não repetir consultas à BD ao desenhar a lista de denúncias. */
+    private final java.util.Map<Integer, String> cacheNomeUtilizador = new java.util.HashMap<>();
+    private final java.util.Map<Integer, Reserva> cacheReserva = new java.util.HashMap<>();
+    private final java.util.Map<Integer, Veiculo> cacheVeiculoPorReserva = new java.util.HashMap<>();
+
+    private String nomeUtilizador(int utilizadorId) {
+        return cacheNomeUtilizador.computeIfAbsent(utilizadorId, id -> {
+            try {
+                return new UserDAO().findById(id).map(User::getNome).orElse("Utilizador #" + id);
+            } catch (Exception ex) {
+                return "Utilizador #" + id;
+            }
+        });
+    }
+
+    private Reserva reservaDaDenuncia(Denuncia d) {
+        if (!d.isLigadaAReserva()) return null;
+        return cacheReserva.computeIfAbsent(d.getReservaId(), id -> {
+            try (java.sql.Connection conn = com.aluguer.util.DatabaseConnection.getConnection()) {
+                return new ReservaDAO(conn).buscarPorId(id);
+            } catch (Exception ex) {
+                return null;
+            }
+        });
+    }
+
+    private Veiculo veiculoDaDenuncia(Denuncia d, Reserva reserva) {
+        if (reserva == null) return null;
+        return cacheVeiculoPorReserva.computeIfAbsent(d.getReservaId(), id -> {
+            try {
+                return new VeiculoDAO().buscarPorId(reserva.getVeiculoId());
+            } catch (Exception ex) {
+                return null;
+            }
+        });
+    }
+
     private VBox criarCardDenuncia(Denuncia d, Runnable[] recarregar, Label lblFeedback) {
-        VBox card = new VBox(8);
+        VBox card = new VBox(10);
         card.setPadding(new Insets(16));
         card.setStyle(
             "-fx-background-color: white; -fx-border-color: #e0e0e0; -fx-border-radius: 8;" +
@@ -425,33 +472,74 @@ public class AdminView {
         );
         topo.getChildren().addAll(lblId, badgeTipo);
 
+        if (d.getDataDenuncia() != null) {
+            Label lblData = new Label(d.getDataDenuncia().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            lblData.setStyle("-fx-font-size: 11px; -fx-text-fill: #999999;");
+            topo.getChildren().add(lblData);
+        }
+
         Label lblPartes = new Label(
-            "Denunciante: utilizador #" + d.getDenuncianteId() + "   |   Denunciado: utilizador #" + d.getDenunciadoId()
+            "Denunciante: " + nomeUtilizador(d.getDenuncianteId()) +
+            "   |   Denunciado: " + nomeUtilizador(d.getDenunciadoId())
         );
-        lblPartes.setStyle("-fx-font-size: 12px; -fx-text-fill: #444444;");
+        lblPartes.setStyle("-fx-font-size: 13px; -fx-text-fill: #444444; -fx-font-weight: bold;");
 
-        Label lblMotivo = new Label("Motivo: " + d.getMotivo());
+        VBox bloco = new VBox(10);
+        bloco.getChildren().addAll(topo, lblPartes);
+
+        // ---- Detalhes da reserva associada (veículo, datas, valores) ----
+        if (d.isLigadaAReserva()) {
+            Reserva reserva = reservaDaDenuncia(d);
+            if (reserva != null) {
+                Veiculo veiculo = veiculoDaDenuncia(d, reserva);
+                String nomeVeiculo = veiculo != null ? (veiculo.getMarca() + " " + veiculo.getModelo() + " (" + veiculo.getAno() + ")") : "Veículo #" + reserva.getVeiculoId();
+
+                Label lblReserva = new Label(
+                    "🚗 " + nomeVeiculo + "  •  " + reserva.getDataInicio() + " → " + reserva.getDataFim() +
+                    " (" + reserva.getNumeroDias() + " dias)  •  Total: " + String.format("%.2f€", reserva.getPrecoTotal()) +
+                    "  •  Caução: " + String.format("%.2f€", reserva.getCaucao()) +
+                    (reserva.getCaucaoEstado() != null ? "  •  Estado caução: " + reserva.getCaucaoEstado() : "")
+                );
+                lblReserva.setWrapText(true);
+                lblReserva.setStyle(
+                    "-fx-font-size: 12px; -fx-text-fill: #1a237e; -fx-background-color: #e8eaf6;" +
+                    "-fx-background-radius: 6; -fx-padding: 8 10 8 10;"
+                );
+                bloco.getChildren().add(lblReserva);
+            }
+        }
+
+        // ---- Motivo (texto maior, sem cortar) ----
+        Label lblMotivoTitulo = new Label("Motivo da denúncia:");
+        lblMotivoTitulo.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #555555;");
+        Label lblMotivo = new Label(d.getMotivo());
         lblMotivo.setWrapText(true);
-        lblMotivo.setStyle("-fx-font-size: 13px; -fx-text-fill: #333333;");
+        lblMotivo.setMaxWidth(Double.MAX_VALUE);
+        lblMotivo.setStyle("-fx-font-size: 14px; -fx-text-fill: #222222; -fx-line-spacing: 2;");
+        bloco.getChildren().addAll(lblMotivoTitulo, lblMotivo);
 
+        // ---- Fotos (clicáveis para ampliar) ----
         HBox linhaFotos = new HBox(20);
         linhaFotos.setAlignment(Pos.CENTER_LEFT);
         linhaFotos.getChildren().add(criarBlocoFoto("Prova do denunciante", d.getFoto()));
-
         if (d.temResposta()) {
             linhaFotos.getChildren().add(criarBlocoFoto("Contraprova do denunciado", d.getFotoResposta()));
         }
+        bloco.getChildren().add(linhaFotos);
 
-        VBox respostaBox = new VBox(4);
+        // ---- Resposta do denunciado (texto maior) ----
         if (d.temResposta()) {
-            Label lblResposta = new Label("Versão do denunciado: " + d.getRespostaTexto());
+            Label lblRespostaTitulo = new Label("Versão do denunciado:");
+            lblRespostaTitulo.setStyle("-fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #555555;");
+            Label lblResposta = new Label(d.getRespostaTexto());
             lblResposta.setWrapText(true);
-            lblResposta.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555; -fx-font-style: italic;");
-            respostaBox.getChildren().add(lblResposta);
+            lblResposta.setMaxWidth(Double.MAX_VALUE);
+            lblResposta.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333; -fx-font-style: italic; -fx-line-spacing: 2;");
+            bloco.getChildren().addAll(lblRespostaTitulo, lblResposta);
         } else {
             Label lblSemResposta = new Label("O denunciado ainda não respondeu.");
             lblSemResposta.setStyle("-fx-font-size: 12px; -fx-text-fill: #999999; -fx-font-style: italic;");
-            respostaBox.getChildren().add(lblSemResposta);
+            bloco.getChildren().add(lblSemResposta);
         }
 
         Button btnAprovar = botao("✔ Aprovar Denúncia", "#2e7d32", "white");
@@ -480,22 +568,37 @@ public class AdminView {
         HBox acoes = new HBox(10, btnAprovar, btnRejeitar);
         acoes.setAlignment(Pos.CENTER_RIGHT);
 
-        card.getChildren().addAll(topo, lblPartes, lblMotivo, linhaFotos, respostaBox, lblExplicacao, acoes);
+        bloco.getChildren().addAll(lblExplicacao, acoes);
+
+        card.getChildren().add(bloco);
         return card;
     }
 
     private StackPane criarBlocoFoto(String legenda, byte[] foto) {
         StackPane box = new StackPane();
-        box.setMinSize(140, 100);
-        box.setMaxSize(140, 100);
+        box.setMinSize(160, 120);
+        box.setMaxSize(160, 120);
         box.setStyle("-fx-background-color: #f1f1f1; -fx-background-radius: 6;");
 
         if (foto != null) {
             ImageView iv = new ImageView(new Image(new ByteArrayInputStream(foto)));
-            iv.setFitWidth(140);
-            iv.setFitHeight(100);
+            iv.setFitWidth(160);
+            iv.setFitHeight(120);
             iv.setPreserveRatio(true);
             box.getChildren().add(iv);
+
+            box.setCursor(javafx.scene.Cursor.HAND);
+            box.setStyle(box.getStyle() + "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 4, 0, 0, 1);");
+            box.setOnMouseClicked(e -> abrirFotoGrande(legenda, foto));
+
+            Label lblAmpliar = new Label("🔍 Ver em grande");
+            lblAmpliar.setStyle(
+                "-fx-font-size: 10px; -fx-text-fill: white; -fx-background-color: rgba(0,0,0,0.55);" +
+                "-fx-background-radius: 4; -fx-padding: 2 6 2 6;"
+            );
+            StackPane.setAlignment(lblAmpliar, Pos.BOTTOM_CENTER);
+            StackPane.setMargin(lblAmpliar, new Insets(0, 0, 6, 0));
+            box.getChildren().add(lblAmpliar);
         } else {
             Label l = new Label("Sem foto");
             l.setStyle("-fx-text-fill: #999999; -fx-font-size: 11px;");
@@ -504,6 +607,48 @@ public class AdminView {
 
         Tooltip.install(box, new Tooltip(legenda));
         return box;
+    }
+
+    /** Abre a foto da denúncia (prova ou contraprova) em tamanho grande, num diálogo próprio. */
+    private void abrirFotoGrande(String legenda, byte[] foto) {
+        Stage dialog = new Stage(StageStyle.UNDECORATED);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+
+        Label lblTitulo = new Label(legenda);
+        lblTitulo.setStyle("-fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: white;");
+        Button btnFechar = new Button("×");
+        btnFechar.setStyle(
+            "-fx-background-color: transparent; -fx-text-fill: white;" +
+            "-fx-font-size: 18px; -fx-cursor: hand; -fx-padding: 0 6 0 6;"
+        );
+        btnFechar.setOnAction(e -> dialog.close());
+
+        HBox topo = new HBox(lblTitulo, criarEspacadorAdmin(), btnFechar);
+        topo.setAlignment(Pos.CENTER_LEFT);
+        topo.setPadding(new Insets(14, 18, 12, 18));
+        topo.setStyle("-fx-background-color: #1a237e; -fx-background-radius: 10 10 0 0;");
+
+        ImageView iv = new ImageView(new Image(new ByteArrayInputStream(foto)));
+        iv.setPreserveRatio(true);
+        iv.setFitWidth(720);
+
+        ScrollPane scroll = new ScrollPane(iv);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background: white; -fx-background-color: white;");
+        scroll.setPrefViewportHeight(560);
+
+        VBox layout = new VBox(topo, scroll);
+        layout.setStyle("-fx-background-radius: 10; -fx-background-color: white;");
+
+        Scene scene = new Scene(layout, 740, 620);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    private Region criarEspacadorAdmin() {
+        Region r = new Region();
+        HBox.setHgrow(r, Priority.ALWAYS);
+        return r;
     }
 
     private void erroMsg(String msg, Label lbl) {
@@ -1076,18 +1221,26 @@ public class AdminView {
 
     private VBox card(String titulo, String valor, String bg, String cor) {
         Label lv = new Label(valor);
-        lv.setStyle("-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: " + cor + ";");
+        // Fonte um pouco menor para valores mais longos, para não cortar nem
+        // ficar desproporcionado dentro do card.
+        int tamanhoFonte = valor.length() > 10 ? 19 : 26;
+        lv.setStyle("-fx-font-size: " + tamanhoFonte + "px; -fx-font-weight: bold; -fx-text-fill: " + cor + ";");
+        lv.setWrapText(true);
+        lv.setMaxWidth(190);
 
         Label lt = new Label(titulo);
         lt.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555;");
+        lt.setWrapText(true);
+        lt.setMaxWidth(190);
 
-        VBox c = new VBox(4, lv, lt);
+        VBox c = new VBox(6, lv, lt);
         c.setAlignment(Pos.CENTER_LEFT);
         c.setPadding(new Insets(16, 22, 16, 22));
         c.setStyle("-fx-background-color: " + bg + "; -fx-background-radius: 10;" +
                    "-fx-border-color: #e0e0e0; -fx-border-radius: 10; -fx-border-width: 1;" +
                    "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 4, 0, 0, 2);");
-        c.setPrefWidth(148);
+        c.setPrefWidth(210);
+        c.setMinHeight(90);
         return c;
     }
 
