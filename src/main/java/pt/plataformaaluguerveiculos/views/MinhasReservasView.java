@@ -1,5 +1,9 @@
 package pt.plataformaaluguerveiculos.views;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -34,11 +38,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 
 public class MinhasReservasView {
 
@@ -215,10 +214,13 @@ public class MinhasReservasView {
         // Aviso de denúncia / caução em disputa
         if (r.getEstado() == Reserva.Estado.CONCLUIDO && r.isCaucaoEmDisputa()) {
             Denuncia denuncia = denunciaService.buscarPendentePorReserva(r.getId());
+            boolean euFuiODenunciante = denuncia != null && denuncia.getDenuncianteId() == utilizadorId;
 
             Label lblDisputa = new Label(
-                "🚩 O proprietário reportou um problema nesta reserva. " +
-                "A caução fica retida até decisão da administração."
+                euFuiODenunciante
+                    ? "🚩 Reportaste um problema nesta reserva. A administração vai avaliar o caso."
+                    : "🚩 O proprietário reportou um problema nesta reserva. " +
+                      "A caução fica retida até decisão da administração."
             );
             lblDisputa.setWrapText(true);
             lblDisputa.setStyle(
@@ -227,7 +229,10 @@ public class MinhasReservasView {
             );
             card.getChildren().add(lblDisputa);
 
-            if (denuncia != null) {
+            // Só mostra "Responder à Denúncia" quando a denúncia foi feita
+            // pela outra parte (proprietário) — não faz sentido responder
+            // a uma denúncia que o próprio locatário submeteu.
+            if (denuncia != null && !euFuiODenunciante) {
                 Button btnResponder = new Button(
                     denuncia.temResposta() ? "Resposta enviada" : "🗣  Responder à Denúncia"
                 );
@@ -273,7 +278,7 @@ public class MinhasReservasView {
             card.getChildren().add(linhaConversar);
         }
 
-        // Botão Avaliar — apenas em reservas CONCLUÍDAS
+        // Botão Avaliar + Reportar Problema — apenas em reservas CONCLUÍDAS
         if (r.getEstado() == Reserva.Estado.CONCLUIDO) {
             try {
                 AvaliacaoService avaliacaoService = new AvaliacaoService();
@@ -289,8 +294,21 @@ public class MinhasReservasView {
                     nomeVeiculo
                 ));
 
-                HBox acoes = new HBox(btnAvaliar);
+                HBox acoes = new HBox(10, btnAvaliar);
                 acoes.setAlignment(Pos.CENTER_RIGHT);
+
+                // Reportar problema (locatário) — só se ainda não houver
+                // nenhuma disputa em curso para esta reserva.
+                if (!r.isCaucaoEmDisputa()) {
+                    Button btnReportar = new Button("🚩  Reportar Problema");
+                    btnReportar.setStyle(
+                        "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold;" +
+                        "-fx-background-radius: 6; -fx-padding: 6 14;"
+                    );
+                    btnReportar.setOnAction(e -> abrirDialogoReportarPosConclusao(r));
+                    acoes.getChildren().add(0, btnReportar);
+                }
+
                 card.getChildren().add(acoes);
 
             } catch (Exception ex) {
@@ -434,6 +452,118 @@ public class MinhasReservasView {
         layout.setStyle("-fx-background-radius: 12; -fx-background-color: white;");
 
         javafx.scene.Scene scene = new javafx.scene.Scene(layout, 460, 560);
+        dialog.setScene(scene);
+        dialog.showAndWait();
+    }
+
+    /** Diálogo do locatário para reportar um problema numa reserva já CONCLUÍDA
+     *  (ex.: defeito não detetado na devolução, cobrança que considera indevida). */
+    private void abrirDialogoReportarPosConclusao(Reserva r) {
+        Stage dialog = new Stage(StageStyle.UNDECORATED);
+        dialog.initModality(Modality.APPLICATION_MODAL);
+
+        Label lblTitulo = new Label("Reportar Problema — Reserva #" + r.getId());
+        lblTitulo.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white;");
+        VBox topo = new VBox(lblTitulo);
+        topo.setPadding(new Insets(18, 24, 16, 24));
+        topo.setStyle("-fx-background-color: #c62828; -fx-background-radius: 12 12 0 0;");
+
+        Label lblInfo = new Label(
+            "Esta reserva já está concluída e a caução já foi devolvida. " +
+            "Usa isto para reportar um problema (ex.: defeito não detetado na devolução, " +
+            "cobrança que consideras indevida). A administração vai avaliar o caso."
+        );
+        lblInfo.setWrapText(true);
+        lblInfo.setStyle("-fx-font-size: 12px; -fx-text-fill: #555555;");
+
+        TextArea txtMotivo = new TextArea();
+        txtMotivo.setPromptText("Descreve o problema...");
+        txtMotivo.setWrapText(true);
+        txtMotivo.setPrefRowCount(4);
+
+        byte[][] fotoSelecionada = {null};
+        StackPane previewBox = new StackPane();
+        previewBox.setMinSize(120, 90);
+        previewBox.setMaxSize(120, 90);
+        previewBox.setStyle("-fx-background-color: #f1f1f1; -fx-background-radius: 6;");
+        Label lblSemFoto = new Label("Sem foto");
+        lblSemFoto.setStyle("-fx-text-fill: #999999; -fx-font-size: 11px;");
+        previewBox.getChildren().add(lblSemFoto);
+
+        Button btnEscolherFoto = new Button("📷  Escolher foto…");
+        btnEscolherFoto.getStyleClass().add("btn-secundario");
+
+        Label lblFeedback = new Label();
+        lblFeedback.setStyle("-fx-font-size: 12px;");
+
+        btnEscolherFoto.setOnAction(e -> {
+            FileChooser chooser = new FileChooser();
+            chooser.setTitle("Escolher foto de prova");
+            chooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Imagens", "*.png", "*.jpg", "*.jpeg")
+            );
+            File ficheiro = chooser.showOpenDialog(dialog);
+            if (ficheiro != null) {
+                try {
+                    fotoSelecionada[0] = Files.readAllBytes(ficheiro.toPath());
+                    ImageView iv = new ImageView(new Image(new ByteArrayInputStream(fotoSelecionada[0])));
+                    iv.setFitWidth(120);
+                    iv.setFitHeight(90);
+                    iv.setPreserveRatio(true);
+                    previewBox.getChildren().setAll(iv);
+                } catch (IOException ex) {
+                    lblFeedback.setText("❌ Não foi possível ler a imagem selecionada.");
+                    lblFeedback.setStyle("-fx-text-fill: #c62828;");
+                }
+            }
+        });
+
+        HBox linhaFoto = new HBox(16, previewBox, btnEscolherFoto);
+        linhaFoto.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnCancelar = new Button("Cancelar");
+        btnCancelar.getStyleClass().add("btn-secundario");
+        btnCancelar.setOnAction(e -> dialog.close());
+
+        Button btnEnviar = new Button("🚩  Enviar Denúncia");
+        btnEnviar.setStyle(
+            "-fx-background-color: #c62828; -fx-text-fill: white; -fx-font-weight: bold;" +
+            "-fx-background-radius: 6; -fx-padding: 8 16 8 16; -fx-cursor: hand;"
+        );
+
+        btnEnviar.setOnAction(e -> {
+            String motivo = txtMotivo.getText();
+            if (motivo == null || motivo.isBlank()) {
+                lblFeedback.setText("⚠️ Indica o motivo do problema.");
+                lblFeedback.setStyle("-fx-text-fill: #e65100;");
+                return;
+            }
+            var resultado = denunciaService.reportarProblemaPosConclusao(
+                r.getId(), utilizadorId, motivo, fotoSelecionada[0]
+            );
+            if (resultado.isSucesso()) {
+                dialog.close();
+                javafx.application.Platform.runLater(() -> {
+                    mostrarFeedback(true, resultado.getMensagem());
+                    construirPagina();
+                });
+            } else {
+                lblFeedback.setText("❌ " + resultado.getMensagem());
+                lblFeedback.setStyle("-fx-text-fill: #c62828;");
+            }
+        });
+
+        HBox botoes = new HBox(10, btnCancelar, btnEnviar);
+        botoes.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox corpo = new VBox(14, lblInfo, txtMotivo, linhaFoto, lblFeedback, botoes);
+        corpo.setPadding(new Insets(20, 24, 22, 24));
+        corpo.setStyle("-fx-background-color: white; -fx-background-radius: 0 0 12 12;");
+
+        VBox layout = new VBox(topo, corpo);
+        layout.setStyle("-fx-background-radius: 12; -fx-background-color: white;");
+
+        javafx.scene.Scene scene = new javafx.scene.Scene(layout, 440, 420);
         dialog.setScene(scene);
         dialog.showAndWait();
     }

@@ -91,6 +91,65 @@ public class DenunciaService {
     }
 
     // ================================================================
+    // 1b) Locatário reporta um problema numa reserva já CONCLUÍDA
+    //     (ex.: defeito não detetado na devolução, cobrança indevida).
+    //     A caução já foi devolvida e o proprietário já foi pago — esta
+    //     denúncia não move saldo automaticamente; serve para o admin
+    //     avaliar e decidir manualmente (ex.: aviso, compensação à parte).
+    //     A reserva fica marcada como "em disputa" (caucaoEstado) até o
+    //     admin decidir, sem alterar o estado CONCLUIDO da reserva.
+    // ================================================================
+
+    public ResultadoOperacao reportarProblemaPosConclusao(int reservaId, int locatarioId, String motivo, byte[] foto) {
+        if (motivo == null || motivo.isBlank())
+            return ResultadoOperacao.erro("Tens de indicar o motivo da denúncia.");
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            ReservaDAO reservaDAO = new ReservaDAO(conn);
+            Reserva reserva = reservaDAO.buscarPorId(reservaId);
+
+            if (reserva == null)
+                return ResultadoOperacao.erro("Reserva #" + reservaId + " não encontrada.");
+
+            if (reserva.getEstado() != Estado.CONCLUIDO)
+                return ResultadoOperacao.erro("Só é possível reportar este tipo de problema numa reserva já CONCLUÍDA.");
+
+            if (reserva.getUtilizadorId() != locatarioId)
+                return ResultadoOperacao.erro("Apenas o locatário desta reserva pode reportar este problema.");
+
+            if (reserva.isCaucaoEmDisputa())
+                return ResultadoOperacao.erro("Já existe uma denúncia pendente para esta reserva.");
+
+            VeiculoDAO veiculoDAO = new VeiculoDAO();
+            Veiculo veiculo = veiculoDAO.buscarPorId(reserva.getVeiculoId());
+            if (veiculo == null)
+                return ResultadoOperacao.erro("Veículo associado à reserva não encontrado.");
+
+            // Marca como "em disputa" apenas para sinalizar ao admin — não reverte
+            // a devolução/pagamento já feitos quando a reserva foi concluída.
+            reservaDAO.atualizarCaucaoEstado(reservaId, "EM_DISPUTA");
+
+            Denuncia d = new Denuncia(reservaId, locatarioId, veiculo.getProprietarioId(), motivo.trim(), foto);
+            DenunciaDAO denunciaDAO = new DenunciaDAO(conn);
+            boolean ok = denunciaDAO.inserir(d);
+            if (!ok)
+                return ResultadoOperacao.erro("Falha ao registar a denúncia. Tente novamente.");
+
+            notificacaoService.criarNotificacao(veiculo.getProprietarioId(), "AVISO",
+                "🚩 O locatário reportou um problema sobre o aluguer (já concluído) do " +
+                veiculo.getMarca() + " " + veiculo.getModelo() +
+                ". A administração vai avaliar o caso.");
+
+            return ResultadoOperacao.sucesso(
+                "Denúncia registada. A administração vai avaliar o caso e decidir se há lugar a alguma compensação.");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return ResultadoOperacao.erro("Erro de base de dados: " + e.getMessage());
+        }
+    }
+
+    // ================================================================
     // 2) Denunciar um utilizador (sem ligação a uma caução)
     // ================================================================
 
@@ -205,9 +264,26 @@ public class DenunciaService {
             boolean ok = dao.decidir(denunciaId, novoEstado, decisaoTexto);
             if (!ok) return ResultadoOperacao.erro("Falha ao gravar a decisão.");
 
-            // Se ligada a uma reserva, resolve o destino da caução em disputa
+            // Se ligada a uma reserva, resolve o destino da caução em disputa —
+            // mas só no fluxo "problema reportado pelo proprietário a meio da
+            // conclusão" (a caução ainda estava em limbo). Quando é o locatário
+            // a reportar um problema numa reserva já CONCLUÍDA, a caução já foi
+            // devolvida e o proprietário já foi pago — não se move saldo de novo.
             if (d.getReservaId() != null) {
-                resolverCaucao(conn, d, aprovarDenunciante);
+                Reserva reservaDaDenuncia = new ReservaDAO(conn).buscarPorId(d.getReservaId());
+                // Critério: no fluxo antigo o denunciante é o proprietário do
+                // veículo, ou seja, é diferente do utilizadorId (locatário) da reserva.
+                boolean caucaoAindaEmLimbo = reservaDaDenuncia != null
+                    && d.getDenuncianteId() != reservaDaDenuncia.getUtilizadorId();
+
+                if (caucaoAindaEmLimbo) {
+                    resolverCaucao(conn, d, aprovarDenunciante);
+                } else if (reservaDaDenuncia != null) {
+                    // A caução já tinha sido devolvida quando a reserva foi
+                    // concluída normalmente; repõe o estado (estava "EM_DISPUTA"
+                    // só como sinalizador enquanto o admin avaliava).
+                    new ReservaDAO(conn).atualizarCaucaoEstado(d.getReservaId(), "DEVOLVIDA");
+                }
             }
 
             notificacaoService.criarNotificacao(d.getDenuncianteId(), "AVISO",

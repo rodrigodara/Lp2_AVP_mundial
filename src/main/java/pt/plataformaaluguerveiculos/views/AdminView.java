@@ -461,6 +461,12 @@ public class AdminView {
             "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 4, 0, 0, 2);"
         );
 
+        // Detetar se é uma denúncia "pós-conclusão" feita pelo locatário
+        // (já não há caução em limbo — é só para avaliação/decisão manual).
+        Reserva reservaParaContexto = d.isLigadaAReserva() ? reservaDaDenuncia(d) : null;
+        boolean denunciaPosConclusao = reservaParaContexto != null
+            && d.getDenuncianteId() == reservaParaContexto.getUtilizadorId();
+
         HBox topo = new HBox(10);
         topo.setAlignment(Pos.CENTER_LEFT);
         Label lblId = new Label("Denúncia #" + d.getId());
@@ -471,6 +477,15 @@ public class AdminView {
             "-fx-background-color: #ffebee; -fx-background-radius: 4; -fx-padding: 2 8 2 8;"
         );
         topo.getChildren().addAll(lblId, badgeTipo);
+
+        if (denunciaPosConclusao) {
+            Label badgePos = new Label("PÓS-CONCLUSÃO (sem efeito na caução)");
+            badgePos.setStyle(
+                "-fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #6a1b9a;" +
+                "-fx-background-color: #f3e5f5; -fx-background-radius: 4; -fx-padding: 2 8 2 8;"
+            );
+            topo.getChildren().add(badgePos);
+        }
 
         if (d.getDataDenuncia() != null) {
             Label lblData = new Label(d.getDataDenuncia().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
@@ -489,7 +504,7 @@ public class AdminView {
 
         // ---- Detalhes da reserva associada (veículo, datas, valores) ----
         if (d.isLigadaAReserva()) {
-            Reserva reserva = reservaDaDenuncia(d);
+            Reserva reserva = reservaParaContexto;
             if (reserva != null) {
                 Veiculo veiculo = veiculoDaDenuncia(d, reserva);
                 String nomeVeiculo = veiculo != null ? (veiculo.getMarca() + " " + veiculo.getModelo() + " (" + veiculo.getAno() + ")") : "Veículo #" + reserva.getVeiculoId();
@@ -497,6 +512,7 @@ public class AdminView {
                 Label lblReserva = new Label(
                     "🚗 " + nomeVeiculo + "  •  " + reserva.getDataInicio() + " → " + reserva.getDataFim() +
                     " (" + reserva.getNumeroDias() + " dias)  •  Total: " + String.format("%.2f€", reserva.getPrecoTotal()) +
+
                     "  •  Caução: " + String.format("%.2f€", reserva.getCaucao()) +
                     (reserva.getCaucaoEstado() != null ? "  •  Estado caução: " + reserva.getCaucaoEstado() : "")
                 );
@@ -546,9 +562,13 @@ public class AdminView {
         Button btnRejeitar = botao("✘ Rejeitar Denúncia", "#c62828", "white");
 
         Label lblExplicacao = new Label(
-            d.isLigadaAReserva()
-                ? "Aprovar = caução fica retida a favor do proprietário (denunciante). Rejeitar = caução é devolvida ao locatário."
-                : "Aprovar = a denúncia procede (pode ser seguida de aviso ao utilizador). Rejeitar = sem consequências."
+            denunciaPosConclusao
+                ? "Esta reserva já estava concluída (caução já devolvida, proprietário já pago). " +
+                  "Aprovar/Rejeitar aqui não move saldo automaticamente — serve apenas para registar a " +
+                  "decisão da administração; qualquer compensação deve ser feita manualmente se aplicável."
+                : d.isLigadaAReserva()
+                    ? "Aprovar = caução fica retida a favor do proprietário (denunciante). Rejeitar = caução é devolvida ao locatário."
+                    : "Aprovar = a denúncia procede (pode ser seguida de aviso ao utilizador). Rejeitar = sem consequências."
         );
         lblExplicacao.setWrapText(true);
         lblExplicacao.setStyle("-fx-font-size: 11px; -fx-text-fill: #888888;");
@@ -910,16 +930,18 @@ public class AdminView {
 
         // ---- Cards gerais ----
         Label lblGerais = label("Resumo Geral", 17, true, "#1a237e");
-        FlowPane cardsBox = criarCardsGerais();
+        CardsGeraisResult cardsRefs = criarCardsGeraisComRefs();
+        FlowPane cardsBox = cardsRefs.pane();
 
         // ---- Filtro por período ----
         Label lblPeriodo = label("Análise por Período", 16, true, "#37474f");
 
         ToggleGroup tg = new ToggleGroup();
-        RadioButton rbDia  = new RadioButton("Dia");   rbDia .setToggleGroup(tg); rbDia .setSelected(true);
-        RadioButton rbMes  = new RadioButton("Mês");   rbMes .setToggleGroup(tg);
-        RadioButton rbAno  = new RadioButton("Ano");   rbAno .setToggleGroup(tg);
-        HBox rbBox = new HBox(16, rbDia, rbMes, rbAno);
+        RadioButton rbDia   = new RadioButton("Dia");    rbDia  .setToggleGroup(tg);
+        RadioButton rbMes   = new RadioButton("Mês");    rbMes  .setToggleGroup(tg); rbMes.setSelected(true);
+        RadioButton rbAno   = new RadioButton("Ano");    rbAno  .setToggleGroup(tg);
+        RadioButton rbTodos = new RadioButton("Todos");  rbTodos.setToggleGroup(tg);
+        HBox rbBox = new HBox(16, rbDia, rbMes, rbAno, rbTodos);
         rbBox.setAlignment(Pos.CENTER_LEFT);
 
         TableView<ObservableList<String>> tblPeriodo = criarTabelaStats(
@@ -927,14 +949,19 @@ public class AdminView {
 
         Button btnPeriodo = botao("Atualizar", "#1a237e", "white");
         btnPeriodo.setOnAction(e -> {
-            String agrup = rbDia.isSelected() ? "DAY" : rbMes.isSelected() ? "MONTH" : "YEAR";
+            String agrup = rbDia.isSelected() ? "DAY" : rbMes.isSelected() ? "MONTH" : rbAno.isSelected() ? "YEAR" : "MONTH";
+            String periodoCards = rbDia.isSelected() ? "DAY" : rbMes.isSelected() ? "MONTH" : rbAno.isSelected() ? "YEAR" : "ALL";
             try {
+                // A tabela "Análise por Período" mantém-se como estava: sempre agrupada
+                // (Todos não tem agrupamento próprio na tabela, usa-se MONTH como nesse caso).
                 preencherTabelaStats(tblPeriodo, dao.estatisticasPorPeriodo(agrup));
             } catch (SQLException ex) { ex.printStackTrace(); }
+            atualizarCardsGeraisPorPeriodo(cardsRefs, periodoCards);
         });
         // Carregar ao abrir
         try { preencherTabelaStats(tblPeriodo, dao.estatisticasPorPeriodo("MONTH")); }
         catch (SQLException ignored) {}
+        atualizarCardsGeraisPorPeriodo(cardsRefs, "MONTH");  // Mês está selecionado por defeito
 
         // ---- Filtro por intervalo de datas (aplica-se a Marca + Região) ----
         Label lblFiltroData = label("Filtrar Marca / Região por Período", 16, true, "#37474f");
@@ -1194,29 +1221,55 @@ public class AdminView {
         return box;
     }
 
-    private FlowPane criarCardsGerais() {
+    /** Agrupa o FlowPane de cards e os 3 Labels de valor que mudam com o filtro de período. */
+    private record CardsGeraisResult(FlowPane pane, Label lblReceita, Label lblLucroConcluidas, Label lblLucroPendente) {}
+
+    private CardsGeraisResult criarCardsGeraisComRefs() {
         FlowPane box = new FlowPane(16, 16);
         box.setAlignment(Pos.CENTER_LEFT);
+
+        Label[] lblReceitaRef = new Label[1];
+        Label[] lblLucroConcluidasRef = new Label[1];
+        Label[] lblLucroPendenteRef = new Label[1];
+
         try {
             int[] s = dao.estatisticasGerais();
+            VBox cardReceita = card("💰 Receita Total", s[5] + " €", "#f3e5f5", "#6a1b9a");
+            lblReceitaRef[0] = (Label) cardReceita.getChildren().get(0);
+
             box.getChildren().addAll(
                 card("👥 Utilizadores",   String.valueOf(s[0]), "#e8eaf6", "#1a237e"),
                 card("✅ Contas Ativas",  String.valueOf(s[1]), "#e8f5e9", "#2e7d32"),
                 card("🔒 Bloqueados",     String.valueOf(s[2]), "#ffebee", "#c62828"),
                 card("🚗 Veículos",       String.valueOf(s[3]), "#e3f2fd", "#1565c0"),
                 card("📋 Reservas",       String.valueOf(s[4]), "#fff8e1", "#f57f17"),
-                card("💰 Receita Total",  s[5] + " €",          "#f3e5f5", "#6a1b9a")
+                cardReceita
             );
 
             double[] lucro = dao.calcularLucroSite();
-            box.getChildren().addAll(
-                card("🏦 Lucro do Site (Concluídas)", String.format("%.2f €", lucro[0]), "#e0f2f1", "#00695c"),
-                card("⏳ Lucro do Site (Pendente)",    String.format("%.2f €", lucro[1]), "#fff3e0", "#ef6c00")
-            );
+            VBox cardConcluidas = card("🏦 Lucro do Site (Concluídas)", String.format("%.2f €", lucro[0]), "#e0f2f1", "#00695c");
+            VBox cardPendente   = card("⏳ Lucro do Site (Pendente)",    String.format("%.2f €", lucro[1]), "#fff3e0", "#ef6c00");
+            lblLucroConcluidasRef[0] = (Label) cardConcluidas.getChildren().get(0);
+            lblLucroPendenteRef[0]   = (Label) cardPendente.getChildren().get(0);
+
+            box.getChildren().addAll(cardConcluidas, cardPendente);
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return box;
+        return new CardsGeraisResult(box, lblReceitaRef[0], lblLucroConcluidasRef[0], lblLucroPendenteRef[0]);
+    }
+
+    /** Atualiza os 3 cards de dinheiro (Receita Total, Lucro Concluídas, Lucro Pendente) para o período indicado. */
+    private void atualizarCardsGeraisPorPeriodo(CardsGeraisResult refs, String periodo) {
+        try {
+            double receita = dao.calcularReceitaTotal(periodo);
+            double[] lucro = dao.calcularLucroSite(periodo);
+            if (refs.lblReceita() != null) refs.lblReceita().setText(String.format("%.2f €", receita));
+            if (refs.lblLucroConcluidas() != null) refs.lblLucroConcluidas().setText(String.format("%.2f €", lucro[0]));
+            if (refs.lblLucroPendente() != null) refs.lblLucroPendente().setText(String.format("%.2f €", lucro[1]));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private VBox card(String titulo, String valor, String bg, String cor) {

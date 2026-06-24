@@ -374,13 +374,30 @@ public boolean emitirAviso(int userId, String motivo) throws SQLException {
      *   [0] = lucro já consolidado, de reservas CONCLUIDO
      *   [1] = lucro pendente, de reservas ACEITE (ainda a decorrer)
      */
+    /** Mantido por compatibilidade — equivale a período "ALL" (histórico completo). */
     public double[] calcularLucroSite() throws SQLException {
+        return calcularLucroSite("ALL");
+    }
+
+    /**
+     * Lucro da plataforma (comissão de 15%), filtrado por período e
+     * separado em dois valores:
+     *   [0] = lucro já consolidado, de reservas CONCLUIDO
+     *   [1] = lucro pendente, de reservas ACEITE (ainda a decorrer)
+     *
+     * @param periodo "DAY" (hoje), "MONTH" (este mês), "YEAR" (este ano) ou "ALL" (sempre).
+     *                A data de referência usada é estado_data (quando a reserva
+     *                passou a ACEITE/CONCLUIDO).
+     */
+    public double[] calcularLucroSite(String periodo) throws SQLException {
         double[] lucro = new double[2];
+        String filtroData = filtroDataPorPeriodo(periodo, "estado_data");
+
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement ps = conn.prepareStatement(
                 "SELECT estado, COALESCE(SUM(precoTotal), 0) AS total "
               + "FROM reserva "
-              + "WHERE estado IN ('ACEITE', 'CONCLUIDO') "
+              + "WHERE estado IN ('ACEITE', 'CONCLUIDO') " + filtroData
               + "GROUP BY estado");
              ResultSet rs = ps.executeQuery()) {
 
@@ -395,6 +412,29 @@ public boolean emitirAviso(int userId, String motivo) throws SQLException {
             }
         }
         return lucro;
+    }
+
+    /** Receita bruta total (ACEITE + CONCLUIDO), filtrada por período. */
+    public double calcularReceitaTotal(String periodo) throws SQLException {
+        String filtroData = filtroDataPorPeriodo(periodo, "estado_data");
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                "SELECT COALESCE(SUM(precoTotal), 0) FROM reserva "
+              + "WHERE estado IN ('ACEITE', 'CONCLUIDO') " + filtroData);
+             ResultSet rs = ps.executeQuery()) {
+            if (rs.next()) return rs.getDouble(1);
+        }
+        return 0;
+    }
+
+    /** Devolve a cláusula SQL "AND coluna >= ..." adequada ao período pedido. */
+    private String filtroDataPorPeriodo(String periodo, String coluna) {
+        return switch (periodo == null ? "ALL" : periodo) {
+            case "DAY"   -> "AND DATE(" + coluna + ") = CURDATE() ";
+            case "MONTH" -> "AND YEAR(" + coluna + ") = YEAR(CURDATE()) AND MONTH(" + coluna + ") = MONTH(CURDATE()) ";
+            case "YEAR"  -> "AND YEAR(" + coluna + ") = YEAR(CURDATE()) ";
+            default      -> "";  // ALL
+        };
     }
 
     public List<Object[]> estatisticasPorPeriodo(String agrupamento) throws SQLException {
