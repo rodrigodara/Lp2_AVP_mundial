@@ -216,6 +216,14 @@ public class NavigationManager {
         navegarPara(new ConsultaReceitaView(utilizadorLogadoId).getRoot());
     }
 
+    /** Navega para a lista de veículos que o utilizador marcou como favoritos. */
+    public void navegarParaMeusFavoritos() {
+        if (bloquearSeAdmin("ver favoritos")) return;
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+        navegarPara(new MeusFavoritosView().getRoot());
+    }
+
     public void navegarParaProcurarVeiculos() {
         if (bloquearSeAdmin("procurar veículos")) {
             return;

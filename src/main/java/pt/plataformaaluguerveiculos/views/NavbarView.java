@@ -83,6 +83,7 @@ public class NavbarView {
 
         Button btnDashboard    = new Button("Dashboard");
         Button btnProcurar     = new Button("Procurar Veículos");
+        Button btnFavoritos    = new Button("Favoritos");
         Button btnReservas     = new Button("As Minhas Reservas");
         Button btnMeusVeiculos = new Button("Os Meus Veículos");
         Button btnPedidos      = new Button("Pedidos Recebidos");
@@ -91,7 +92,7 @@ public class NavbarView {
         Button btnSair         = new Button("Sair");
 
         for (Button b : new Button[]{
-                btnDashboard, btnProcurar, btnReservas,
+                btnDashboard, btnProcurar, btnFavoritos, btnReservas,
                 btnMeusVeiculos, btnPedidos, btnConta,
                 btnHistorico, btnSair
         }) {
@@ -100,6 +101,7 @@ public class NavbarView {
 
         btnDashboard.setOnAction(e    -> NavigationManager.getInstance().navegarParaDashboard());
         btnProcurar.setOnAction(e     -> NavigationManager.getInstance().navegarParaProcurarVeiculos());
+        btnFavoritos.setOnAction(e    -> NavigationManager.getInstance().navegarParaMeusFavoritos());
         btnReservas.setOnAction(e     -> NavigationManager.getInstance().navegarParaMinhasReservas());
         btnMeusVeiculos.setOnAction(e -> NavigationManager.getInstance().navegarParaMeusVeiculos());
         btnPedidos.setOnAction(e      -> NavigationManager.getInstance().navegarParaPedidosRecebidos());
@@ -124,13 +126,13 @@ public class NavbarView {
 
         if (sino != null) {
             navbar.getChildren().addAll(
-                btnDashboard, btnProcurar, btnReservas,
+                btnDashboard, btnProcurar, btnFavoritos, btnReservas,
                 btnMeusVeiculos, btnPedidos, btnConta,
                 btnHistorico, spacer, sino, btnSair
             );
         } else {
             navbar.getChildren().addAll(
-                btnDashboard, btnProcurar, btnReservas,
+                btnDashboard, btnProcurar, btnFavoritos, btnReservas,
                 btnMeusVeiculos, btnPedidos, btnConta,
                 btnHistorico, spacer, btnSair
             );

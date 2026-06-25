@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import com.aluguer.model.Veiculo;
+import com.aluguer.service.FavoritoService;
 import com.aluguer.service.VeiculoService;
+import com.aluguer.util.SessionManager;
 
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
@@ -284,7 +286,28 @@ public class ProcurarVeiculosView {
         btnVerDetalhes.setMaxWidth(Double.MAX_VALUE);
         btnVerDetalhes.setOnAction(e -> abrirDetalhe(v));
 
-        VBox infoBox = new VBox(6, lblNome, lblAno, lblLocal, linhaPrecoAval, btnVerDetalhes);
+        // ---- Botão de favorito ----
+        int utilizadorId = SessionManager.getInstance().getUtilizador().getId();
+        Button btnFavorito = new Button("☆ Guardar");
+        btnFavorito.getStyleClass().add("btn-secundario");
+        btnFavorito.setMaxWidth(Double.MAX_VALUE);
+        try {
+            boolean jaFavorito = new FavoritoService().isFavorito(utilizadorId, v.getId());
+            btnFavorito.setText(jaFavorito ? "★ Guardado" : "☆ Guardar");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+        btnFavorito.setOnAction(e -> {
+            e.consume(); // não abrir o detalhe ao clicar neste botão
+            try {
+                boolean novoEstado = new FavoritoService().alternar(utilizadorId, v.getId());
+                btnFavorito.setText(novoEstado ? "★ Guardado" : "☆ Guardar");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        VBox infoBox = new VBox(6, lblNome, lblAno, lblLocal, linhaPrecoAval, btnVerDetalhes, btnFavorito);
         infoBox.setPadding(new Insets(12));
 
         // ---- Conteúdo do card (foto + info), com cantos arredondados ----

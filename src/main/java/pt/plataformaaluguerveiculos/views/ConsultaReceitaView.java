@@ -68,13 +68,20 @@ public class ConsultaReceitaView {
         btnVoltar.getStyleClass().add("btn-secundario");
         btnVoltar.setOnAction(e -> NavigationManager.getInstance().navegarParaMeusVeiculos());
 
+        javafx.scene.control.Button btnExportarPdf = new javafx.scene.control.Button("📄 Exportar PDF");
+        btnExportarPdf.getStyleClass().add("btn-primario");
+        btnExportarPdf.setOnAction(e -> exportarRelatorioPdf());
+
+        HBox linhaBotoes = new HBox(10, btnVoltar, btnExportarPdf);
+        linhaBotoes.setAlignment(Pos.CENTER_LEFT);
+
         Label titulo = new Label("Consulta de Receita por Veículo");
         titulo.getStyleClass().add("reservas-titulo");
 
         Label subtitulo = new Label("Receita acumulada gerada por cada veículo");
         subtitulo.getStyleClass().add("reservas-subtitulo");
 
-        root.getChildren().addAll(btnVoltar, titulo, subtitulo);
+        root.getChildren().addAll(linhaBotoes, titulo, subtitulo);
 
         // Carregar dados
         List<ReceitaVeiculo> receitas    = carregarReceitas();
@@ -417,5 +424,29 @@ public class ConsultaReceitaView {
 
     public VBox getRoot() {
         return root;
+    }
+
+    // ----------------------------------------------------------------
+    // Exportação para PDF
+    // ----------------------------------------------------------------
+
+    private void exportarRelatorioPdf() {
+        javafx.stage.FileChooser chooser = new javafx.stage.FileChooser();
+        chooser.setInitialFileName("relatorio_receita.pdf");
+        chooser.getExtensionFilters().add(
+            new javafx.stage.FileChooser.ExtensionFilter("Ficheiro PDF", "*.pdf"));
+
+        java.io.File destino = chooser.showSaveDialog(root.getScene().getWindow());
+        if (destino == null) return; // utilizador cancelou
+
+        try {
+            com.aluguer.model.User utilizador = com.aluguer.util.SessionManager.getInstance().getUtilizador();
+            new com.aluguer.service.RelatorioReceitaPdfService().gerarRelatorio(utilizador, destino);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            Label erro = new Label("Não foi possível gerar o PDF: " + ex.getMessage());
+            erro.setStyle("-fx-text-fill: #c62828;");
+            root.getChildren().add(erro);
+        }
     }
 }
