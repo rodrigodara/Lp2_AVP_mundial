@@ -41,24 +41,24 @@ public class ReceitaVeiculoDAO {
     public List<ReceitaVeiculo> listarReceitaPorVeiculo(int proprietarioId) {
         List<ReceitaVeiculo> lista = new ArrayList<>();
 
-        // ALV-188: GROUP BY veiculoId agrupa por veículo
-        // ALV-187: SUM(t.valor) calcula a receita total por veículo
+        // Nota: a tabela `transacao` não tem reservaId nem utilizadorId — tem
+        // contaId (que se liga a conta.utilizadorId) e tipo
+        // 'recebimento_proprietario' para os pagamentos recebidos pelo dono.
+        // Como a transação não está ligada a uma reserva/veículo específico,
+        // a receita por veículo é calculada a partir de reserva.precoTotal
+        // (consistente com "Os Meus Veículos"), não da tabela transacao.
         String sql = """
                 SELECT
                     v.id              AS veiculoId,
                     v.marca,
                     v.modelo,
                     v.ano,
-                    COUNT(DISTINCT r.id)  AS totalReservas,
-                    COALESCE(SUM(t.valor), 0) AS receitaTotal
+                    COUNT(r.id)  AS totalReservas,
+                    COALESCE(SUM(CASE WHEN r.estado IN ('ACEITE', 'CONCLUIDO')
+                                       THEN r.precoTotal * 0.85 ELSE 0 END), 0) AS receitaTotal
                 FROM veiculo v
                 LEFT JOIN reserva r
                     ON r.veiculoId = v.id
-                    AND r.estado = 'ACEITE'
-                LEFT JOIN transacao t
-                    ON t.reservaId = r.id
-                    AND t.utilizadorId = v.proprietarioId
-                    AND t.tipo = 'RECEBIMENTO'
                 WHERE v.proprietarioId = ?
                 GROUP BY v.id, v.marca, v.modelo, v.ano
                 ORDER BY receitaTotal DESC
@@ -87,6 +87,58 @@ public class ReceitaVeiculoDAO {
     }
 
     // ----------------------------------------------------------------
+    // Evolução temporal da receita de um veículo, para o gráfico
+    // (Dia / Semana / Mês / Ano), usado na comparação entre veículos.
+    // ----------------------------------------------------------------
+
+    /**
+     * Devolve a evolução da receita (85% do precoTotal, já sem comissão)
+     * de um veículo específico, agrupada pelo período indicado.
+     *
+     * @param veiculoId   id do veículo
+     * @param agrupamento "DAY", "WEEK", "MONTH" ou "YEAR"
+     * @return lista de Object[]{periodo (String), receita (Double)}, ordenada
+     *         cronologicamente (mais antigo primeiro), limitada às últimas 30 entradas.
+     */
+    public List<Object[]> evolucaoReceitaPorVeiculo(int veiculoId, String agrupamento) {
+        List<Object[]> lista = new ArrayList<>();
+
+        String fmt = switch (agrupamento == null ? "MONTH" : agrupamento) {
+            case "DAY"   -> "%Y-%m-%d";
+            case "WEEK"  -> "%Y-S%u";
+            case "YEAR"  -> "%Y";
+            default      -> "%Y-%m"; // MONTH
+        };
+
+        // fmt vem de um switch interno fixo, não de input do utilizador — seguro
+        // concatenar diretamente na query.
+        String sql = "SELECT DATE_FORMAT(r.dataInicio, '" + fmt + "') AS periodo, "
+                   + "       COALESCE(SUM(r.precoTotal * 0.85), 0) AS receita "
+                   + "FROM reserva r "
+                   + "WHERE r.veiculoId = ? "
+                   + "  AND r.estado IN ('ACEITE', 'CONCLUIDO') "
+                   + "GROUP BY periodo "
+                   + "ORDER BY periodo ASC "
+                   + "LIMIT 30";
+
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, veiculoId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new Object[]{
+                        rs.getString("periodo"),
+                        rs.getDouble("receita")
+                    });
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("[ReceitaVeiculoDAO] Erro ao calcular evolução de receita: " + e.getMessage());
+        }
+
+        return lista;
+    }
+
+    // ----------------------------------------------------------------
     // ALV-189 — Endpoint estatísticas: totais globais do proprietário
     // ----------------------------------------------------------------
 
@@ -99,12 +151,11 @@ public class ReceitaVeiculoDAO {
      */
     public double receitaTotalProprietario(int proprietarioId) {
         String sql = """
-                SELECT COALESCE(SUM(t.valor), 0)
-                FROM transacao t
-                JOIN reserva r  ON t.reservaId = r.id
-                JOIN veiculo v  ON r.veiculoId  = v.id
+                SELECT COALESCE(SUM(r.precoTotal * 0.85), 0)
+                FROM reserva r
+                JOIN veiculo v ON r.veiculoId = v.id
                 WHERE v.proprietarioId = ?
-                  AND t.tipo = 'RECEBIMENTO'
+                  AND r.estado IN ('ACEITE', 'CONCLUIDO')
                 """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -130,7 +181,7 @@ public class ReceitaVeiculoDAO {
                 FROM reserva r
                 JOIN veiculo v ON r.veiculoId = v.id
                 WHERE v.proprietarioId = ?
-                  AND r.estado = 'ACEITE'
+                  AND r.estado IN ('ACEITE', 'CONCLUIDO')
                 """;
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {

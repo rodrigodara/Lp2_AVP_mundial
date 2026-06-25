@@ -1,21 +1,33 @@
 package pt.plataformaaluguerveiculos.views;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
+
 import com.aluguer.dao.ReceitaVeiculoDAO;
 import com.aluguer.model.ReceitaVeiculo;
 import com.aluguer.util.DatabaseConnection;
 
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
 
 /**
  * ALV-188 — Agrupar por veículo
@@ -52,13 +64,17 @@ public class ConsultaReceitaView {
         root.getChildren().clear();
 
         // Cabeçalho
+        javafx.scene.control.Button btnVoltar = new javafx.scene.control.Button("←  Voltar aos Meus Veículos");
+        btnVoltar.getStyleClass().add("btn-secundario");
+        btnVoltar.setOnAction(e -> NavigationManager.getInstance().navegarParaMeusVeiculos());
+
         Label titulo = new Label("Consulta de Receita por Veículo");
         titulo.getStyleClass().add("reservas-titulo");
 
         Label subtitulo = new Label("Receita acumulada gerada por cada veículo");
         subtitulo.getStyleClass().add("reservas-subtitulo");
 
-        root.getChildren().addAll(titulo, subtitulo);
+        root.getChildren().addAll(btnVoltar, titulo, subtitulo);
 
         // Carregar dados
         List<ReceitaVeiculo> receitas    = carregarReceitas();
@@ -79,6 +95,14 @@ public class ConsultaReceitaView {
             root.getChildren().add(vazio);
             return;
         }
+
+        // ---- Gráfico comparativo de evolução de receita ----
+        Label lblGrafico = new Label("Comparar Veículos");
+        lblGrafico.getStyleClass().add("reservas-subtitulo");
+        lblGrafico.setPadding(new Insets(8, 0, 0, 0));
+        root.getChildren().add(lblGrafico);
+
+        root.getChildren().add(criarSecaoGrafico(receitas));
 
         // ALV-188 + ALV-190 — Lista de cards por veículo
         Label lblLista = new Label("Receita por Veículo");
@@ -195,8 +219,184 @@ public class ConsultaReceitaView {
     }
 
     // ----------------------------------------------------------------
-    // Carregar dados da BD
+    // Gráfico comparativo de evolução de receita entre veículos
     // ----------------------------------------------------------------
+
+    private VBox criarSecaoGrafico(List<ReceitaVeiculo> receitas) {
+        VBox secao = new VBox(14);
+
+        // ---- Controlos: Veículo A, Veículo B, período, tipo de gráfico ----
+        ComboBox<ReceitaVeiculo> comboVeiculoA = new ComboBox<>(FXCollections.observableArrayList(receitas));
+        comboVeiculoA.getStyleClass().add("combo-filtro");
+        comboVeiculoA.setPromptText("Veículo A");
+        comboVeiculoA.setConverter(criarConversorVeiculo());
+        comboVeiculoA.setValue(receitas.get(0));
+        comboVeiculoA.setPrefWidth(220);
+
+        ComboBox<ReceitaVeiculo> comboVeiculoB = new ComboBox<>(FXCollections.observableArrayList(receitas));
+        comboVeiculoB.getStyleClass().add("combo-filtro");
+        comboVeiculoB.setPromptText("Veículo B (opcional)");
+        comboVeiculoB.setConverter(criarConversorVeiculo());
+        comboVeiculoB.setPrefWidth(220);
+
+        ToggleGroup tgPeriodo = new ToggleGroup();
+        RadioButton rbDia   = new RadioButton("Dia");   rbDia.setToggleGroup(tgPeriodo);
+        RadioButton rbSemana = new RadioButton("Semana"); rbSemana.setToggleGroup(tgPeriodo);
+        RadioButton rbMes   = new RadioButton("Mês");   rbMes.setToggleGroup(tgPeriodo); rbMes.setSelected(true);
+        RadioButton rbAno   = new RadioButton("Ano");   rbAno.setToggleGroup(tgPeriodo);
+        HBox periodoBox = new HBox(12, rbDia, rbSemana, rbMes, rbAno);
+        periodoBox.setAlignment(Pos.CENTER_LEFT);
+
+        ToggleGroup tgTipo = new ToggleGroup();
+        RadioButton rbBarras = new RadioButton("📊 Barras"); rbBarras.setToggleGroup(tgTipo); rbBarras.setSelected(true);
+        RadioButton rbLinha  = new RadioButton("📈 Linha");  rbLinha.setToggleGroup(tgTipo);
+        HBox tipoBox = new HBox(12, rbBarras, rbLinha);
+        tipoBox.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnAtualizar = new Button("Atualizar Gráfico");
+        btnAtualizar.getStyleClass().add("btn-primario");
+
+        HBox linhaControlos = new HBox(16,
+            criarCampoComLabelGrafico("Veículo A", comboVeiculoA),
+            criarCampoComLabelGrafico("Veículo B", comboVeiculoB),
+            criarCampoComLabelGrafico("Período", periodoBox),
+            criarCampoComLabelGrafico("Tipo de gráfico", tipoBox),
+            btnAtualizar
+        );
+        linhaControlos.setAlignment(Pos.CENTER_LEFT);
+
+        // ---- Área do gráfico: troca entre BarChart e LineChart ----
+        StackPane areaGrafico = new StackPane();
+        areaGrafico.setPrefHeight(320);
+
+        Runnable atualizar = () -> desenharGrafico(
+            areaGrafico,
+            comboVeiculoA.getValue(),
+            comboVeiculoB.getValue(),
+            agrupamentoSelecionado(rbDia, rbSemana, rbAno),
+            rbBarras.isSelected()
+        );
+
+        btnAtualizar.setOnAction(e -> atualizar.run());
+        atualizar.run(); // desenha logo com os valores por defeito
+
+        secao.getChildren().addAll(linhaControlos, areaGrafico);
+        return secao;
+    }
+
+    private String agrupamentoSelecionado(RadioButton rbDia, RadioButton rbSemana, RadioButton rbAno) {
+        if (rbDia.isSelected()) return "DAY";
+        if (rbSemana.isSelected()) return "WEEK";
+        if (rbAno.isSelected()) return "YEAR";
+        return "MONTH";
+    }
+
+    private VBox criarCampoComLabelGrafico(String texto, javafx.scene.Node campo) {
+        Label lbl = new Label(texto);
+        lbl.setStyle("-fx-font-size: 11px; -fx-text-fill: #666666; -fx-font-weight: bold;");
+        return new VBox(4, lbl, campo);
+    }
+
+    private javafx.util.StringConverter<ReceitaVeiculo> criarConversorVeiculo() {
+        return new javafx.util.StringConverter<>() {
+            @Override
+            public String toString(ReceitaVeiculo rv) {
+                return rv == null ? "Nenhum" : rv.getNomeVeiculo();
+            }
+            @Override
+            public ReceitaVeiculo fromString(String s) {
+                return null; // não editável, só seleção
+            }
+        };
+    }
+
+    /** Desenha o gráfico (barras ou linha) com 1 ou 2 veículos, no período escolhido. */
+    private void desenharGrafico(StackPane area, ReceitaVeiculo veiculoA, ReceitaVeiculo veiculoB,
+                                  String agrupamento, boolean usarBarras) {
+        area.getChildren().clear();
+        if (veiculoA == null) {
+            Label vazio = new Label("Seleciona pelo menos o Veículo A.");
+            vazio.setStyle("-fx-text-fill: #999999; -fx-font-style: italic;");
+            area.getChildren().add(vazio);
+            return;
+        }
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            ReceitaVeiculoDAO dao = new ReceitaVeiculoDAO(conn);
+            List<Object[]> dadosA = dao.evolucaoReceitaPorVeiculo(veiculoA.getVeiculoId(), agrupamento);
+            List<Object[]> dadosB = (veiculoB != null && veiculoB.getVeiculoId() != veiculoA.getVeiculoId())
+                ? dao.evolucaoReceitaPorVeiculo(veiculoB.getVeiculoId(), agrupamento)
+                : null;
+
+            if (usarBarras) {
+                BarChart<String, Number> chart = criarGraficoBarrasReceita();
+                chart.getData().add(criarSerieBarras(veiculoA.getNomeVeiculo(), dadosA));
+                if (dadosB != null) chart.getData().add(criarSerieBarras(veiculoB.getNomeVeiculo(), dadosB));
+                chart.setLegendVisible(dadosB != null);
+                area.getChildren().add(chart);
+            } else {
+                LineChart<String, Number> chart = criarGraficoLinhaReceita();
+                chart.getData().add(criarSerieLinha(veiculoA.getNomeVeiculo(), dadosA));
+                if (dadosB != null) chart.getData().add(criarSerieLinha(veiculoB.getNomeVeiculo(), dadosB));
+                area.getChildren().add(chart);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            Label erro = new Label("Erro ao carregar dados do gráfico.");
+            erro.setStyle("-fx-text-fill: #c62828;");
+            area.getChildren().add(erro);
+        }
+    }
+
+    private BarChart<String, Number> criarGraficoBarrasReceita() {
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Receita (€)");
+        BarChart<String, Number> chart = new BarChart<>(xAxis, yAxis);
+        chart.setAnimated(false);
+        chart.setPrefHeight(320);
+        chart.setCategoryGap(12);
+        return chart;
+    }
+
+    private LineChart<String, Number> criarGraficoLinhaReceita() {
+        CategoryAxis xAxis = new CategoryAxis();
+        NumberAxis yAxis = new NumberAxis();
+        yAxis.setLabel("Receita (€)");
+        xAxis.setLabel("Período");
+        LineChart<String, Number> chart = new LineChart<>(xAxis, yAxis);
+        chart.setAnimated(false);
+        chart.setPrefHeight(320);
+        chart.setCreateSymbols(true);
+        return chart;
+    }
+
+    private XYChart.Series<String, Number> criarSerieBarras(String nome, List<Object[]> dados) {
+        XYChart.Series<String, Number> serie = new XYChart.Series<>();
+        serie.setName(nome);
+        for (Object[] row : dados) {
+            double valor = (double) row[1];
+            XYChart.Data<String, Number> ponto = new XYChart.Data<>(String.valueOf(row[0]), valor);
+            serie.getData().add(ponto);
+            ponto.nodeProperty().addListener((obs, oldN, newN) -> {
+                if (newN != null) {
+                    Tooltip tt = new Tooltip(String.format("%s — %s\n%.2f €", nome, row[0], valor));
+                    Tooltip.install(newN, tt);
+                }
+            });
+        }
+        return serie;
+    }
+
+    private XYChart.Series<String, Number> criarSerieLinha(String nome, List<Object[]> dados) {
+        XYChart.Series<String, Number> serie = new XYChart.Series<>();
+        serie.setName(nome);
+        for (Object[] row : dados) {
+            serie.getData().add(new XYChart.Data<>(String.valueOf(row[0]), (double) row[1]));
+        }
+        return serie;
+    }
+
 
     private List<ReceitaVeiculo> carregarReceitas() {
         try (Connection conn = DatabaseConnection.getConnection()) {

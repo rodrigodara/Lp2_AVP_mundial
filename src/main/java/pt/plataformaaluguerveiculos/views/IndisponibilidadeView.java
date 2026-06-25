@@ -58,10 +58,14 @@ public class IndisponibilidadeView {
         root.getChildren().clear();
 
         // Cabeçalho
+        Button btnVoltar = new Button("←  Voltar aos Meus Veículos");
+        btnVoltar.getStyleClass().add("btn-secundario");
+        btnVoltar.setOnAction(e -> NavigationManager.getInstance().navegarParaMeusVeiculos());
+
         Label titulo = new Label("Gestão de Indisponibilidade");
         titulo.getStyleClass().add("reservas-titulo");
 
-        Label subtitulo = new Label("Defina os períodos em que o veículo não está disponível");
+        Label subtitulo = new Label("Defina os períodos em que " + nomeVeiculoAtual() + " não está disponível");
         subtitulo.getStyleClass().add("reservas-subtitulo");
 
         // Formulário para adicionar
@@ -76,7 +80,7 @@ public class IndisponibilidadeView {
         scroll.getStyleClass().add("reservas-scroll");
         scroll.setPrefHeight(350);
 
-        root.getChildren().addAll(titulo, subtitulo, formulario, scroll);
+        root.getChildren().addAll(btnVoltar, titulo, subtitulo, formulario, scroll);
     }
 
     // ----------------------------------------------------------------
@@ -223,6 +227,19 @@ public class IndisponibilidadeView {
         alert.setHeaderText(null);
         alert.setContentText(mensagem);
         alert.showAndWait();
+    }
+
+    private String nomeVeiculoCache;
+
+    private String nomeVeiculoAtual() {
+        if (nomeVeiculoCache != null) return nomeVeiculoCache;
+        try {
+            com.aluguer.model.Veiculo v = new com.aluguer.dao.VeiculoDAO().buscarPorId(veiculoId);
+            nomeVeiculoCache = (v != null) ? (v.getMarca() + " " + v.getModelo()) : "o veículo";
+        } catch (Exception ex) {
+            nomeVeiculoCache = "o veículo";
+        }
+        return nomeVeiculoCache;
     }
 
     public VBox getRoot() {

@@ -24,6 +24,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
 
@@ -49,6 +50,16 @@ public class MeusVeiculosView {
 
         Label titulo = new Label("Os Meus Veículos");
         titulo.getStyleClass().add("dashboard-titulo");
+
+        Button btnConsultarReceita = new Button("💰  Consultar Receita por Veículo");
+        btnConsultarReceita.getStyleClass().add("btn-secundario");
+        btnConsultarReceita.setOnAction(e ->
+            NavigationManager.getInstance().navegarParaConsultaReceita()
+        );
+
+        HBox linhaTitulo = new HBox(titulo, criarEspacadorMeusVeiculos(), btnConsultarReceita);
+        linhaTitulo.setAlignment(Pos.CENTER_LEFT);
+        linhaTitulo.setMaxWidth(Double.MAX_VALUE);
 
         cardsResumo = new HBox(16);
         cardsResumo.setAlignment(Pos.CENTER_LEFT);
@@ -119,10 +130,21 @@ public class MeusVeiculosView {
         btnRemover.getStyleClass().add("btn-perigo");
         btnRemover.setDisable(true);
 
+        Button btnIndisponibilidade = new Button("📅  Gerir Indisponibilidade");
+        btnIndisponibilidade.getStyleClass().add("btn-secundario");
+        btnIndisponibilidade.setDisable(true);
+        btnIndisponibilidade.setOnAction(e -> {
+            Veiculo selecionado = tabela.getSelectionModel().getSelectedItem();
+            if (selecionado != null) {
+                NavigationManager.getInstance().navegarParaIndisponibilidade(selecionado.getId());
+            }
+        });
+
         tabela.getSelectionModel().selectedItemProperty().addListener((obs, antigo, novo) -> {
             boolean semSelecao = (novo == null);
             btnDetalhes.setDisable(semSelecao);
             btnRemover.setDisable(semSelecao);
+            btnIndisponibilidade.setDisable(semSelecao);
         });
 
         tabela.setOnMouseClicked(e -> {
@@ -139,12 +161,18 @@ public class MeusVeiculosView {
             removerVeiculo(tabela.getSelectionModel().getSelectedItem())
         );
 
-        HBox acoes = new HBox(15, btnAdicionar, btnDetalhes, btnRemover);
+        HBox acoes = new HBox(15, btnAdicionar, btnDetalhes, btnIndisponibilidade, btnRemover);
         acoes.setAlignment(Pos.CENTER);
 
         carregarMeusVeiculos();
 
-        root.getChildren().addAll(titulo, cardsResumo, tabela, acoes);
+        root.getChildren().addAll(linhaTitulo, cardsResumo, tabela, acoes);
+    }
+
+    private Region criarEspacadorMeusVeiculos() {
+        Region r = new Region();
+        HBox.setHgrow(r, Priority.ALWAYS);
+        return r;
     }
 
     private void carregarMeusVeiculos() {

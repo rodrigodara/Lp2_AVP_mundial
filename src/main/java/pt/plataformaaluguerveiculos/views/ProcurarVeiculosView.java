@@ -58,6 +58,13 @@ public class ProcurarVeiculosView {
     private ComboBox<Integer> comboAvaliacaoMin;
     private ComboBox<Integer> comboAvaliacaoMax;
 
+    // Ordenação
+    private ComboBox<String> comboOrdenar;
+    private static final String ORD_RELEVANCIA   = "Relevância";
+    private static final String ORD_PRECO_ASC    = "Preço: mais baratos primeiro";
+    private static final String ORD_PRECO_DESC   = "Preço: mais caros primeiro";
+    private static final String ORD_AVALIACAO    = "Melhor avaliados";
+
     // Mapeamento label → [precoMin, precoMax] para os presets rápidos
     private static final Map<String, double[]> RANGES_PRECO = new LinkedHashMap<>();
     static {
@@ -93,7 +100,23 @@ public class ProcurarVeiculosView {
         Button btnToggleFiltros = new Button("Filtros ▾");
         btnToggleFiltros.getStyleClass().add("btn-secundario");
 
-        HBox pesquisaBox = new HBox(8, campoPesquisa, btnPesquisar, btnLimparPesquisa, btnToggleFiltros);
+        comboOrdenar = new ComboBox<>();
+        comboOrdenar.getStyleClass().add("combo-filtro");
+        comboOrdenar.setPromptText("Ordenar por...");
+        comboOrdenar.setItems(FXCollections.observableArrayList(
+            ORD_RELEVANCIA, ORD_PRECO_ASC, ORD_PRECO_DESC, ORD_AVALIACAO
+        ));
+        comboOrdenar.setValue(ORD_RELEVANCIA);
+        comboOrdenar.setPrefWidth(220);
+        comboOrdenar.setOnAction(e -> {
+            // Reaplica a ordenação sobre a lista já carregada, sem repetir
+            // a pesquisa/filtros — só muda a ordem de apresentação.
+            ordenarListaCompleta();
+            paginaAtual = 0;
+            renderizarPaginaAtual();
+        });
+
+        HBox pesquisaBox = new HBox(8, campoPesquisa, btnPesquisar, btnLimparPesquisa, btnToggleFiltros, comboOrdenar);
         pesquisaBox.setAlignment(Pos.CENTER_LEFT);
 
         btnPesquisar.setOnAction(e -> {
@@ -294,9 +317,36 @@ public class ProcurarVeiculosView {
 
     /** Recebe a lista completa (de uma pesquisa/filtro) e mostra a partir da página 1. */
     private void atualizarCards(List<Veiculo> lista) {
-        this.listaCompleta = (lista != null) ? lista : java.util.Collections.emptyList();
+        this.listaCompleta = (lista != null) ? new java.util.ArrayList<>(lista) : new java.util.ArrayList<>();
+        ordenarListaCompleta();
         this.paginaAtual = 0;
         renderizarPaginaAtual();
+    }
+
+    /** Ordena listaCompleta de acordo com a opção escolhida em comboOrdenar (em memória, sem nova query). */
+    private void ordenarListaCompleta() {
+        if (comboOrdenar == null || listaCompleta.isEmpty()) return;
+        String ordem = comboOrdenar.getValue();
+        if (ordem == null) ordem = ORD_RELEVANCIA;
+
+        switch (ordem) {
+            case ORD_PRECO_ASC ->
+                listaCompleta.sort(java.util.Comparator.comparingDouble(Veiculo::getPrecoDiario));
+            case ORD_PRECO_DESC ->
+                listaCompleta.sort(java.util.Comparator.comparingDouble(Veiculo::getPrecoDiario).reversed());
+            case ORD_AVALIACAO ->
+                // Sem avaliações (média < 0) fica sempre no fim, independentemente da ordenação.
+                listaCompleta.sort((a, b) -> {
+                    double mA = a.getAvaliacaoMedia();
+                    double mB = b.getAvaliacaoMedia();
+                    boolean semA = mA < 0, semB = mB < 0;
+                    if (semA && semB) return 0;
+                    if (semA) return 1;
+                    if (semB) return -1;
+                    return Double.compare(mB, mA); // descendente: melhor avaliados primeiro
+                });
+            default -> { /* ORD_RELEVANCIA — mantém a ordem original devolvida pela pesquisa/filtro */ }
+        }
     }
 
     private int totalPaginas() {

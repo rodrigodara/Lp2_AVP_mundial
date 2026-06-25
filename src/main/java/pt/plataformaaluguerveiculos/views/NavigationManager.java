@@ -200,6 +200,22 @@ public class NavigationManager {
         navegarPara(new MeusVeiculosView().getRoot());
     }
 
+    /** Navega para a gestão de indisponibilidade de um veículo específico (proprietário). */
+    public void navegarParaIndisponibilidade(int veiculoId) {
+        if (bloquearSeAdmin("gerir indisponibilidade")) return;
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+        navegarPara(new IndisponibilidadeView(veiculoId).getRoot());
+    }
+
+    /** Navega para a consulta de receita por veículo do proprietário logado. */
+    public void navegarParaConsultaReceita() {
+        if (bloquearSeAdmin("consultar receita")) return;
+        if (utilizadorLogadoId < 0) return;
+        garantirNavbar();
+        navegarPara(new ConsultaReceitaView(utilizadorLogadoId).getRoot());
+    }
+
     public void navegarParaProcurarVeiculos() {
         if (bloquearSeAdmin("procurar veículos")) {
             return;
