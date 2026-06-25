@@ -115,6 +115,24 @@ public class EmailService {
         enviarAsync(email, assunto, corpo);
     }
 
+    public static void enviarCodigoRecuperacao(String email, String nome, String codigo) {
+        String assunto = "Código de recuperação de password — AVL Mundial";
+
+        String corpo = corpoBase(
+            COR_PRIMARIA,
+            "🔑 Recuperação de Password",
+            "Olá " + nome + ",",
+            "Recebemos um pedido para repor a password da sua conta. Use o código abaixo para continuar:"
+                + "<div style=\"margin:20px 0;padding:18px;background:#f5f5f7;border-radius:8px;text-align:center;\">"
+                + "<span style=\"font-size:32px;font-weight:700;letter-spacing:8px;color:" + COR_PRIMARIA + ";\">" + codigo + "</span>"
+                + "</div>"
+                + "<p style=\"margin:0;color:#555;\">Este código é válido durante <strong>15 minutos</strong>.</p>"
+                + "<p style=\"margin:12px 0 0;color:#999;font-size:13px;\">Se não foi você a pedir isto, pode ignorar este email com segurança.</p>"
+        );
+
+        enviarAsync(email, assunto, corpo);
+    }
+
     // =========================================================================
     // TEMPLATE HTML
     // =========================================================================

@@ -47,8 +47,8 @@ public class UserDAO {
         String sql = """
                 INSERT INTO utilizadores
                     (email, nome, nif, numero_carta, validade_carta, password_hash,
-                     tipo, saldo, perfil, ativo, data_criacao, security_question, security_answer)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)
+                     tipo, saldo, perfil, ativo, data_criacao)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
                 """;
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -64,8 +64,6 @@ public class UserDAO {
             ps.setBigDecimal(8, user.getSaldo());
             ps.setString(9, user.getPerfil());
             ps.setBoolean(10, user.isAtivo());
-            ps.setString(11, user.getSecurityQuestion());
-            ps.setString(12, user.getSecurityAnswer());
 
             ps.executeUpdate();
 
@@ -106,31 +104,6 @@ public class UserDAO {
             }
         }
         return Optional.empty();
-    }
-
-    public String getSecurityQuestion(String email) throws SQLException {
-        String sql = "SELECT security_question FROM utilizadores WHERE email = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, email);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) return null;
-                String q = rs.getString("security_question");
-                return (q == null || q.isBlank()) ? "" : q;
-            }
-        }
-    }
-
-    public String getSecurityAnswerHash(String email) throws SQLException {
-        String sql = "SELECT security_answer FROM utilizadores WHERE email = ?";
-        try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, email);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getString("security_answer");
-            }
-        }
-        return null;
     }
 
     public boolean updatePassword(String email, String newHashedPassword) throws SQLException {
